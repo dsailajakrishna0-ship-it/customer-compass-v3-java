@@ -2,7 +2,7 @@
 
 Which stages of the Python edition (`customer-compass-v3`) are merged, and whether the Java edition has ported them. The Java session reads the Python edition's `main` before starting a stage; this table is the summary.
 
-Last checked against `customer-compass-v3` `main` at commit `e0d287e`-after-`#52` (Stage 3.2b merged), 2026-11-05.
+Last checked against `customer-compass-v3` `main` at commit `139c7f8` (Stage 3.2b merged), 2026-11-05.
 
 | Python stage | Merged there | API contract changed? | Java stage | Java status |
 | --- | --- | --- | --- | --- |
