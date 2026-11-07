@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: api-java
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/customer_compass}
+    username: ${DATABASE_USER:customer_compass}
+    password: ${DATABASE_PASSWORD:customer_compass_dev}
+    hikari:
+      # created_at is returned as text; a fixed zone keeps that text the same as in the Python edition
+      connection-init-sql: SET TIME ZONE 'UTC'
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: ${SERVER_PORT:8001}
+  error:
+    include-message: never
+
+# Origin of the web app's dev server (the Python edition allows the same one)
+app:
+  cors-allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
