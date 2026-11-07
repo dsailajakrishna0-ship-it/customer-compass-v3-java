@@ -6,7 +6,7 @@ Goal: the same product and API contract as the Python edition, built with the Ja
 
 | Stage | Name | Ports (Python edition) | Status |
 | --- | --- | --- | --- |
-| J0 | Foundation: repo, shared assets, CI | Stage 0 | In progress |
+| J0 | Foundation: repo, shared assets, CI | Stage 0 | J0.1 and J0.2 merged; J0.3 in review |
 | J1 | Spring Boot skeleton, Postgres + Flyway, CRM API | Stage 0 (V2 base) | Planned |
 | J2 | Model layer: Spring AI chat, fallback chain, usage, `/llm/models`, HTTP contract tests | Stage 1, 3.1 | Planned |
 | J3 | Documents and RAG: Spring AI `VectorStore` (Qdrant), Gemini embeddings, `/documents/*`, `/chat/rag`, `/chat/crm` | V2 base, Stage 4 | Planned |
