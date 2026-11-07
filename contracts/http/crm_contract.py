@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HTTP contract check for the CRM routes (J1). Runs against any base URL, so the same file can be
+"""HTTP contract check for the CRM routes (J1) and the model list (J2.1). Runs against any base URL, so the same file can be
 pointed at the Python edition and at the Java edition and must pass on both.
 
     python3 contracts/http/crm_contract.py http://localhost:8001
@@ -86,6 +86,12 @@ check(
     "a task has exactly the documented fields",
     all(set(t) == {"id", "company_id", "company_name", "note", "status", "created_at"} for t in tasks),
 )
+
+status, models, _ = get("/api/v1/llm/models")
+check("GET /llm/models is 200 with free, paid and source", status == 200 and list(models) == ["free", "paid", "source"], f"{status}")
+check("the model source is live or fallback", models["source"] in ("live", "fallback"), models["source"])
+check("every listed model has an id and a name", all(set(m) == {"id", "name"} for m in models["free"] + models["paid"]))
+check("every free model id ends with :free", all(m["id"].endswith(":free") for m in models["free"]))
 
 _, _, headers = get("/health")
 check("every response has X-Request-ID", bool(headers.get("X-Request-ID")))
