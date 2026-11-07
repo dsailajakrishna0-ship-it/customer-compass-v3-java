@@ -14,7 +14,7 @@ just test              # 31 tests: the CRM API (Testcontainers) and, new, 22 mod
 | # | Do | Expect | What it shows |
 | --- | --- | --- | --- |
 | 1 | `cd apps/api-java && ./mvnw -B -ntp test -Dtest=ModelGatewayTests` | 18 tests pass. Read the names: `a429FallsBackToTheNextModel`, `emptyAnswerFallsBackToTheNextModel`, `aModelThatJustFailedIsSkipped...` | The policy, exact and offline |
-| 2 | Break it on purpose: in `ModelGateway.java` change `e.kind().retryable()` to `true`, run step 1 | `a429IsNotRetriedOnTheSameModel` and one more fail. Undo with `git checkout apps/api-java/src/main` | The tests can fail |
+| 2 | Break it on purpose: in `ModelGateway.java` change `e.kind().retryable()` to `true`, run step 1 | 5 tests fail, among them `a429IsNotRetriedOnTheSameModel`. Undo with `git checkout apps/api-java/src/main` | The tests can fail |
 | 3 | `just db`, `just run`, then `curl -s localhost:8001/api/v1/llm/models \| python3 -m json.tool \| head -20` | `"source": "live"`, about a dozen free models sorted by name, and one paid example (`openai/gpt-4o-mini`) | The live list from OpenRouter (no key needed) |
 | 4 | Call it again | Answers in a few milliseconds | The five-minute cache |
 | 5 | Disconnect the network (or block openrouter.ai), restart `just run`, call it | `"source": "fallback"` and the four models from `models.yaml`, `"paid": []` | A dropdown that still works offline |
