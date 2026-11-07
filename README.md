@@ -19,6 +19,8 @@ The same CRM and AI assistant as [`customer-compass-v3`](https://github.com/dsai
 - A later part of the plan adds a **no-framework** version (plain Java), to compare with the framework one.
 - Sibling project, planned: `claims-compass-v1` (insurance claims, Java).
 
-Status: **J0 in progress** (seeding the repo). Nothing runs yet.
+Status: **J0 done after J0.3 merges** (plan, shared assets, tooling and CI). The API itself starts in J1.
+
+Build and check: `just test` (Java) and `just test-web` (web app). See [`docs/testing-guide.md`](docs/testing-guide.md).
 
 Licence: MIT. Security: see [SECURITY.md](SECURITY.md).
