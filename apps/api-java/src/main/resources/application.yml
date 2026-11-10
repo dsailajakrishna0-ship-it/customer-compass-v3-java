@@ -17,6 +17,16 @@ server:
   error:
     include-message: never
 
+# Model layer (the Python edition's OPENROUTER_* and LLM_* variables)
+llm:
+  openrouter-api-key: ${OPENROUTER_API_KEY:}
+  openrouter-model: ${OPENROUTER_MODEL:}
+  timeout-seconds: ${LLM_TIMEOUT_SECONDS:60}
+  max-retries: ${LLM_MAX_RETRIES:2}
+  retry-min-seconds: ${LLM_RETRY_MIN_SECONDS:1}
+  cooldown-seconds: ${LLM_COOLDOWN_SECONDS:30}
+  models-file: ${MODELS_FILE:}
+
 # Origin of the web app's dev server (the Python edition allows the same one)
 app:
   cors-allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}

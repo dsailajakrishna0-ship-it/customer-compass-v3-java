@@ -2,6 +2,27 @@
 
 One section per PR, newest first. Each says how to start, what to run, what you should see, and how to stop.
 
+## J2.1: the model gateway and the model list
+
+Needs: Java 21, Docker (for `just test`). No key. Chat itself arrives in J2.2.
+
+```bash
+git pull
+just test              # 31 tests: the CRM API (Testcontainers) and, new, 22 model-layer tests with no network
+```
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `cd apps/api-java && ./mvnw -B -ntp test -Dtest=ModelGatewayTests` | 18 tests pass. Read the names: `a429FallsBackToTheNextModel`, `emptyAnswerFallsBackToTheNextModel`, `aModelThatJustFailedIsSkipped...` | The policy, exact and offline |
+| 2 | Break it on purpose: in `ModelGateway.java` change `e.kind().retryable()` to `true`, run step 1 | 5 tests fail, among them `a429IsNotRetriedOnTheSameModel`. Undo with `git checkout apps/api-java/src/main` | The tests can fail |
+| 3 | `just db`, `just run`, then `curl -s localhost:8001/api/v1/llm/models \| python3 -m json.tool \| head -20` | `"source": "live"`, about a dozen free models sorted by name, and one paid example (`openai/gpt-4o-mini`) | The live list from OpenRouter (no key needed) |
+| 4 | Call it again | Answers in a few milliseconds | The five-minute cache |
+| 5 | Disconnect the network (or block openrouter.ai), restart `just run`, call it | `"source": "fallback"` and the four models from `models.yaml`, `"paid": []` | A dropdown that still works offline |
+| 6 | `python3 contracts/http/crm_contract.py http://localhost:8001` | `OK`, including the four `/llm/models` checks | The shared contract |
+| 7 | Optional parity: run the Python edition on another port and `curl` its `/api/v1/llm/models` | The same keys and the same models (both read OpenRouter) | Same contract, two languages |
+
+**Stop:** `Ctrl+C` in the `just run` terminal, then `just db-stop`.
+
 ## J1: the CRM API (health, companies, tasks)
 
 Needs: Java 21, Node 22, Docker (for the tests and a throw-away Postgres), `just`. No keys. The web app's address is fixed at port 8001, so **stop the Python edition's stack first** if it is running.

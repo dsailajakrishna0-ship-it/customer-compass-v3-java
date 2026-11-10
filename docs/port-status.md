@@ -7,7 +7,7 @@ Last checked against `customer-compass-v3` `main` at commit `99c59d8` (Stage 4.2
 | Python stage | Merged there | API contract changed? | Java stage | Java status |
 | --- | --- | --- | --- | --- |
 | 0 Foundation | Yes | n/a | J0, J1 | J0.1 to J0.3 done or in review; J1 in review |
-| 1 Model layer | Yes | Gateway, usage footer, `/llm/models` | J2 | Planned |
+| 1 Model layer | Yes | Gateway, usage footer, `/llm/models` | J2 | J2.1 (gateway, `/llm/models`) in review; `/chat` in J2.2 |
 | 2 Tools and MCP | 2.1, 2.2a, 2.2b | `/chat/tools`, `/mcp/servers`, `contracts/mcp-tools.json` | J4 | Planned |
 | 3 LangGraph port | 3.1, 3.2a, 3.2b | No (26 contract tests unchanged) | J5 | Planned |
 | 4 Retrieval upgrade | 4.1a, 4.1b, 4.2 (4.3 in review) | 4.2 adds optional `page` and `sheet` to `/chat/rag` citations | J3 (RAG) | Planned |
