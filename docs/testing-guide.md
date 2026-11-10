@@ -2,6 +2,8 @@
 
 One section per PR, newest first. Each says how to start, what to run, what you should see, and how to stop.
 
+> **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
+
 ## J2.1: the model gateway and the model list
 
 Needs: Java 21, Docker (for `just test`). No key. Chat itself arrives in J2.2.

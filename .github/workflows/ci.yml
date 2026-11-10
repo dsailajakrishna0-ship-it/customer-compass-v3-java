@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:17.11
+        image: postgres:17.11-alpine
         env:
           POSTGRES_DB: customer_compass
           POSTGRES_USER: customer_compass
