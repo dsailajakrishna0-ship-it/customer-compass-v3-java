@@ -4,6 +4,31 @@ One section per PR, newest first. Each says how to start, what to run, what you 
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## J3.1: ingest Markdown documents
+
+Needs: Java 21, Docker, `just`, and for the live steps (5 to 7) a free Google key (<https://aistudio.google.com/apikey>) exported as `GOOGLE_API_KEY` (never paste it into a chat or a commit). Steps 1 to 4 need no key. If the Python edition's stack is running, **leave its Qdrant alone**: the Java edition writes to its own collection, `java_document_chunks`.
+
+```bash
+git checkout main && git pull
+just test              # chunker, parser, a fake-embedding ingestion test against real Postgres and Qdrant containers
+just db                # scratch Postgres on localhost:55432
+just qdrant            # scratch Qdrant: REST on 56333, gRPC on 56334 (skip if you use the Python stack's Qdrant)
+```
+
+Run the API with `QDRANT_GRPC_PORT=56334 just run` (add `GOOGLE_API_KEY=...` in front for the live steps; with the Python stack's Qdrant use the default port 6334). In a second terminal:
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just test` | all tests pass; read `ChunkerTests`: the last test checks 16 files against the Python edition's chunk counts | Same chunking as Python |
+| 2 | `curl -s -X POST localhost:8001/api/v1/documents/ingest` with no key | `502` and `"error": "GOOGLE_API_KEY is not set..."` | A missing key says what to set |
+| 3 | `curl -s localhost:8001/api/v1/documents/ingestion-runs \| python3 -m json.tool` | the failed run, with `"status": "failed"` | Every run is recorded |
+| 4 | Remove one `type:` line from a copy of a document, point `SAMPLE_DATA_DIR` at that folder, ingest | `502` and `Document <name> is missing required metadata (title, type).` | A bad file is named |
+| 5 | With the key: `curl -s -X POST localhost:8001/api/v1/documents/ingest` | `{"ingestionRunId":..,"documentsProcessed":16,"chunksCreated":28,"status":"completed"}` | The real Gemini and Qdrant path. The PDF, Word and Excel files are skipped until J3.2 |
+| 6 | `curl -s localhost:8001/api/v1/documents \| python3 -m json.tool \| head -30` | 16 documents, each with `chunkCount` (1 or 2) and its company | The chunk counts match the Python edition's for the same files |
+| 7 | Run step 5 again, then `curl -s localhost:56333/collections/java_document_chunks \| python3 -m json.tool \| grep -E "points_count|size"` | `points_count` still 28 and `size` 768 | Re-ingesting never duplicates |
+
+**Stop:** `Ctrl+C` in the `just run` terminal, then `just db-stop` and `just qdrant-stop`.
+
 ## J2.2: Spring AI client and `POST /api/v1/chat`
 
 Needs: Java 21, Node 22, Docker, `just`, and for steps 5 to 8 a free OpenRouter key (<https://openrouter.ai/keys>) exported as `OPENROUTER_API_KEY` (never paste it into a chat or a commit). Steps 1 to 4 need no key. The Python edition's stack must be stopped (`docker compose stop api-py` in that repo), because both use port 8001.

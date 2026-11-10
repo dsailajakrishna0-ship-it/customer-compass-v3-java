@@ -132,7 +132,8 @@ public class VectorIndex {
             .model(properties.embeddingModel())
             .dimensions(properties.embeddingDimensions())
             .build();
-    return new GoogleGenAiTextEmbeddingModel(details, options);
+    return new FixedDimensionsEmbeddingModel(
+        new GoogleGenAiTextEmbeddingModel(details, options), properties.embeddingDimensions());
   }
 
   private QdrantClient qdrantClient() {

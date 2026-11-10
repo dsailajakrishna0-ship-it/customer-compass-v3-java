@@ -18,7 +18,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 public record RagProperties(
     @DefaultValue("localhost") String qdrantHost,
     @DefaultValue("6334") int qdrantGrpcPort,
-    @DefaultValue("document_chunks") String collection,
+    @DefaultValue("java_document_chunks") String collection,
     @DefaultValue("") String googleApiKey,
     @DefaultValue("gemini-embedding-001") String embeddingModel,
     @DefaultValue("768") int embeddingDimensions,
