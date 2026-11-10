@@ -42,7 +42,7 @@ A read route is one query and one mapping. Writing the SQL shows exactly what th
 
 ## Concept 5. Testcontainers
 
-The JUnit tests start a real `postgres:17.11` in Docker for the test run, point the app at it, and call the routes over HTTP. No fake database, so the SQL and the migrations are really tested. The cost is that Docker must be running.
+The JUnit tests start a real `postgres:17.11-alpine` in Docker for the test run, point the app at it, and call the routes over HTTP. No fake database, so the SQL and the migrations are really tested. The cost is that Docker must be running.
 
 ## Questions to answer in your own words
 

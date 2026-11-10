@@ -29,7 +29,7 @@ check: test test-web
 
 # a throw-away Postgres for running the API by hand (port 55432, never the Python edition's 5432); stop with `just db-stop`
 db:
-    docker run -d --rm --name cc-java-db -e POSTGRES_DB=customer_compass -e POSTGRES_USER=customer_compass -e POSTGRES_PASSWORD=customer_compass_dev -p 55432:5432 postgres:17.11
+    docker run -d --rm --name cc-java-db -e POSTGRES_DB=customer_compass -e POSTGRES_USER=customer_compass -e POSTGRES_PASSWORD=customer_compass_dev -p 55432:5432 postgres:17.11-alpine
     until docker exec cc-java-db pg_isready -U customer_compass -d customer_compass >/dev/null 2>&1; do sleep 1; done
     @echo "Postgres ready on localhost:55432"
 

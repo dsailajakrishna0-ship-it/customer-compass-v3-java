@@ -7,7 +7,7 @@ This is the Java edition of `customer-compass-v3` (an AI learning project, synth
 - The `gh` CLI may have another account active. Use `GH_TOKEN=$(gh auth token --user dsailajakrishna0-ship-it)` per command, and push with
   `git -c credential.helper= -c "http.extraheader=AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" push`. Never run `gh auth switch`.
 - Never print `.env` values. Never put real keys in `.env.example`; before every commit check `git diff -- .env.example`, stage with `git add -A -- . ':!.env.example'`, and grep the staged diff for `AIza|AQ\.A|sk-or-v1-`.
-- Never `docker compose down -v` or `docker volume prune`. Test against a scratch Postgres on another port (for example `postgres:17.11` on 55432). Do not start the owner's compose stack without asking: their Docker is often stopped for other work.
+- Never `docker compose down -v` or `docker volume prune`. Test against a scratch Postgres on another port (for example `postgres:17.11-alpine` on 55432). Do not start the owner's compose stack without asking: their Docker is often stopped for other work.
 - Never `pkill -f` a pattern that appears in your own command line.
 - Creating repos, publishing, or anything outward-facing: ask first.
 
