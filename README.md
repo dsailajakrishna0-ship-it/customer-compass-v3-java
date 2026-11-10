@@ -19,8 +19,8 @@ The same CRM and AI assistant as [`customer-compass-v3`](https://github.com/dsai
 - A later part of the plan adds a **no-framework** version (plain Java), to compare with the framework one.
 - Sibling project, planned: `claims-compass-v1` (insurance claims, Java).
 
-Status: **J0 done after J0.3 merges** (plan, shared assets, tooling and CI). The API itself starts in J1.
+Status: **J0 done after J0.3 merges** (plan, shared assets, tooling and CI). J1 adds the Spring Boot API with the CRM routes (health, companies, tasks).
 
-Build and check: `just test` (Java) and `just test-web` (web app). See [`docs/testing-guide.md`](docs/testing-guide.md).
+Build and check: `just test` (Java, needs Docker) and `just test-web` (web app); run it with `just db` then `just run` (port 8001). See [`docs/testing-guide.md`](docs/testing-guide.md).
 
 Licence: MIT. Security: see [SECURITY.md](SECURITY.md).

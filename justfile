@@ -26,3 +26,21 @@ test-web:
 
 # everything CI checks
 check: test test-web
+
+# a throw-away Postgres for running the API by hand (port 55432, never the Python edition's 5432); stop with `just db-stop`
+db:
+    docker run -d --rm --name cc-java-db -e POSTGRES_DB=customer_compass -e POSTGRES_USER=customer_compass -e POSTGRES_PASSWORD=customer_compass_dev -p 55432:5432 postgres:17.11
+    until docker exec cc-java-db pg_isready -U customer_compass -d customer_compass >/dev/null 2>&1; do sleep 1; done
+    @echo "Postgres ready on localhost:55432"
+
+# stop the throw-away Postgres (its data goes with it)
+db-stop:
+    docker stop cc-java-db
+
+# run the API on http://localhost:8001 against `just db` (Flyway builds the schema and demo data on start)
+run:
+    cd {{api}} && DATABASE_URL=jdbc:postgresql://localhost:55432/customer_compass ./mvnw -B -ntp spring-boot:run
+
+# the shared HTTP contract check; point it at this API or at the Python edition, e.g. `just contract http://localhost:8001`
+contract url="http://localhost:8001":
+    python3 contracts/http/crm_contract.py {{url}}
