@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HTTP contract check for the CRM routes (J1) and the model list (J2.1). Runs against any base URL, so the same file can be
+"""HTTP contract check for the CRM routes (J1), the model list (J2.1) and POST /chat (J2.2). Runs against any base URL, so the same file can be
 pointed at the Python edition and at the Java edition and must pass on both.
 
     python3 contracts/http/crm_contract.py http://localhost:8001
@@ -24,6 +24,17 @@ def get(path, headers=None):
             return response.status, json.loads(response.read() or b"null"), response.headers
     except urllib.error.HTTPError as error:
         return error.code, json.loads(error.read() or b"null"), error.headers
+
+
+def post(path, raw):
+    request = urllib.request.Request(
+        BASE + path, data=raw.encode(), headers={"Content-Type": "application/json"}, method="POST"
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=90) as response:
+            return response.status, json.loads(response.read() or b"null")
+    except urllib.error.HTTPError as error:
+        return error.code, json.loads(error.read() or b"null")
 
 
 def check(name, condition, detail=""):
@@ -92,6 +103,41 @@ check("GET /llm/models is 200 with free, paid and source", status == 200 and lis
 check("the model source is live or fallback", models["source"] in ("live", "fallback"), models["source"])
 check("every listed model has an id and a name", all(set(m) == {"id", "name"} for m in models["free"] + models["paid"]))
 check("every free model id ends with :free", all(m["id"].endswith(":free") for m in models["free"]))
+
+# POST /chat: the request is validated before any model is called, so these need no key.
+def problem(raw):
+    status, body = post("/api/v1/chat", raw)
+    return status, (body.get("detail") or [{}])[0] if status == 422 else body
+
+
+status, first = problem('{"messages":[]}')
+check("chat: an empty list is 422 too_short", status == 422 and first["type"] == "too_short" and first["loc"] == ["body", "messages"], f"{status} {first}")
+status, first = problem("{}")
+check("chat: missing messages is 422 missing", status == 422 and first["type"] == "missing", f"{status} {first}")
+status, first = problem('{"messages":[{"role":"user","content":"   "}]}')
+check("chat: blank content is 422 value_error", status == 422 and first["type"] == "value_error" and first["loc"] == ["body", "messages", 0, "content"], f"{status} {first}")
+status, first = problem('{"messages":[{"role":"system","content":"hi"}]}')
+check("chat: a role other than user or assistant is 422 literal_error", status == 422 and first["type"] == "literal_error" and first["loc"][-1] == "role", f"{status} {first}")
+status, first = problem(json.dumps({"messages": [{"role": "user", "content": "x" * 4001}]}))
+check("chat: content over 4000 characters is 422 string_too_long", status == 422 and first["type"] == "string_too_long", f"{status} {first}")
+status, first = problem(json.dumps({"messages": [{"role": "user", "content": "hi"}] * 13}))
+check("chat: more than 12 messages is 422 too_long", status == 422 and first["type"] == "too_long", f"{status} {first}")
+status, first = problem('{"messages":[{"role":"user","content":"hi"}],"model":5}')
+check("chat: a non-string model is 422 string_type", status == 422 and first["type"] == "string_type" and first["loc"] == ["body", "model"], f"{status} {first}")
+
+# A valid question: with a key and a reachable model it is 200 with message, usage and guardrail;
+# otherwise (no key, free models rate-limited) it is 503 with the shared error body. Either is the contract.
+status, body = post("/api/v1/chat", '{"messages":[{"role":"user","content":"Reply with the single word: ok"}]}')
+if status == 200:
+    check("chat: 200 has message, usage and guardrail in that order", list(body) == ["message", "usage", "guardrail"], str(list(body)))
+    check(
+        "chat: usage has the seven footer fields",
+        list(body["usage"]) == ["model", "tokensIn", "tokensOut", "latencyMs", "estimatedCost", "fallbackUsed", "fallbackFromModel"],
+        str(list(body["usage"])),
+    )
+    check("chat: the guardrail field says flagged and reasons", list(body["guardrail"]) == ["flagged", "reasons"], str(body["guardrail"]))
+else:
+    check("chat: otherwise 503 with error and detail", status == 503 and set(body) == {"error", "detail"} and body["error"] == body["detail"], f"{status} {body}")
 
 _, _, headers = get("/health")
 check("every response has X-Request-ID", bool(headers.get("X-Request-ID")))
