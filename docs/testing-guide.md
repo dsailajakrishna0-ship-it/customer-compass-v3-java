@@ -2,6 +2,8 @@
 
 One section per PR, newest first. Each says how to start, what to run, what you should see, and how to stop.
 
+> **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
+
 ## J2.2: Spring AI client and `POST /api/v1/chat`
 
 Needs: Java 21, Node 22, Docker, `just`, and for steps 5 to 8 a free OpenRouter key (<https://openrouter.ai/keys>) exported as `OPENROUTER_API_KEY` (never paste it into a chat or a commit). Steps 1 to 4 need no key. The Python edition's stack must be stopped (`docker compose stop api-py` in that repo), because both use port 8001.

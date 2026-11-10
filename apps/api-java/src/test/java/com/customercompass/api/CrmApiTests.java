@@ -27,7 +27,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 class CrmApiTests {
 
   @Container @ServiceConnection
-  static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17.11");
+  static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17.11-alpine");
 
   @LocalServerPort int port;
   @Autowired JdbcClient jdbc;
