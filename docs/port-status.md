@@ -7,7 +7,7 @@ Last checked against `customer-compass-v3` `main` at commit `99c59d8` (Stage 4.2
 | Python stage | Merged there | API contract changed? | Java stage | Java status |
 | --- | --- | --- | --- | --- |
 | 0 Foundation | Yes | n/a | J0, J1 | J0.1 to J0.3 done or in review; J1 in review |
-| 1 Model layer | Yes | Gateway, usage footer, `/llm/models` | J2 | J2.1 (gateway, `/llm/models`) in review; `/chat` in J2.2 |
+| 1 Model layer | Yes | Gateway, usage footer, `/llm/models` | J2 | J2.1 (gateway, `/llm/models`) merged; J2.2 (Spring AI client, `POST /chat`) in review |
 | 2 Tools and MCP | 2.1, 2.2a, 2.2b | `/chat/tools`, `/mcp/servers`, `contracts/mcp-tools.json` | J4 | Planned |
 | 3 LangGraph port | 3.1, 3.2a, 3.2b | No (26 contract tests unchanged) | J5 | Planned |
 | 4 Retrieval upgrade | 4.1a, 4.1b, 4.2 (4.3 in review) | 4.2 adds optional `page` and `sheet` to `/chat/rag` citations | J3 (RAG) | Planned |
@@ -24,3 +24,12 @@ Places where the Python edition's real behaviour differs from its own `api-refer
 | `GET /companies` example | `relationship_status` shown as `active` | the code and database use `lead`, `customer`, `former_customer` |
 
 The contract is the 26 tests in `apps/api-py/tests/contract/` plus `docs/api-reference.md` and `contracts/mcp-tools.json` in the Python edition.
+
+## Where the Java edition is behind or different
+
+| Item | Python today | Java today | Plan |
+| --- | --- | --- | --- |
+| Guardrail on `/chat` | Prompt-injection scan of the question, scan of the answer, audit log | The `guardrail` field is always unflagged | J6 |
+| Raw tool-call markup from a small model (Python PR #67) | Treated as a failed attempt, next model answers | Not ported; the gateway only knows empty replies | Port with the Python change once it is merged |
+| A body that is not valid JSON | `loc: ["body", <character position>]` and Python's own message in `ctx` | `loc: ["body"]`, no `ctx` | Accepted gap; every other chat validation error is byte-identical (checked by sending the same 15 bodies to both editions: 14 identical, this is the one difference) |
+

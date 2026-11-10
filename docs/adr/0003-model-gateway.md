@@ -34,3 +34,14 @@ One difference from LiteLLM: the doubling of the waits (1 s, 2 s) is explicit he
 ## Consequences
 
 The cool-down is per process, as in Python. If a second replica ever runs, each keeps its own bench list. Streaming and tool calling are not in the gateway yet; tool calling arrives in J4 with the MCP client.
+
+## Addendum (J2.2): the Spring AI client
+
+`SpringAiModelClient` is the one implementation of `ModelClient`. It uses Spring AI 2.0.2's OpenAI chat model (which in 2.0 sits on the official OpenAI Java SDK) pointed at OpenRouter's OpenAI-compatible endpoint, `https://openrouter.ai/api/v1`.
+
+- **Only the client module (`spring-ai-openai`), not the starter.** The starter's auto-configuration builds the chat model at start-up and demands a key; this application must start without one and say what to set when chat is used. The model is built on the first call.
+- **The SDK's own retries are off (`maxRetries(0)`).** Retries and fallback are the gateway's job, and the 429 rule (never retry the same model) would be broken by a hidden retry.
+- **One timeout per attempt** from `LLM_TIMEOUT_SECONDS`; the temperature (0.3) and the answer limit (700 tokens) equal the Python edition's.
+- **Failures are sorted by what happened, not by message text:** `RateLimitException` or HTTP 429 is a rate limit; 5xx is a server error; 401 and 403 are auth; other 4xx are bad requests; an I/O or timeout error is a timeout. The message that leaves the client names only the failure type, never the key and never the provider's reply body (a test checks both).
+- **Tested against a local fake of `/chat/completions`**, so the request that is really sent (key header, model, system prompt first, history in order, `max_tokens`) and every failure kind are checked with no network and no real key.
+

@@ -2,6 +2,35 @@
 
 One section per PR, newest first. Each says how to start, what to run, what you should see, and how to stop.
 
+## J2.2: Spring AI client and `POST /api/v1/chat`
+
+Needs: Java 21, Node 22, Docker, `just`, and for steps 5 to 8 a free OpenRouter key (<https://openrouter.ai/keys>) exported as `OPENROUTER_API_KEY` (never paste it into a chat or a commit). Steps 1 to 4 need no key. The Python edition's stack must be stopped (`docker compose stop api-py` in that repo), because both use port 8001.
+
+```bash
+git checkout main && git pull
+just test              # all tests pass, including 8 against a fake OpenRouter and 14 for the chat route
+just db                # scratch Postgres on localhost:55432
+just run               # the API on http://localhost:8001 (add OPENROUTER_API_KEY=... in front for steps 5 to 8)
+```
+
+In a second terminal:
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `curl -si -X POST localhost:8001/api/v1/chat -H 'Content-Type: application/json' -d '{"messages":[]}'` | `422` and `"type":"too_short"` | Validation before any model call |
+| 2 | the same with `-d '{"messages":[{"role":"user","content":"   "}]}'`, then `-d '{"messages":[{"role":"system","content":"hi"}]}'` | `value_error` ("content must not be blank"), then `literal_error` | The same errors FastAPI gives |
+| 3 | `curl -si -X POST localhost:8001/api/v1/chat -H 'Content-Type: text/plain' -d 'hello'` | `422` `model_attributes_type`, not a 500 | A wrong content type is a client error |
+| 4 | Start `just run` with no key, then step 1 body but with a valid message: `-d '{"messages":[{"role":"user","content":"hi"}]}'` | `503` and a message that names `OPENROUTER_API_KEY` | The no-key message |
+| 5 | With the key: `curl -s -X POST localhost:8001/api/v1/chat -H 'Content-Type: application/json' -d '{"messages":[{"role":"user","content":"What is the capital of France?"}]}' \| python3 -m json.tool` | `message` says Paris; `usage` has `model`, `tokensIn`, `tokensOut`, `latencyMs`, `estimatedCost` 0.0, `fallbackUsed` false; `guardrail` is `{"flagged": false, "reasons": []}` | The real Spring AI call to OpenRouter |
+| 6 | Send a conversation: messages `user` "My name is Murali.", `assistant` "Nice to meet you, Murali.", `user` "What is my name?" | The answer says Murali | History reaches the model in order |
+| 7 | Add `"model":"not-a-real-model"` to a valid body | A real answer with `usage.fallbackUsed: true` and `fallbackFromModel: "not-a-real-model"`; or a 503 naming the models tried if the free models are rate-limited | The gateway's fallback chain with the real client. **Note which model answered.** |
+| 8 | `just contract` | `OK`, including the chat checks | The shared contract |
+| 9 | Optional: open http://localhost:5173 (`cd apps/web && npm ci && npm run dev`), mode **General chat**, ask the same question | The answer and a usage footer under it | The unchanged web app against the Java API |
+
+**What is not here yet:** the prompt-injection tag (the orange "Potential prompt injection detected") needs the guard, which arrives in J6. In this stage a "reveal your system prompt" question is not flagged.
+
+**Stop:** `Ctrl+C` in the `just run` terminal, then `just db-stop`.
+
 ## J2.1: the model gateway and the model list
 
 Needs: Java 21, Docker (for `just test`). No key. Chat itself arrives in J2.2.

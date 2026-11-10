@@ -1,6 +1,6 @@
 # Stage J2: the model layer
 
-Ports Python Stage 1 (settings, model catalogue, gateway) and, in J2.2, the chat route. Decisions: [ADR 0003](../adr/0003-model-gateway.md).
+Ports Python Stage 1 (settings, model catalogue, gateway) and, in J2.2, the Spring AI client and the chat route. Decisions: [ADR 0003](../adr/0003-model-gateway.md).
 
 ## J2.1: gateway and model list
 
@@ -46,3 +46,44 @@ flowchart LR
 ### Code tour
 
 `ModelGateway.java` (`generate`, then `callChain`), then `ModelGatewayTests.java` (read the names), then `LlmController.java`.
+
+## J2.2: Spring AI client and `POST /api/v1/chat`
+
+```mermaid
+flowchart LR
+  web["web app<br/>POST /api/v1/chat"] --> parse["ChatRequestValidator<br/>raw body to JSON,<br/>FastAPI-style 422"]
+  parse --> ctrl["ChatController<br/>GENERAL_SYSTEM_PROMPT"]
+  ctrl --> gw["ModelGateway<br/>chain, retries, cool-down"]
+  gw --> client["SpringAiModelClient<br/>one call to one model"]
+  client -->|"OpenAI protocol"| or["OpenRouter"]
+  gw --> res["GenerationResult"]
+  res --> out["message + usage footer<br/>+ guardrail (unflagged until J6)"]
+```
+
+| Piece | File | Job | Python twin |
+| --- | --- | --- | --- |
+| Client | `llm/SpringAiModelClient.java` | one Spring AI call, failures sorted into kinds | LiteLLM `acompletion` |
+| Wiring | `llm/LlmBeans.java` | the client bean (replaces the J2.1 placeholder) | n/a |
+| Route | `chat/ChatController.java` | `POST /api/v1/chat`: validate, call the gateway, add the usage footer | `general_chat` in `routes/chat.py` |
+| Validation | `chat/ChatRequestValidator.java` | 1 to 12 messages, role, 4,000 characters, FastAPI's 422 bodies | `ChatRequest` (Pydantic) |
+
+### Concepts
+
+1. **Spring AI as a thin client.** The framework makes one HTTP call and parses the reply. It does not decide what happens when a model is rate-limited: that is the gateway, written out in plain Java (ADR 0003).
+2. **Do not let a library retry behind your back.** The SDK retries by default; with it on, a 429 would be retried on the same model and the "next model at once" rule would silently stop being true.
+3. **Classify errors by type.** A failure becomes a `RateLimit`, `Timeout`, `ServerError` and so on because of the exception class and status code, never by searching a message.
+4. **A body the framework cannot read still gets the shared answer.** The route takes the raw body, so an empty body, non-JSON text and a wrong content type give the same 422 that FastAPI gives, not a framework 500.
+5. **A stub that says so.** The `guardrail` field is always `{"flagged": false, "reasons": []}` until J6 adds the prompt and output guards. The field exists now so the web app and the contract do not change later.
+
+### Questions
+
+1. Why is only `spring-ai-openai` on the classpath and not the Spring AI starter?
+2. What would go wrong if the SDK's retries were on?
+3. A user sends 13 messages. Which status and body come back, and who decides?
+4. The key is rejected by OpenRouter (HTTP 401). What does the user see, and what must the message not contain?
+5. Why does the gateway not know that Spring AI exists?
+
+### Code tour
+
+`SpringAiModelClient.java` (`complete`, then `translate`), `SpringAiModelClientTests.java` (a fake OpenRouter on a local port), then `ChatRequestValidator.java` and `ChatControllerTests.java` (the 422 bodies are the exact ones the Python edition returns).
+
