@@ -44,3 +44,14 @@ run:
 # the shared HTTP contract check; point it at this API or at the Python edition, e.g. `just contract http://localhost:8001`
 contract url="http://localhost:8001":
     python3 contracts/http/crm_contract.py {{url}}
+
+# a throw-away Qdrant for running the API by hand (REST 56333, gRPC 56334, never the Python edition's 6333/6334); stop with `just qdrant-stop`
+qdrant:
+    docker run -d --rm --name cc-java-qdrant -p 56333:6333 -p 56334:6334 qdrant/qdrant:v1.20.0
+    until curl -sf http://localhost:56333/readyz >/dev/null 2>&1; do sleep 1; done
+    @echo "Qdrant ready: REST on localhost:56333, gRPC on localhost:56334 (run the API with QDRANT_GRPC_PORT=56334)"
+
+# stop the throw-away Qdrant (its data goes with it)
+qdrant-stop:
+    docker stop cc-java-qdrant
+

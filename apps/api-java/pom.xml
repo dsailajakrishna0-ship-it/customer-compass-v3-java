@@ -86,6 +86,17 @@
       <artifactId>testcontainers-postgresql</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!-- J3: the vector store (Qdrant) and Gemini embeddings as Spring AI modules, not starters, so
+         nothing is auto-configured and the application starts without a key or a Qdrant. -->
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-qdrant-store</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-google-genai-embedding</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

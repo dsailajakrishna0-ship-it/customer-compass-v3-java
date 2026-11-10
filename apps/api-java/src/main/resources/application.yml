@@ -27,6 +27,17 @@ llm:
   cooldown-seconds: ${LLM_COOLDOWN_SECONDS:30}
   models-file: ${MODELS_FILE:}
 
+# Documents and search (the Python edition's QDRANT_* and GOOGLE_* variables). The Java client talks to
+# Qdrant over gRPC, so the port is 6334, not the REST port 6333.
+rag:
+  qdrant-host: ${QDRANT_HOST:localhost}
+  qdrant-grpc-port: ${QDRANT_GRPC_PORT:6334}
+  collection: ${QDRANT_COLLECTION:java_document_chunks}
+  google-api-key: ${GOOGLE_API_KEY:}
+  embedding-model: ${GOOGLE_EMBEDDING_MODEL:gemini-embedding-001}
+  embedding-dimensions: ${EMBEDDING_DIMENSIONS:768}
+  sample-data-dir: ${SAMPLE_DATA_DIR:}
+
 # Origin of the web app's dev server (the Python edition allows the same one)
 app:
   cors-allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
