@@ -124,11 +124,11 @@ class DocumentIngestionTests {
     assertThat(summary.keySet())
         .containsExactly("ingestionRunId", "documentsProcessed", "chunksCreated", "status");
     assertThat(summary)
-        .containsEntry("documentsProcessed", 16)
-        .containsEntry("chunksCreated", 28)
+        .containsEntry("documentsProcessed", 19)
+        .containsEntry("chunksCreated", 33)
         .containsEntry("status", "completed");
-    assertThat(jdbc.sql("SELECT count(*) FROM documents").query(Long.class).single()).isEqualTo(16);
-    assertThat(index.count(null)).isEqualTo(28);
+    assertThat(jdbc.sql("SELECT count(*) FROM documents").query(Long.class).single()).isEqualTo(19);
+    assertThat(index.count(null)).isEqualTo(33);
   }
 
   @Test
@@ -139,7 +139,7 @@ class DocumentIngestionTests {
     List<Map<String, Object>> documents =
         http().get().uri("/api/v1/documents").retrieve().body(List.class);
 
-    assertThat(documents).hasSize(16);
+    assertThat(documents).hasSize(19);
     Map<String, Object> first = documents.get(0);
     assertThat(first.keySet())
         .containsExactly("id", "title", "docType", "sourcePath", "companyName", "chunkCount");
@@ -148,7 +148,17 @@ class DocumentIngestionTests {
         .containsEntry("companyName", "Acme Fabrication")
         .containsEntry("chunkCount", 2);
     assertThat(documents.stream().mapToLong(d -> ((Number) d.get("chunkCount")).longValue()).sum())
-        .isEqualTo(28);
+        .isEqualTo(33);
+    // the ids follow the sorted file list, so they equal the Python edition's
+    assertThat(documents.get(2))
+        .containsEntry("id", 3)
+        .containsEntry("sourcePath", "sample-data/documents/acme-service-agreement.pdf")
+        .containsEntry("chunkCount", 2);
+    assertThat(documents.get(8))
+        .containsEntry("sourcePath", "sample-data/documents/northstar-rate-card.xlsx");
+    assertThat(documents.get(13))
+        .containsEntry("sourcePath", "sample-data/documents/riverside-data-handling-policy.docx")
+        .containsEntry("chunkCount", 1);
   }
 
   @Test
@@ -156,9 +166,9 @@ class DocumentIngestionTests {
     ingest();
     Map<String, Object> second = ingest();
 
-    assertThat(second).containsEntry("documentsProcessed", 16).containsEntry("chunksCreated", 28);
-    assertThat(index.count(null)).isEqualTo(28);
-    assertThat(jdbc.sql("SELECT count(*) FROM documents").query(Long.class).single()).isEqualTo(16);
+    assertThat(second).containsEntry("documentsProcessed", 19).containsEntry("chunksCreated", 33);
+    assertThat(index.count(null)).isEqualTo(33);
+    assertThat(jdbc.sql("SELECT count(*) FROM documents").query(Long.class).single()).isEqualTo(19);
     @SuppressWarnings("unchecked")
     List<Map<String, Object>> runs =
         http().get().uri("/api/v1/documents/ingestion-runs").retrieve().body(List.class);
@@ -186,7 +196,7 @@ class DocumentIngestionTests {
             .store()
             .similaritySearch(SearchRequest.builder().query("volume discount").topK(40).build());
 
-    assertThat(hits).hasSize(28);
+    assertThat(hits).hasSize(33);
     Document anAcmeChunk =
         hits.stream()
             .filter(d -> "Acme Fabrication".equals(d.getMetadata().get("company_name")))
@@ -204,6 +214,37 @@ class DocumentIngestionTests {
             "company_id",
             "company_name");
     assertThat(anAcmeChunk.getText()).isNotBlank();
+  }
+
+  @Test
+  void chunksFromAPdfCarryThePageAndChunksFromAnExcelFileCarryTheSheet() {
+    ingest();
+
+    List<Document> hits =
+        index.store().similaritySearch(SearchRequest.builder().query("renewal").topK(40).build());
+
+    List<Document> pdfChunks =
+        hits.stream()
+            .filter(d -> String.valueOf(d.getMetadata().get("source_path")).endsWith(".pdf"))
+            .toList();
+    assertThat(pdfChunks)
+        .extracting(d -> ((Number) d.getMetadata().get("page")).intValue())
+        .containsExactlyInAnyOrder(1, 2);
+    assertThat(pdfChunks).allSatisfy(d -> assertThat(d.getMetadata()).doesNotContainKey("sheet"));
+    List<Document> excelChunks =
+        hits.stream()
+            .filter(d -> String.valueOf(d.getMetadata().get("source_path")).endsWith(".xlsx"))
+            .toList();
+    assertThat(excelChunks)
+        .extracting(d -> d.getMetadata().get("sheet"))
+        .containsExactlyInAnyOrder("Rate card", "SLA credits");
+    // a Markdown chunk has neither
+    Document markdown =
+        hits.stream()
+            .filter(d -> String.valueOf(d.getMetadata().get("source_path")).endsWith(".md"))
+            .findFirst()
+            .orElseThrow();
+    assertThat(markdown.getMetadata()).doesNotContainKeys("page", "sheet");
   }
 
   @Test

@@ -23,6 +23,8 @@
     <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
     <checkstyle.version>14.4.0</checkstyle.version>
     <spring-ai.version>2.0.2</spring-ai.version>
+    <pdfbox.version>3.0.8</pdfbox.version>
+    <poi.version>6.0.0</poi.version>
   </properties>
 
   <dependencyManagement>
@@ -96,6 +98,18 @@
     <dependency>
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-google-genai-embedding</artifactId>
+    </dependency>
+
+    <!-- J3.2: reading PDF, Word and Excel files (Apache PDFBox and Apache POI). -->
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>pdfbox</artifactId>
+      <version>${pdfbox.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.poi</groupId>
+      <artifactId>poi-ooxml</artifactId>
+      <version>${poi.version}</version>
     </dependency>
   </dependencies>
 

@@ -20,8 +20,8 @@ import org.springframework.stereotype.Service;
  * something that happens on every chat request. Postgres keeps the documents and the run history;
  * Qdrant keeps the chunk vectors with a payload that is complete enough to cite from.
  *
- * <p>J3.1 reads Markdown. PDF, Word and Excel files in the folder are skipped (and logged); they
- * arrive in J3.2.
+ * <p>Markdown, PDF, Word and Excel files are read (J3.2). A chunk from a PDF carries its page, one
+ * from a spreadsheet its sheet.
  */
 @Service
 public class DocumentIngestionService {
@@ -76,17 +76,17 @@ public class DocumentIngestionService {
                 .param("content", document.content())
                 .query(Long.class)
                 .single();
-        List<Chunk> chunks = Chunker.chunkText(document.content());
+        List<SegmentChunk> chunks = Chunker.chunkSegments(document.segments());
         if (chunks.isEmpty()) {
           continue;
         }
         var points = new ArrayList<Document>();
-        for (Chunk chunk : chunks) {
+        for (SegmentChunk piece : chunks) {
           points.add(
               new Document(
                   UUID.randomUUID().toString(),
-                  chunk.content(),
-                  metadata(document, documentId, companyId, chunk)));
+                  piece.chunk().content(),
+                  metadata(document, documentId, companyId, piece)));
         }
         index.store().add(points); // embeds every chunk, then stores vector and payload
         chunksCreated += points.size();
@@ -120,7 +120,8 @@ public class DocumentIngestionService {
 
   /** The payload every chunk carries, so a search result can be cited without a database join. */
   private static Map<String, Object> metadata(
-      ParsedDocument document, long documentId, Integer companyId, Chunk chunk) {
+      ParsedDocument document, long documentId, Integer companyId, SegmentChunk piece) {
+    Chunk chunk = piece.chunk();
     var metadata = new LinkedHashMap<String, Object>();
     // an int, not a long: Spring AI stores a Long payload value as a string, which a filter would
     // miss
@@ -131,6 +132,14 @@ public class DocumentIngestionService {
     metadata.put("document_title", document.title());
     metadata.put("source_path", document.sourcePath());
     metadata.put("doc_type", document.docType());
+    // page (PDF) and sheet (spreadsheet) are left out when a file has neither, so Markdown chunks
+    // look exactly as before; the page is an int for the same reason as document_id (ADR 0004)
+    if (piece.segment().page() != null) {
+      metadata.put("page", piece.segment().page());
+    }
+    if (piece.segment().sheet() != null) {
+      metadata.put("sheet", piece.segment().sheet());
+    }
     if (companyId != null) {
       metadata.put("company_id", companyId);
     }
@@ -168,12 +177,9 @@ public class DocumentIngestionService {
     var documents = new ArrayList<ParsedDocument>();
     try (Stream<Path> files = Files.list(directory)) {
       for (Path file : files.sorted().toList()) {
-        String name = file.getFileName().toString();
-        if (name.endsWith(".md")) {
+        if (DocumentReader.isDocument(file)) {
           documents.add(
-              MarkdownParser.parse(file, repoRoot.relativize(file).toString().replace('\\', '/')));
-        } else if (name.endsWith(".pdf") || name.endsWith(".docx") || name.endsWith(".xlsx")) {
-          log.warn("ingestion_skipped file={} reason=pdf_word_excel_arrive_in_J3.2", name);
+              DocumentReader.read(file, repoRoot.relativize(file).toString().replace('\\', '/')));
         }
       }
     }

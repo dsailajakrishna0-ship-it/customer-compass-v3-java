@@ -49,6 +49,13 @@ class MarkdownParserTests {
   }
 
   @Test
+  void aMissingTypeGivesTheClearMessageNotANullPointerError() {
+    assertThatThrownBy(() -> MarkdownParser.parse("t.md", "---\ntitle: T\n---\nBody", "t"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Document t.md is missing required metadata (title, type).");
+  }
+
+  @Test
   void aTypeOutsideTheFiveKnownOnesIsRefused() {
     assertThatThrownBy(
             () -> MarkdownParser.parse("y.md", "---\ntitle: T\ntype: memo\n---\nBody", "y"))
