@@ -2,6 +2,8 @@
 
 One section per PR, newest first. Each says how to start, what to run, what you should see, and how to stop.
 
+> **Scratch ports are 25432 (Postgres), 26333 and 26334 (Qdrant).** They are below 32768 on purpose: Linux uses 32768 to 60999 for temporary outgoing connections, and a program that holds one of those numbers (a VPN client did) makes `just db` fail with "address already in use". If a port is still taken, `ss -tanp | grep <port>` shows who has it.
+
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
 ## J3.1: ingest Markdown documents
@@ -11,11 +13,11 @@ Needs: Java 21, Docker, `just`, and for the live steps (5 to 7) a free Google ke
 ```bash
 git checkout main && git pull
 just test              # chunker, parser, a fake-embedding ingestion test against real Postgres and Qdrant containers
-just db                # scratch Postgres on localhost:55432
-just qdrant            # scratch Qdrant: REST on 56333, gRPC on 56334 (skip if you use the Python stack's Qdrant)
+just db                # scratch Postgres on localhost:25432
+just qdrant            # scratch Qdrant: REST on 26333, gRPC on 26334 (skip if you use the Python stack's Qdrant)
 ```
 
-Run the API with `QDRANT_GRPC_PORT=56334 just run` (add `GOOGLE_API_KEY=...` in front for the live steps; with the Python stack's Qdrant use the default port 6334). In a second terminal:
+Run the API with `QDRANT_GRPC_PORT=26334 just run` (add `GOOGLE_API_KEY=...` in front for the live steps; with the Python stack's Qdrant use the default port 6334). In a second terminal:
 
 | # | Do | Expect | What it shows |
 | --- | --- | --- | --- |
@@ -25,7 +27,7 @@ Run the API with `QDRANT_GRPC_PORT=56334 just run` (add `GOOGLE_API_KEY=...` in 
 | 4 | Remove one `type:` line from a copy of a document, point `SAMPLE_DATA_DIR` at that folder, ingest | `502` and `Document <name> is missing required metadata (title, type).` | A bad file is named |
 | 5 | With the key: `curl -s -X POST localhost:8001/api/v1/documents/ingest` | `{"ingestionRunId":..,"documentsProcessed":16,"chunksCreated":28,"status":"completed"}` | The real Gemini and Qdrant path. The PDF, Word and Excel files are skipped until J3.2 |
 | 6 | `curl -s localhost:8001/api/v1/documents \| python3 -m json.tool \| head -30` | 16 documents, each with `chunkCount` (1 or 2) and its company | The chunk counts match the Python edition's for the same files |
-| 7 | Run step 5 again, then `curl -s localhost:56333/collections/java_document_chunks \| python3 -m json.tool \| grep -E "points_count|size"` | `points_count` still 28 and `size` 768 | Re-ingesting never duplicates |
+| 7 | Run step 5 again, then `curl -s localhost:26333/collections/java_document_chunks \| python3 -m json.tool \| grep -E "points_count|size"` | `points_count` still 28 and `size` 768 | Re-ingesting never duplicates |
 
 **Stop:** `Ctrl+C` in the `just run` terminal, then `just db-stop` and `just qdrant-stop`.
 
@@ -36,7 +38,7 @@ Needs: Java 21, Node 22, Docker, `just`, and for steps 5 to 8 a free OpenRouter 
 ```bash
 git checkout main && git pull
 just test              # all tests pass, including 8 against a fake OpenRouter and 14 for the chat route
-just db                # scratch Postgres on localhost:55432
+just db                # scratch Postgres on localhost:25432
 just run               # the API on http://localhost:8001 (add OPENROUTER_API_KEY=... in front for steps 5 to 8)
 ```
 
@@ -86,7 +88,7 @@ Needs: Java 21, Node 22, Docker (for the tests and a throw-away Postgres), `just
 ```bash
 git pull
 just test              # 9 tests over real HTTP; Testcontainers starts Postgres for you (about a minute)
-just db                # throw-away Postgres on localhost:55432
+just db                # throw-away Postgres on localhost:25432
 just run               # the API on http://localhost:8001 (leave it running; Flyway builds the schema and demo data)
 ```
 

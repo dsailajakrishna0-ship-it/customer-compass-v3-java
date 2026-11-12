@@ -27,11 +27,11 @@ test-web:
 # everything CI checks
 check: test test-web
 
-# a throw-away Postgres for running the API by hand (port 55432, never the Python edition's 5432); stop with `just db-stop`
+# a throw-away Postgres for running the API by hand (port 25432: below 32768 on purpose, because Linux hands out 32768 to 60999 as temporary outgoing ports, which a VPN client or any program can hold, never the Python edition's 5432); stop with `just db-stop`
 db:
-    docker run -d --rm --name cc-java-db -e POSTGRES_DB=customer_compass -e POSTGRES_USER=customer_compass -e POSTGRES_PASSWORD=customer_compass_dev -p 55432:5432 postgres:17.11-alpine
+    docker run -d --rm --name cc-java-db -e POSTGRES_DB=customer_compass -e POSTGRES_USER=customer_compass -e POSTGRES_PASSWORD=customer_compass_dev -p 25432:5432 postgres:17.11-alpine
     until docker exec cc-java-db pg_isready -U customer_compass -d customer_compass >/dev/null 2>&1; do sleep 1; done
-    @echo "Postgres ready on localhost:55432"
+    @echo "Postgres ready on localhost:25432"
 
 # stop the throw-away Postgres (its data goes with it)
 db-stop:
@@ -39,17 +39,17 @@ db-stop:
 
 # run the API on http://localhost:8001 against `just db` (Flyway builds the schema and demo data on start)
 run:
-    cd {{api}} && DATABASE_URL=jdbc:postgresql://localhost:55432/customer_compass ./mvnw -B -ntp spring-boot:run
+    cd {{api}} && DATABASE_URL=jdbc:postgresql://localhost:25432/customer_compass ./mvnw -B -ntp spring-boot:run
 
 # the shared HTTP contract check; point it at this API or at the Python edition, e.g. `just contract http://localhost:8001`
 contract url="http://localhost:8001":
     python3 contracts/http/crm_contract.py {{url}}
 
-# a throw-away Qdrant for running the API by hand (REST 56333, gRPC 56334, never the Python edition's 6333/6334); stop with `just qdrant-stop`
+# a throw-away Qdrant for running the API by hand (REST 26333, gRPC 26334, never the Python edition's 6333/6334); stop with `just qdrant-stop`
 qdrant:
-    docker run -d --rm --name cc-java-qdrant -p 56333:6333 -p 56334:6334 qdrant/qdrant:v1.20.0
-    until curl -sf http://localhost:56333/readyz >/dev/null 2>&1; do sleep 1; done
-    @echo "Qdrant ready: REST on localhost:56333, gRPC on localhost:56334 (run the API with QDRANT_GRPC_PORT=56334)"
+    docker run -d --rm --name cc-java-qdrant -p 26333:6333 -p 26334:6334 qdrant/qdrant:v1.20.0
+    until curl -sf http://localhost:26333/readyz >/dev/null 2>&1; do sleep 1; done
+    @echo "Qdrant ready: REST on localhost:26333, gRPC on localhost:26334 (run the API with QDRANT_GRPC_PORT=26334)"
 
 # stop the throw-away Qdrant (its data goes with it)
 qdrant-stop:
