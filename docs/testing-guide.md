@@ -6,6 +6,31 @@ One section per PR, newest first. Each says how to start, what to run, what you 
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## J3.3: retrieval and `POST /api/v1/chat/rag`
+
+Needs: the same as J3.1 and J3.2, **and** an OpenRouter key (`OPENROUTER_API_KEY`) for the answers. Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run` with both keys exported. **Ingest first** (J3.2 step 6): 19 documents, 33 chunks. Free models are sometimes rate-limited; a 503 that names the models tried is normal, wait and retry. Replace `ask` below by this helper once:
+
+```bash
+ask() { curl -s -X POST localhost:8001/api/v1/chat/rag -H 'Content-Type: application/json' -d "{\"messages\":[{\"role\":\"user\",\"content\":\"$1\"}]}" | python3 -m json.tool; }
+```
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just test` | all tests pass (92); read `RagChatTests` | The flow, with a scripted model that records what it is shown |
+| 2 | Before ingesting (`just db-stop`, `just db`, restart the API) run `ask "What is in the documents?"` | `"message": "I could not find any ingested documents relevant to that question."`, `"citations": []`, no `usage` | Nothing found means no model call |
+| 3 | `ask "What did Maya Chen ask about the renewal of the Premium Operations Plan?"` | A cited answer; `citations` lists up to 4 sources (the Renewal planning call with Maya Chen first), similarity 0.6 to 0.8 | Retrieval and citations |
+| 4 | `ask "What is the capital of France?"` | The "could not find" sentence, `citations: []` | The 0.45 floor and no model call |
+| 5 | `ask "What does Clause 7.3 say about the renewal notice period?"` | 60 days' notice; the first citation is the service agreement with `"page": 2` | A PDF page in a citation |
+| 6 | `ask "Which plan costs 3400 USD a month and how many vehicles does it track?"` | Fleet Plus, 250 vehicles; the first citation has `"sheet": "Rate card"` | An Excel sheet in a citation |
+| 7 | `ask "How often are accounts with access to clinical data reviewed?"` | Every quarter; the first citation is the Riverside data handling policy with no `page` or `sheet` | A Word file in a citation |
+| 8 | After step 3 run `docker exec cc-java-db psql -U customer_compass -d customer_compass -c "update ingestion_runs set embedding_model='google:old-model'"`, then ask again | `503` and "The documents were embedded with google:old-model, but the embedding model is now google:gemini-embedding-001. Click Ingest documents ..." | A mismatched index is refused with the fix. Ingest again to restore |
+| 9 | `just contract` | `OK`, including three `chat/rag` checks | The shared contract |
+| 10 | Web app, mode **Document knowledge (RAG)**: ask step 5's question | The answer with a source list; the PDF source line ends "page 2" | The unchanged web app against the Java API |
+
+The prompt-injection tag and the "ignore all previous instructions" question need the guard (J6); in this stage they are not flagged. Hybrid search and the reranker are not in the Java edition yet (ADR 0006).
+
+**Stop:** `Ctrl+C` in the `just run` terminal, then `just db-stop` and `just qdrant-stop`.
+
 ## J3.2: PDF, Word and Excel, with the page or sheet in the citation
 
 Needs: the same as J3.1 (Java 21, Docker, `just`; a Google key for the live steps 6 to 8). Start `just db`, `just qdrant`, then `QDRANT_GRPC_PORT=26334 just run` with `GOOGLE_API_KEY` exported, as in J3.1.
