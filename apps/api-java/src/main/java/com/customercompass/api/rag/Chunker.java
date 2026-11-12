@@ -15,6 +15,24 @@ public final class Chunker {
 
   private Chunker() {}
 
+  /**
+   * Cuts every segment into chunks, in order. The chunk number runs on across segments, and each
+   * chunk keeps the segment it came from. The character offsets in a chunk are relative to its
+   * segment.
+   */
+  public static List<SegmentChunk> chunkSegments(List<Segment> segments) {
+    var chunks = new ArrayList<SegmentChunk>();
+    for (Segment segment : segments) {
+      for (Chunk chunk : chunkText(segment.text())) {
+        chunks.add(
+            new SegmentChunk(
+                segment,
+                new Chunk(chunks.size(), chunk.content(), chunk.charStart(), chunk.charEnd())));
+      }
+    }
+    return chunks;
+  }
+
   public static List<Chunk> chunkText(String text) {
     return chunkText(text, CHUNK_SIZE, CHUNK_OVERLAP);
   }

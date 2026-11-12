@@ -10,7 +10,7 @@ Last checked against `customer-compass-v3` `main` at commit `99c59d8` (Stage 4.2
 | 1 Model layer | Yes | Gateway, usage footer, `/llm/models` | J2 | J2.1 (gateway, `/llm/models`) merged; J2.2 (Spring AI client, `POST /chat`) in review |
 | 2 Tools and MCP | 2.1, 2.2a, 2.2b | `/chat/tools`, `/mcp/servers`, `contracts/mcp-tools.json` | J4 | Planned |
 | 3 LangGraph port | 3.1, 3.2a, 3.2b | No (26 contract tests unchanged) | J5 | Planned |
-| 4 Retrieval upgrade | 4.1a, 4.1b, 4.2, 4.3 | 4.2 adds optional `page` and `sheet` to `/chat/rag` citations | J3 (RAG) | J3.1 (Markdown ingestion) in review; J3.2 to J3.4 planned |
+| 4 Retrieval upgrade | 4.1a, 4.1b, 4.2, 4.3 | 4.2 adds optional `page` and `sheet` to `/chat/rag` citations | J3 (RAG) | J3.1 and J3.2 (all four file formats) in review; J3.3 and J3.4 planned |
 | 5 and later | No | Unknown | J6 to J8 | Planned |
 
 ## Contract gaps
@@ -32,7 +32,7 @@ The contract is the 26 tests in `apps/api-py/tests/contract/` plus `docs/api-ref
 | Guardrail on `/chat` | Prompt-injection scan of the question, scan of the answer, audit log | The `guardrail` field is always unflagged | J6 |
 | Raw tool-call markup from a small model (Python PR #67) | Treated as a failed attempt, next model answers | Not ported; the gateway only knows empty replies | Port with the Python change once it is merged |
 | A body that is not valid JSON | `loc: ["body", <character position>]` and Python's own message in `ctx` | `loc: ["body"]`, no `ctx` | Accepted gap; every other chat validation error is byte-identical (checked by sending the same 15 bodies to both editions: 14 identical, this is the one difference) |
-| Documents ingested | 19 (16 Markdown, 1 PDF, 1 Excel, 1 Word), 33 chunks | 16 Markdown, 28 chunks (the Markdown chunk counts are identical, checked file by file) | J3.2 adds the other three |
+| Documents ingested | 19 (16 Markdown, 1 PDF, 1 Excel, 1 Word), 33 chunks | The same: 19 and 33, chunk counts equal file by file | Done in J3.2 |
 | Keyword vector (hybrid search) | Stored beside the meaning vector | Not stored; one vector per chunk | Decision in J3.3 |
-| Document ids | Follow the sorted file list, including the three non-Markdown files | The same sorted list without them, so ids after `acme-service-agreement` differ | Align in J3.2 |
+| Document ids | Follow the sorted file list | The same sorted list, so the ids are equal (3 is the PDF, 9 the Excel file, 14 the Word file) | Done in J3.2 |
 

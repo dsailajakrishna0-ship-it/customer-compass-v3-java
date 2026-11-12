@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -14,8 +14,6 @@ import org.yaml.snakeyaml.Yaml;
  * type outside the five known ones is an error that names the file.
  */
 public final class MarkdownParser {
-
-  static final Set<String> DOCUMENT_TYPES = Set.of("email", "call", "note", "support", "product");
 
   private MarkdownParser() {}
 
@@ -40,18 +38,13 @@ public final class MarkdownParser {
         body = bodyStart < 0 ? "" : stripped.substring(bodyStart + 1);
       }
     }
-    Object title = meta.get("title");
-    Object type = meta.get("type");
-    Object company = meta.get("company");
-    if (!(title instanceof String titleText) || !DOCUMENT_TYPES.contains(type)) {
-      throw new IllegalArgumentException(
-          "Document " + fileName + " is missing required metadata (title, type).");
-    }
+    DocumentMetadata metadata =
+        DocumentMetadata.check(fileName, meta.get("title"), meta.get("type"), meta.get("company"));
     return new ParsedDocument(
         sourcePath,
-        titleText,
-        (String) type,
-        company instanceof String companyText ? companyText : null,
-        body.strip());
+        metadata.title(),
+        metadata.docType(),
+        metadata.companyName(),
+        List.of(Segment.plain(body.strip())));
   }
 }

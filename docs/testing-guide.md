@@ -6,6 +6,25 @@ One section per PR, newest first. Each says how to start, what to run, what you 
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## J3.2: PDF, Word and Excel, with the page or sheet in the citation
+
+Needs: the same as J3.1 (Java 21, Docker, `just`; a Google key for the live steps 6 to 8). Start `just db`, `just qdrant`, then `QDRANT_GRPC_PORT=26334 just run` with `GOOGLE_API_KEY` exported, as in J3.1.
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just test` | all tests pass (83); read `DocumentReaderTests` | The three readers give the text, pages and sheets the Python edition gives |
+| 2 | `ls sample-data/documents` | 22 files: 16 `.md`, a PDF, an Excel file, a Word file and three `.meta.yaml` sidecars | The shared sample data, now complete |
+| 3 | `cat sample-data/documents/acme-service-agreement.meta.yaml` | `title`, `type`, `company` | Metadata for non-Markdown files sits beside them |
+| 4 | Copy the PDF to a scratch folder `x/sample-data/documents/report.pdf` without its sidecar, point `SAMPLE_DATA_DIR` at it, ingest | `502` and `Document report.pdf needs a metadata file named report.meta.yaml.` | A missing sidecar is named |
+| 5 | Remove the `type:` line from a Markdown file in the scratch folder, ingest | `502` and `Document <name> is missing required metadata (title, type).` | The same clear message (a missing type used to crash, see ADR 0005) |
+| 6 | `curl -s -X POST localhost:8001/api/v1/documents/ingest` (with the key, default folder) | `"documentsProcessed":19,"chunksCreated":33,"status":"completed"` | All formats, as in the Python edition |
+| 7 | `curl -s localhost:8001/api/v1/documents \| python3 -m json.tool` | 19 documents; id 3 is `acme-service-agreement.pdf` (2 chunks), id 9 `northstar-rate-card.xlsx` (2), id 14 `riverside-data-handling-policy.docx` (1) | The ids equal the Python edition's |
+| 8 | Look at the stored fields: `curl -s -X POST localhost:26333/collections/java_document_chunks/points/scroll -H 'Content-Type: application/json' -d '{"limit":100,"with_payload":true}' \| python3 -m json.tool \| grep -E '"page"|"sheet"'` | `"page": 1` and `2`, `"sheet": "Rate card"` and `"SLA credits"` | Every chunk keeps where it came from |
+
+Questions that use this (they need J3.3, `/chat/rag`): "What does Clause 7.3 say about the renewal notice period?" should cite the PDF, page 2; "Which plan costs 3400 USD a month and how many vehicles does it track?" should cite the Excel file, sheet Rate card; "How often are accounts with access to clinical data reviewed?" should cite the Word file with no page or sheet.
+
+**Stop:** `Ctrl+C` in the `just run` terminal, then `just db-stop` and `just qdrant-stop`.
+
 ## J3.1: ingest Markdown documents
 
 Needs: Java 21, Docker, `just`, and for the live steps (5 to 7) a free Google key (<https://aistudio.google.com/apikey>) exported as `GOOGLE_API_KEY` (never paste it into a chat or a commit). Steps 1 to 4 need no key. If the Python edition's stack is running, **leave its Qdrant alone**: the Java edition writes to its own collection, `java_document_chunks`.
@@ -21,13 +40,13 @@ Run the API with `QDRANT_GRPC_PORT=26334 just run` (add `GOOGLE_API_KEY=...` in 
 
 | # | Do | Expect | What it shows |
 | --- | --- | --- | --- |
-| 1 | `just test` | all tests pass; read `ChunkerTests`: the last test checks 16 files against the Python edition's chunk counts | Same chunking as Python |
+| 1 | `just test` | all tests pass; read `ChunkerTests`: the last test checks the 16 Markdown files against the Python edition's chunk counts | Same chunking as Python |
 | 2 | `curl -s -X POST localhost:8001/api/v1/documents/ingest` with no key | `502` and `"error": "GOOGLE_API_KEY is not set..."` | A missing key says what to set |
 | 3 | `curl -s localhost:8001/api/v1/documents/ingestion-runs \| python3 -m json.tool` | the failed run, with `"status": "failed"` | Every run is recorded |
 | 4 | Remove one `type:` line from a copy of a document, point `SAMPLE_DATA_DIR` at that folder, ingest | `502` and `Document <name> is missing required metadata (title, type).` | A bad file is named |
-| 5 | With the key: `curl -s -X POST localhost:8001/api/v1/documents/ingest` | `{"ingestionRunId":..,"documentsProcessed":16,"chunksCreated":28,"status":"completed"}` | The real Gemini and Qdrant path. The PDF, Word and Excel files are skipped until J3.2 |
-| 6 | `curl -s localhost:8001/api/v1/documents \| python3 -m json.tool \| head -30` | 16 documents, each with `chunkCount` (1 or 2) and its company | The chunk counts match the Python edition's for the same files |
-| 7 | Run step 5 again, then `curl -s localhost:26333/collections/java_document_chunks \| python3 -m json.tool \| grep -E "points_count|size"` | `points_count` still 28 and `size` 768 | Re-ingesting never duplicates |
+| 5 | With the key: `curl -s -X POST localhost:8001/api/v1/documents/ingest` | `{"ingestionRunId":..,"documentsProcessed":19,"chunksCreated":33,"status":"completed"}` | The real Gemini and Qdrant path (since J3.2 all 19 files, 33 chunks, as in the Python edition) |
+| 6 | `curl -s localhost:8001/api/v1/documents \| python3 -m json.tool \| head -30` | 19 documents, each with `chunkCount` (1 or 2) and its company | The chunk counts match the Python edition's for the same files |
+| 7 | Run step 5 again, then `curl -s localhost:26333/collections/java_document_chunks \| python3 -m json.tool \| grep -E "points_count|size"` | `points_count` still 33 and `size` 768 | Re-ingesting never duplicates |
 
 **Stop:** `Ctrl+C` in the `just run` terminal, then `just db-stop` and `just qdrant-stop`.
 
