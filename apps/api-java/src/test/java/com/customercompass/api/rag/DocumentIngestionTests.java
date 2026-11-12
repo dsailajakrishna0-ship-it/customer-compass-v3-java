@@ -4,15 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.embedding.Embedding;
-import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.ai.embedding.EmbeddingRequest;
-import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -60,44 +55,12 @@ class DocumentIngestionTests {
     registry.add("rag.collection", () -> "test_chunks");
   }
 
-  /** Eight numbers made from the text, so the same text always gets the same vector. */
-  static class FakeEmbeddings implements EmbeddingModel {
-    @Override
-    public EmbeddingResponse call(EmbeddingRequest request) {
-      var embeddings = new ArrayList<Embedding>();
-      int i = 0;
-      for (String text : request.getInstructions()) {
-        embeddings.add(new Embedding(vector(text), i++));
-      }
-      return new EmbeddingResponse(embeddings);
-    }
-
-    @Override
-    public float[] embed(Document document) {
-      return vector(document.getText());
-    }
-
-    @Override
-    public int dimensions() {
-      return 8;
-    }
-
-    private static float[] vector(String text) {
-      float[] values = new float[8];
-      int hash = text.hashCode();
-      for (int i = 0; i < 8; i++) {
-        values[i] = ((hash >> (i * 3)) & 7) + 1;
-      }
-      return values;
-    }
-  }
-
   @TestConfiguration
   static class Fakes {
     @Bean
     @Primary
     VectorIndex fakeIndex(RagProperties properties) {
-      return new VectorIndex(properties, FakeEmbeddings::new, null);
+      return RagTestSupport.fakeIndex(properties);
     }
   }
 

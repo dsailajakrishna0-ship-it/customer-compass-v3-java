@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HTTP contract check for the CRM routes (J1), the model list (J2.1) and POST /chat (J2.2). Runs against any base URL, so the same file can be
+"""HTTP contract check for the CRM routes (J1), the model list (J2.1) POST /chat (J2.2) and POST /chat/rag (J3.3). Runs against any base URL, so the same file can be
 pointed at the Python edition and at the Java edition and must pass on both.
 
     python3 contracts/http/crm_contract.py http://localhost:8001
@@ -138,6 +138,31 @@ if status == 200:
     check("chat: the guardrail field says flagged and reasons", list(body["guardrail"]) == ["flagged", "reasons"], str(body["guardrail"]))
 else:
     check("chat: otherwise 503 with error and detail", status == 503 and set(body) == {"error", "detail"} and body["error"] == body["detail"], f"{status} {body}")
+
+# POST /chat/rag: validated like /chat (same request model), then retrieval and a grounded answer.
+status, body = post("/api/v1/chat/rag", '{"messages":[]}')
+check("chat/rag: an empty list is 422 too_short", status == 422 and body["detail"][0]["type"] == "too_short", f"{status} {body}")
+status, body = post("/api/v1/chat/rag", '{"messages":[{"role":"user","content":"   "}]}')
+check("chat/rag: blank content is 422 value_error", status == 422 and body["detail"][0]["type"] == "value_error", f"{status} {body}")
+
+# A valid question: 200 with citations (or none found), or 503 (no key, model rate-limited): all are the contract.
+status, body = post("/api/v1/chat/rag", '{"messages":[{"role":"user","content":"What does Clause 7.3 say about the renewal notice period?"}]}')
+if status == 200:
+    check(
+        "chat/rag: 200 has message, citations, (usage) and guardrail in that order",
+        list(body) in (["message", "citations", "usage", "guardrail"], ["message", "citations", "guardrail"]),
+        str(list(body)),
+    )
+    for citation in body["citations"]:
+        keys = [k for k in citation if k not in ("page", "sheet")]
+        check(
+            "chat/rag: a citation has number, documentId, title, sourcePath, docType, companyName, similarity, snippet",
+            keys == ["number", "documentId", "title", "sourcePath", "docType", "companyName", "similarity", "snippet"],
+            str(list(citation)),
+        )
+        break
+else:
+    check("chat/rag: otherwise 503 with error and detail", status == 503 and set(body) == {"error", "detail"} and body["error"] == body["detail"], f"{status} {body}")
 
 _, _, headers = get("/health")
 check("every response has X-Request-ID", bool(headers.get("X-Request-ID")))

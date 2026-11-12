@@ -70,11 +70,16 @@ class ChatController {
     var response = new LinkedHashMap<String, Object>();
     response.put("message", result.content());
     response.put("usage", usage(result));
+    response.put("guardrail", unflagged());
+    return response;
+  }
+
+  /** The guardrail field while the guard is not built yet (J6): nothing is ever flagged. */
+  static Map<String, Object> unflagged() {
     var guardrail = new LinkedHashMap<String, Object>();
     guardrail.put("flagged", false);
     guardrail.put("reasons", List.of());
-    response.put("guardrail", guardrail);
-    return response;
+    return guardrail;
   }
 
   /** The usage footer: which model answered, tokens, latency, cost and whether fallback ran. */
