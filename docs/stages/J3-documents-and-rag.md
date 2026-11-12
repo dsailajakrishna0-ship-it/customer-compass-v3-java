@@ -40,3 +40,47 @@ flowchart LR
 ### Code tour
 
 `Chunker.java`, then `ChunkerTests.java` (the last test compares with the Python edition's chunk counts), then `DocumentIngestionService.java` and `DocumentIngestionTests.java` (a real Postgres and a real Qdrant in containers, with a fake embedding model).
+
+## J3.2: PDF, Word and Excel, with the page or sheet in the citation
+
+```mermaid
+flowchart LR
+  file["file"] --> kind{"format"}
+  kind -->|".md"| md["MarkdownParser<br/>front matter"]
+  kind -->|".pdf"| pdf["PdfReader (PDFBox)<br/>one segment per page"]
+  kind -->|".docx"| word["WordReader (POI)<br/>one segment, headings as ##"]
+  kind -->|".xlsx"| xl["ExcelReader (POI)<br/>one segment per sheet"]
+  pdf --> side["sidecar<br/>report.meta.yaml"]
+  word --> side
+  xl --> side
+  md --> chunk["Chunker.chunkSegments<br/>chunk keeps page or sheet"]
+  side --> chunk
+```
+
+| Piece | File | Job | Python twin |
+| --- | --- | --- | --- |
+| Dispatch | `rag/DocumentReader.java` | picks the reader, skips `.meta.yaml` sidecars | `parse_file`, `is_document` |
+| Sidecar | `rag/DocumentMetadata.java` | title, type, company for the non-Markdown formats | `read_sidecar`, `_check` |
+| PDF | `rag/PdfReader.java` | one segment per page with text | `parse_pdf_pages` |
+| Word | `rag/WordReader.java` | one segment of Markdown-like text | `parse_word` |
+| Excel | `rag/ExcelReader.java`, `rag/MarkdownTable.java` | one segment per sheet, the table laid out as Python lays it out | `parse_sheets` |
+
+### Concepts
+
+1. **A citation says where.** "Clause 7.3, page 2" or "Fleet Plus, sheet Rate card" is worth more than a file name. So the reader keeps a location with each run of text and every chunk inherits it.
+2. **Equal text, not just equal meaning.** Both editions embed the text of the same files; if the Java reader wrote the table differently, the vectors would differ and the same question could cite a different chunk. The tests compare the text character for character.
+3. **No library to copy, so copy the output.** Docling has no Java twin; the Java readers reproduce its output shape (headings, table layout) and the test says whether they got it right.
+4. **Metadata beside the file.** Only Markdown can carry its own metadata. A sidecar keeps the rule simple and the error message exact.
+
+### Questions
+
+1. Why is a PDF split into one segment per page instead of one segment for the whole file?
+2. A chunk from page 2 starts at character 0 of its chunk. Relative to what are `char_start` and `char_end`?
+3. The Excel table has a column of prices. Which alignment does it get, and why does the width not equal the longest number?
+4. A PDF is added with no `.meta.yaml`. What does the caller see?
+5. What can a spreadsheet hold that this reader does not tell apart?
+
+### Code tour
+
+`DocumentReader.java`, then `ExcelReader.java` and `MarkdownTable.java`, then `DocumentReaderTests.java` (the expected text in the tests is the Python edition's own output for the same files).
+

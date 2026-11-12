@@ -9,4 +9,6 @@ Copied (not linked) from `customer-compass-v3` at commit `139c7f8` (Stage 3.2b m
 | `contracts/` | `mcp-tools.json` and two small checkers | J4 |
 | `evals/golden` | The golden question set | J7 |
 
+Update 2026-11-12: `sample-data/documents` re-copied from `customer-compass-v3` at commit `1750505` (Stage 4.3 merged): the PDF, Excel and Word files and their `.meta.yaml` sidecars were added.
+
 Not copied: the Python API, the Python tool server, the Python-specific eval runners and the docs of the Python edition.
