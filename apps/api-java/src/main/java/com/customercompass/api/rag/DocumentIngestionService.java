@@ -140,9 +140,10 @@ public class DocumentIngestionService {
     if (piece.segment().sheet() != null) {
       metadata.put("sheet", piece.segment().sheet());
     }
-    if (companyId != null) {
-      metadata.put("company_id", companyId);
-    }
+    // A company-agnostic document (a product overview) gets company_id 0, so a company-scoped
+    // search
+    // can ask for "this company or 0": Spring AI's Qdrant filter cannot test for a missing value.
+    metadata.put("company_id", companyId == null ? 0 : companyId);
     if (document.companyName() != null) {
       metadata.put("company_name", document.companyName());
     }
