@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
@@ -40,16 +41,27 @@ public class Retriever {
   }
 
   public List<RetrievedChunk> retrieve(String question, int topK) {
+    return retrieve(question, null, topK);
+  }
+
+  /**
+   * With a company id the question is scoped: only that company's documents and the
+   * company-agnostic ones (company_id 0) are eligible, so another customer's material is never
+   * retrieved for it.
+   */
+  public List<RetrievedChunk> retrieve(String question, Integer companyId) {
+    return retrieve(question, companyId, DEFAULT_TOP_K);
+  }
+
+  public List<RetrievedChunk> retrieve(String question, Integer companyId, int topK) {
     checkIndexModel();
-    List<Document> hits =
-        index
-            .store()
-            .similaritySearch(
-                SearchRequest.builder()
-                    .query(question)
-                    .topK(topK)
-                    .similarityThreshold(MIN_SIMILARITY)
-                    .build());
+    SearchRequest.Builder request =
+        SearchRequest.builder().query(question).topK(topK).similarityThreshold(MIN_SIMILARITY);
+    if (companyId != null) {
+      var f = new FilterExpressionBuilder();
+      request.filterExpression(f.or(f.eq("company_id", companyId), f.eq("company_id", 0)).build());
+    }
+    List<Document> hits = index.store().similaritySearch(request.build());
     return hits.stream().map(Retriever::chunk).toList();
   }
 

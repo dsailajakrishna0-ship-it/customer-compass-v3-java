@@ -124,3 +124,44 @@ flowchart LR
 
 `Retriever.java`, then `RagContext.java` and `RagContextTests.java`, then `RagChatController.java` and `RagChatTests.java` (the test records what the model is shown).
 
+## J3.4: the CRM copilot, `POST /api/v1/chat/crm`
+
+```mermaid
+flowchart LR
+  q["question"] --> router["QueryRouter<br/>keywords + which company"]
+  router -->|"deal words + a company"| sql["CrmFacts<br/>SQL summary"]
+  router -->|"said / email words,<br/>or no deal words"| ret["Retriever<br/>scoped to the company"]
+  sql --> ctx["facts block (do not cite)<br/>+ numbered sources"]
+  ret --> ctx
+  ctx --> gw["ModelGateway<br/>CRM prompt"]
+  gw --> out["message + facts + citations<br/>+ scopedCompany + usage"]
+  router -->|"nothing found"| none["fixed sentence,<br/>no model call"]
+```
+
+| Piece | File | Job | Python twin |
+| --- | --- | --- | --- |
+| Router | `chat/QueryRouter.java` | keywords and the named company | `chat/router.py` |
+| Facts | `crm/CrmFacts.java` | company list, summary with open deals and counts | `crm/queries.py` |
+| Scope | `rag/Retriever.java` | `company_id = X or 0` filter | `_company_filter` |
+| Route | `chat/CrmChatController.java` | combine, prompt, respond | `crm_chat` in `routes/chat.py` |
+
+### Concepts
+
+1. **Two kinds of truth.** A number from the database is correct by construction and is stated plainly. A claim from a document is only as good as its source and gets a citation. Keeping the two apart in the prompt and in the response (`facts` and `citations`) is the point of this route.
+2. **A router you can read.** The decision is a keyword match, so any answer can be explained by pointing at a word. The price is that it does not understand meaning ("pineapple" names Harbor & Pine).
+3. **Scope is enforced where the data is.** The company filter runs inside the vector search, before ranking, so another customer's chunk cannot appear in the results at all. A test asks about three companies and checks every citation.
+4. **A framework limit shapes the data.** Spring AI's Qdrant filter cannot test for a missing value, so company-agnostic documents are stored with `company_id` 0 (ADR 0007).
+5. **Nothing found means no model.** The route says so itself instead of letting a model improvise.
+
+### Questions
+
+1. "What open deals does Acme Fabrication have?" does not search documents. Which words decide that?
+2. A question names no company and mentions "deals". What does the user get, and is the model called?
+3. Why are company-agnostic documents stored with `company_id` 0 and not left without one?
+4. After upgrading to J3.4 the scoped search misses the product overviews. Why, and what is the fix?
+5. Why is a fact never given a citation number?
+
+### Code tour
+
+`QueryRouter.java` and `QueryRouterTests.java`, then `CrmFacts.java`, then `CrmChatController.java`, then `CrmChatTests.java` (the test `aQuestionAboutOneCompanyNeverRetrievesAnotherCompanysDocuments` is the safety property).
+

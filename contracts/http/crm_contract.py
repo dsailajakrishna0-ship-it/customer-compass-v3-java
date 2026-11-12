@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HTTP contract check for the CRM routes (J1), the model list (J2.1) POST /chat (J2.2) and POST /chat/rag (J3.3). Runs against any base URL, so the same file can be
+"""HTTP contract check for the CRM routes (J1), the model list (J2.1) POST /chat (J2.2) and POST /chat/rag (J3.3) and POST /chat/crm (J3.4). Runs against any base URL, so the same file can be
 pointed at the Python edition and at the Java edition and must pass on both.
 
     python3 contracts/http/crm_contract.py http://localhost:8001
@@ -163,6 +163,47 @@ if status == 200:
         break
 else:
     check("chat/rag: otherwise 503 with error and detail", status == 503 and set(body) == {"error", "detail"} and body["error"] == body["detail"], f"{status} {body}")
+
+# POST /chat/crm: validated like /chat, then routed to CRM facts, documents or both.
+status, body = post("/api/v1/chat/crm", '{"messages":[]}')
+check("chat/crm: an empty list is 422 too_short", status == 422 and body["detail"][0]["type"] == "too_short", f"{status} {body}")
+
+# A deal question about a company that does not exist needs no model and no embeddings, so it is
+# the same answer on both editions with or without keys.
+status, body = post("/api/v1/chat/crm", '{"messages":[{"role":"user","content":"What open deals does a company we have never heard of have?"}]}')
+check(
+    "chat/crm: an unknown company finds nothing, in this key order",
+    status == 200 and list(body) == ["message", "facts", "citations", "scopedCompany", "guardrail"],
+    f"{status} {body}",
+)
+check(
+    "chat/crm: the unknown-company answer, no facts, no citations, no scope",
+    body.get("message") == "I could not find a matching company or deal data for that question."
+    and body.get("facts") is None
+    and body.get("citations") == []
+    and body.get("scopedCompany") is None,
+    str(body),
+)
+
+# A deal question about Acme: facts from SQL, no documents needed. 200 with facts, or 503 (no model key).
+status, body = post("/api/v1/chat/crm", '{"messages":[{"role":"user","content":"What open deals does Acme Fabrication have?"}]}')
+if status == 200:
+    check(
+        "chat/crm: a deal answer has message, facts, citations, scopedCompany, usage, guardrail in that order",
+        list(body) == ["message", "facts", "citations", "scopedCompany", "usage", "guardrail"],
+        str(list(body)),
+    )
+    facts = body["facts"]
+    check(
+        "chat/crm: the facts are Acme's verified summary",
+        list(facts) == ["id", "name", "industry", "relationshipStatus", "openDeals", "wonDealsCount", "lostDealsCount"]
+        and facts["name"] == "Acme Fabrication"
+        and facts["openDeals"][0]["amount"] == "48000.00"
+        and body["scopedCompany"] == "Acme Fabrication",
+        str(facts),
+    )
+else:
+    check("chat/crm: otherwise 503 with error and detail", status == 503 and set(body) == {"error", "detail"}, f"{status} {body}")
 
 _, _, headers = get("/health")
 check("every response has X-Request-ID", bool(headers.get("X-Request-ID")))

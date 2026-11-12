@@ -6,6 +6,30 @@ One section per PR, newest first. Each says how to start, what to run, what you 
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## J3.4: the CRM copilot, `POST /api/v1/chat/crm`
+
+Needs: the same as J3.3 (both keys). **Ingest again first** (J3.2 step 6): documents ingested before J3.4 lack the `company_id` marker the company scope uses (ADR 0007). Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run`. Helper, once:
+
+```bash
+crm() { curl -s -X POST localhost:8001/api/v1/chat/crm -H 'Content-Type: application/json' -d "{\"messages\":[{\"role\":\"user\",\"content\":\"$1\"}]}" | python3 -m json.tool; }
+```
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just test` | all tests pass (109); read `QueryRouterTests` and `CrmChatTests` | The routing rules and the prompt |
+| 2 | `crm "What open deals does Acme Fabrication have?"` | An answer with Premium Operations Plan renewal, $48,000.00, 2026-10-15; `"facts"` holds Acme's summary (`"relationshipStatus": "customer"`, `wonDealsCount` 1); `"citations": []`; `"scopedCompany": "Acme Fabrication"` | Deal words go to SQL facts only |
+| 3 | `crm "What did Acme Fabrication say about onboarding in their emails?"` | An answer from Acme's documents; `"facts": null`; every citation has `"companyName": "Acme Fabrication"` (or `null` for a product overview) | Document words go to retrieval, scoped to the company |
+| 4 | `crm "What open deals does a company we have never heard of have?"` | `"message": "I could not find a matching company or deal data for that question."`, `"facts": null`, `"scopedCompany": null`, no `usage` | An unknown company: nothing invented, no model call |
+| 5 | `crm "Which deals did Riverside Health Group discuss on the call?"` | Both: `facts` (Fleet Visibility expansion, 40000.00) and `citations`, all from Riverside | Deal and call words use both |
+| 6 | `crm "What did Vertex Analytics say about rate limits in their emails?"` | Citations from Vertex only, plus possibly one with `"companyName": null` (the product overview) | Another customer's documents are never retrieved |
+| 7 | `crm "What did customers say in their emails about pricing?"` | `"scopedCompany": null` and citations from several companies | No company named, no scope |
+| 8 | `just contract` | `OK`, including the `chat/crm` checks | The shared contract |
+| 9 | Web app, mode **CRM copilot (facts + documents)**, ask step 2's and step 3's questions | The answer, a facts panel, and a source list | The unchanged web app against the Java API |
+
+With J3.4 the Java edition has the document and CRM chat of the Python edition's Stage 4. Still missing: the tool-calling copilot (J4), the agent (J5), the prompt-injection guard (J6).
+
+**Stop:** `Ctrl+C` in the `just run` terminal, then `just db-stop` and `just qdrant-stop`.
+
 ## J3.3: retrieval and `POST /api/v1/chat/rag`
 
 Needs: the same as J3.1 and J3.2, **and** an OpenRouter key (`OPENROUTER_API_KEY`) for the answers. Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run` with both keys exported. **Ingest first** (J3.2 step 6): 19 documents, 33 chunks. Free models are sometimes rate-limited; a 503 that names the models tried is normal, wait and retry. Replace `ask` below by this helper once:

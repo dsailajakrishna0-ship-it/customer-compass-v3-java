@@ -10,7 +10,7 @@ Last checked against `customer-compass-v3` `main` at commit `99c59d8` (Stage 4.2
 | 1 Model layer | Yes | Gateway, usage footer, `/llm/models` | J2 | J2.1 (gateway, `/llm/models`) merged; J2.2 (Spring AI client, `POST /chat`) in review |
 | 2 Tools and MCP | 2.1, 2.2a, 2.2b | `/chat/tools`, `/mcp/servers`, `contracts/mcp-tools.json` | J4 | Planned |
 | 3 LangGraph port | 3.1, 3.2a, 3.2b | No (26 contract tests unchanged) | J5 | Planned |
-| 4 Retrieval upgrade | 4.1a, 4.1b, 4.2, 4.3 | 4.2 adds optional `page` and `sheet` to `/chat/rag` citations | J3 (RAG) | J3.1 and J3.2 merged; J3.3 (retrieval, `/chat/rag`) in review; J3.4 planned |
+| 4 Retrieval upgrade | 4.1a, 4.1b, 4.2, 4.3 | 4.2 adds optional `page` and `sheet` to `/chat/rag` citations | J3 (RAG) | J3.1 to J3.3 merged; J3.4 (`/chat/crm`) in review. J3 is then complete except hybrid search and the reranker |
 | 5 and later | No | Unknown | J6 to J8 | Planned |
 
 ## Contract gaps
@@ -38,4 +38,5 @@ The contract is the 26 tests in `apps/api-py/tests/contract/` plus `docs/api-ref
 | Retrieval mode | `dense` (default), `hybrid` and an optional reranker behind settings | Dense only | Hybrid and the reranker in a later slice (ADR 0006) |
 | `GET /documents/vector-search-info` | Reports exact versus approximate search by collection size | Not built (Spring AI's store does not expose search parameters) | Decide with hybrid |
 | Prompt-injection scan of the question and of retrieved chunks | Yes, with an audit log | The context is wrapped as untrusted, nothing is scanned | J6 |
+| Company scope in retrieval | `company_id` equal to X or null | `company_id` equal to X or 0 (company-agnostic documents are stored with 0; ADR 0007). Ingest again after upgrading | Not visible through the API |
 
