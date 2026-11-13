@@ -113,7 +113,7 @@ final class AgentTestSupport {
     volatile boolean noEmbeddings;
 
     FakeRetriever() {
-      super(null, null, null, null, null);
+      super(null, null, null, null, null, null, null);
     }
 
     @Override

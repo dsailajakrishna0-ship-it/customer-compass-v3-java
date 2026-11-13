@@ -48,6 +48,11 @@ rag:
   embedding-dimensions: ${EMBEDDING_DIMENSIONS:768}
   sample-data-dir: ${SAMPLE_DATA_DIR:}
 
+# How chunks are found (the Python edition's RETRIEVAL_MODE and RRF_K): dense (default) | hybrid
+retrieval:
+  mode: ${RETRIEVAL_MODE:dense}
+  rrf-k: ${RRF_K:60}
+
 # The optional reranker (the Python edition's RERANK_PROVIDER etc.): off | voyage | cohere. A second model re-orders
 # the search results; any failure keeps the search order.
 rerank:

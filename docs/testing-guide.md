@@ -138,6 +138,20 @@ Needs: Java 21, Docker, `just`, `uv` (it fetches the small `mcp` client library)
 
 **Stop:** `Ctrl+C` in the `just run` terminal, then `just db-stop` and `just qdrant-stop`.
 
+## J3.6: hybrid search
+
+Needs the J3.3 setup (`just db`, `just qdrant`, both keys). **Ingest again** after upgrading: the keyword vectors are built at ingestion. Hybrid is off by default.
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just test` | all tests pass; read `SparseTests` and `HybridRetrievalTests` | The word hash and weights match Python's, an exact term finds its chunk, scoping holds, the fallback works |
+| 2 | Ingest (`curl -s -X POST localhost:8001/api/v1/documents/ingest`), then `curl -s localhost:6333/collections` (use your Qdrant REST port) | Two collections: the chunks and the same name with `_bm25` | The keyword vectors live beside the chunks |
+| 3 | `just rag "What does Clause 7.3 say about the renewal notice period?"` | Cited sources as before (dense is the default) | Nothing changes unless you turn it on |
+| 4 | Restart with `RETRIEVAL_MODE=hybrid just run`, repeat step 3 | The API log has `hybrid_search dense=20 keyword=<n> merged=<m>`; the sources still include the clause page | The two searches and their merge |
+| 5 | `just rag "What is the capital of France?"` in hybrid mode | The fixed "I could not find any ingested documents" answer | The similarity floor still holds |
+| 6 | `RETRIEVAL_MODE=hybrid RERANK_PROVIDER=voyage VOYAGE_API_KEY=<key> just run`, repeat step 3 (optional) | `hybrid_search ...` then `reranked candidates=... kept=4` | Hybrid and the reranker compose |
+| 7 | Skip ingesting on an older index (one made before J3.6), hybrid on | The answer still works; the log has `keyword_index_missing ... re-ingest` | An old index falls back to dense instead of failing |
+
 ## J3.5: the optional reranker
 
 Needs the J3.3 setup (`just db`, `just qdrant`, `just run`, both keys, ingest). Without a Voyage or Cohere key the reranker stays off, which is the default and still correct.

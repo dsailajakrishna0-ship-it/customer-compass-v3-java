@@ -12,8 +12,8 @@ import org.springframework.stereotype.Service;
  * Query-time retrieval: embed the question, ask Qdrant for the closest chunks, keep the ones that
  * are similar enough to cite. This is the Python edition's default mode (RETRIEVAL_MODE=dense).
  * With a reranker configured (RERANK_PROVIDER, ADR 0015) the search hands it a longer shortlist and
- * its order decides the final top k; if it fails the search order stays. Hybrid search is a later
- * slice (ADR 0006).
+ * its order decides the final top k; if it fails the search order stays. RETRIEVAL_MODE=hybrid also
+ * finds the chunks that share the question's exact words (ADR 0016).
  */
 @Service
 public class Retriever {
@@ -35,13 +35,19 @@ public class Retriever {
   private final JdbcClient jdbc;
   private final Reranker reranker;
   private final RerankProperties rerank;
+  private final KeywordIndex keywords;
+  private final RetrievalProperties retrieval;
 
   public Retriever(
       VectorIndex index,
       RagProperties properties,
       JdbcClient jdbc,
       Reranker reranker,
-      RerankProperties rerank) {
+      RerankProperties rerank,
+      KeywordIndex keywords,
+      RetrievalProperties retrieval) {
+    this.keywords = keywords;
+    this.retrieval = retrieval;
     this.index = index;
     this.properties = properties;
     this.jdbc = jdbc;
@@ -68,6 +74,9 @@ public class Retriever {
 
   public List<RetrievedChunk> retrieve(String question, Integer companyId, int topK) {
     checkIndexModel();
+    if (retrieval.mode() == RetrievalProperties.Mode.HYBRID) {
+      return hybrid(question, companyId, topK);
+    }
     // With a reranker we keep a longer shortlist for it to choose from; without one, just topK.
     int pool = reranker.enabled() ? Math.max(rerank.candidates(), topK) : topK;
     SearchRequest.Builder request =
@@ -79,6 +88,96 @@ public class Retriever {
     List<Document> hits = index.store().similaritySearch(request.build());
     List<RetrievedChunk> shortlist = hits.stream().map(Retriever::chunk).toList();
     return rerank(question, shortlist, topK);
+  }
+
+  /**
+   * Hybrid search: the closest meanings and the chunks that share the question's exact words are
+   * found separately and merged by reciprocal rank fusion. A chunk found only by keywords gets its
+   * meaning-similarity from its stored dense vector, so the same 0.45 floor applies in both modes
+   * and an unrelated question still finds nothing to cite (ADR 0016).
+   */
+  private List<RetrievedChunk> hybrid(String question, Integer companyId, int topK) {
+    int limit = rerank.candidates();
+    int pool = reranker.enabled() ? Math.max(limit, topK) : topK;
+    SearchRequest.Builder request = SearchRequest.builder().query(question).topK(limit);
+    if (companyId != null) {
+      var f = new FilterExpressionBuilder();
+      request.filterExpression(f.or(f.eq("company_id", companyId), f.eq("company_id", 0)).build());
+    }
+    // no similarity floor here: it is applied after the merge, to every candidate alike
+    List<Document> dense = index.store().similaritySearch(request.build());
+    List<String> keywordIds = keywords.search(question, companyId, limit);
+
+    var similarity = new java.util.HashMap<String, Double>();
+    var chunks = new java.util.HashMap<String, RetrievedChunk>();
+    for (Document d : dense) {
+      RetrievedChunk c = chunk(d);
+      similarity.put(c.chunkId(), c.similarity());
+      chunks.put(c.chunkId(), c);
+    }
+    List<String> keywordOnly = keywordIds.stream().filter(id -> !chunks.containsKey(id)).toList();
+    if (!keywordOnly.isEmpty()) {
+      float[] q = index.embeddings().embed(question);
+      keywords
+          .fetch(keywordOnly)
+          .forEach(
+              (id, point) -> {
+                var vector = point.getVectors().getVector().getDataList();
+                double cos = cosine(q, vector);
+                Map<String, Object> payload = KeywordIndex.plain(point.getPayloadMap());
+                chunks.put(id, chunk(id, payload, String.valueOf(payload.get("doc_content")), cos));
+                similarity.put(id, cos);
+              });
+    }
+    List<String> order =
+        rrfFuse(
+            List.of(dense.stream().map(Document::getId).toList(), keywordIds), retrieval.rrfK());
+    log.info(
+        "hybrid_search dense={} keyword={} merged={}",
+        dense.size(),
+        keywordIds.size(),
+        order.size());
+    List<RetrievedChunk> shortlist =
+        order.stream()
+            .filter(id -> chunks.containsKey(id) && similarity.get(id) >= MIN_SIMILARITY)
+            .limit(pool)
+            .map(chunks::get)
+            .toList();
+    return rerank(question, shortlist, topK);
+  }
+
+  /**
+   * Reciprocal rank fusion: merges best-first rankings into one. An item scores {@code 1 / (k +
+   * rank)} in every ranking that holds it (rank starts at 1) and the scores add up, so an item both
+   * searches like beats an item only one found. Only positions count, never the raw scores, so a
+   * cosine score and a BM25 score (different scales) merge without tuning.
+   */
+  public static <T> List<T> rrfFuse(List<? extends List<T>> rankings, int k) {
+    var scores = new java.util.LinkedHashMap<T, Double>();
+    for (List<T> ranking : rankings) {
+      int position = 1;
+      for (T item : ranking) {
+        scores.merge(item, 1.0 / (k + position++), Double::sum);
+      }
+    }
+    return scores.entrySet().stream()
+        .sorted(Map.Entry.<T, Double>comparingByValue().reversed())
+        .map(Map.Entry::getKey)
+        .toList();
+  }
+
+  /** Cosine similarity of two dense vectors (what Qdrant's own score is for the chunk vector). */
+  public static double cosine(float[] a, List<Float> b) {
+    double dot = 0;
+    double na = 0;
+    double nb = 0;
+    for (int i = 0; i < a.length && i < b.size(); i++) {
+      dot += a[i] * b.get(i);
+      na += a[i] * a[i];
+      nb += b.get(i) * b.get(i);
+    }
+    double norm = Math.sqrt(na) * Math.sqrt(nb);
+    return norm == 0 ? 0.0 : dot / norm;
   }
 
   /**
@@ -120,17 +219,25 @@ public class Retriever {
   }
 
   private static RetrievedChunk chunk(Document document) {
-    Map<String, Object> m = document.getMetadata();
-    return new RetrievedChunk(
+    return chunk(
         document.getId(),
+        document.getMetadata(),
+        document.getText(),
+        document.getScore() == null ? 0.0 : document.getScore());
+  }
+
+  private static RetrievedChunk chunk(
+      String id, Map<String, Object> m, String text, double similarity) {
+    return new RetrievedChunk(
+        id,
         number(m.get("document_id")).intValue(),
         String.valueOf(m.get("document_title")),
         String.valueOf(m.get("source_path")),
         String.valueOf(m.get("doc_type")),
         m.get("company_name") == null ? null : String.valueOf(m.get("company_name")),
         number(m.get("chunk_index")).intValue(),
-        document.getText(),
-        document.getScore() == null ? 0.0 : document.getScore(),
+        text,
+        similarity,
         m.get("page") == null ? null : number(m.get("page")).intValue(),
         m.get("sheet") == null ? null : String.valueOf(m.get("sheet")));
   }

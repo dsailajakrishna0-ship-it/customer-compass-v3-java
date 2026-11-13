@@ -71,10 +71,16 @@ public class VectorIndex {
    * points behind (the same rule as the Python edition).
    */
   public synchronized void recreate() {
+    String keywords = properties.collection() + "_bm25";
     try {
       if (Boolean.TRUE.equals(client().collectionExistsAsync(properties.collection()).get())) {
         client().deleteCollectionAsync(properties.collection()).get();
       }
+      // the keyword vectors (hybrid search, ADR 0016) are rebuilt with the chunks
+      if (Boolean.TRUE.equals(client().collectionExistsAsync(keywords).get())) {
+        client().deleteCollectionAsync(keywords).get();
+      }
+      client().createCollectionAsync(KeywordIndex.definition(keywords)).get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IllegalStateException("Interrupted while recreating the collection", e);
