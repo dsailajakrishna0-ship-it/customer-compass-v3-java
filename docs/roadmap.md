@@ -10,7 +10,7 @@ Goal: the same product and API contract as the Python edition, built with the Ja
 | J1 | Spring Boot skeleton, Postgres + Flyway, CRM API | Stage 0 (V2 base) | In review (stacked on J0.3) |
 | J2 | Model layer: Spring AI chat, fallback chain, usage, `/llm/models`, HTTP contract tests | Stage 1, 3.1 | J2.1 gateway and model list merged; J2.2 Spring AI chat in review |
 | J3 | Documents and RAG: Spring AI `VectorStore` (Qdrant), Gemini embeddings, `/documents/*`, `/chat/rag`, `/chat/crm`; cut into J3.1 Markdown ingestion, J3.2 PDF, Word and Excel, J3.3 retrieval and `/chat/rag`, J3.4 `/chat/crm` | V2 base, Stage 4 | J3.1 to J3.3 merged; J3.4 in review |
-| J4 | Tools and MCP: Spring AI MCP server and client, `/chat/tools`, `/mcp/servers` | Stage 2 | J4.1 merged; J4.2 (tool calling) in review |
+| J4 | Tools and MCP: Spring AI MCP server and client, `/chat/tools`, `/mcp/servers` | Stage 2 | J4.1 and J4.2 merged; J4.3 (tools chat) in review |
 | J5 | The agent: graph, human approval with a durable pause, `/agent/recommend` and `/agent/confirm` | Stage 3.2 | Planned |
 | J6 | Guardrails and audit: prompt guard, output guard, audit logs | V2 base | Planned |
 | J7 | Evals and observability | Stage 5 | Planned |

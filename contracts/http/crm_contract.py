@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HTTP contract check for the CRM routes (J1), the model list (J2.1) POST /chat (J2.2) and POST /chat/rag (J3.3) and POST /chat/crm (J3.4). Runs against any base URL, so the same file can be
+"""HTTP contract check for the CRM routes (J1), the model list (J2.1) POST /chat (J2.2) and POST /chat/rag (J3.3) POST /chat/crm (J3.4) and the tool routes (J4.3). Runs against any base URL, so the same file can be
 pointed at the Python edition and at the Java edition and must pass on both.
 
     python3 contracts/http/crm_contract.py http://localhost:8001
@@ -204,6 +204,32 @@ if status == 200:
     )
 else:
     check("chat/crm: otherwise 503 with error and detail", status == 503 and set(body) == {"error", "detail"}, f"{status} {body}")
+
+# The tool routes: POST /chat/tools is validated like the other chat routes; the server list and the audit log
+# have the same shape on every edition.
+status, body = post("/api/v1/chat/tools", '{"messages":[]}')
+check("chat/tools: an empty list is 422 too_short", status == 422 and body["detail"][0]["type"] == "too_short", f"{status} {body}")
+status, body = post("/api/v1/chat/tools", '{"messages":[{"role":"user","content":"hi"}],"mcpServer":5}')
+check("chat/tools: a non-string mcpServer is 422 string_type", status == 422 and body["detail"][0]["type"] == "string_type" and body["detail"][0]["loc"] == ["body", "mcpServer"], f"{status} {body}")
+status, body = post("/api/v1/chat/tools", '{"messages":[{"role":"user","content":"hi"}],"mcpServer":"nope"}')
+check("chat/tools: an unknown tool server is 400 and names the choices", status == 400 and body["detail"] == 'Unknown MCP server "nope". Choose one of: fastmcp, springboot.', f"{status} {body}")
+
+status, servers_body, _ = get("/api/v1/mcp/servers")
+check("mcp/servers: 200 with default and servers", status == 200 and list(servers_body) == ["default", "servers"], f"{status} {servers_body}")
+check(
+    "mcp/servers: each server has id, label, configured and reachable",
+    all(list(sv) == ["id", "label", "configured", "reachable"] for sv in servers_body["servers"]),
+    str(servers_body),
+)
+check("mcp/servers: the default is one of the listed servers", servers_body["default"] in [sv["id"] for sv in servers_body["servers"]], str(servers_body))
+
+status, audit, _ = get("/api/v1/tool-audit-log?limit=3")
+check("tool-audit-log: 200 and a list of at most the limit", status == 200 and isinstance(audit, list) and len(audit) <= 3, f"{status}")
+check(
+    "tool-audit-log: a row has id, tool_name, arguments (an object), status, result_summary, company_id, created_at",
+    all(list(r) == ["id", "tool_name", "arguments", "status", "result_summary", "company_id", "created_at"] and isinstance(r["arguments"], dict) for r in audit),
+    str(audit[:1]),
+)
 
 _, _, headers = get("/health")
 check("every response has X-Request-ID", bool(headers.get("X-Request-ID")))

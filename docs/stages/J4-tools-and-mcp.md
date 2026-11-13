@@ -94,3 +94,52 @@ sequenceDiagram
 
 `ModelClient.java` (the two calls), `SpringAiModelClient.java` (`complete` with tools, then `readToolCalls`), `ModelGateway.java` (`generate` and the success rule), then `SpringAiModelClientTests.java` (the fake provider shows exactly what is sent) and `ModelGatewayTests.java` (the last block).
 
+## J4.3: the tools chat, `POST /api/v1/chat/tools`
+
+```mermaid
+flowchart TD
+  q["question (+ earlier messages)"] --> confirm{"user's own words<br/>confirm?"}
+  q --> pick["McpServers<br/>springboot or fastmcp"]
+  pick --> sess["McpToolClient<br/>list the tools"]
+  sess --> loop["loop, at most 4 rounds"]
+  loop --> gw["ModelGateway<br/>offer the tools"]
+  gw -->|"text"| done["answer + toolsUsed"]
+  gw -->|"tool calls (at most 4)"| run["ToolCallRunner<br/>validate, add confirm, call via MCP"]
+  run --> back["result wrapped as untrusted data,<br/>back into the conversation"]
+  back --> loop
+  loop -->|"limit reached"| force["one last call,<br/>tool choice none"]
+  force --> done
+  confirm -.->|"decides confirm"| run
+```
+
+| Piece | File | Job | Python twin |
+| --- | --- | --- | --- |
+| Route | `chat/ToolsChatController.java` | the loop, the limits, the response | `tools_chat` in `routes/chat.py` |
+| Run one call | `mcp/ToolCallRunner.java` | validate, set `confirm`, call, never throw | `_run_tool_call` |
+| Schemas | `mcp/ToolSchemas.java` | what the model is shown and may send | `app/mcp/schemas.py` |
+| Confirm | `mcp/ConfirmationRule.java` | the user's words decide | `looks_like_confirmation` |
+| Servers | `mcp/McpServers.java`, `mcp/McpController.java` | which server, `GET /mcp/servers` | `registry.py`, `routes/mcp.py` |
+| MCP client | `mcp/McpToolClient.java` | connect, list, call | `app/mcp/client.py` |
+| Audit | `mcp/ToolAuditController.java` | `GET /tool-audit-log` | `routes/tasks.py` |
+
+### Concepts
+
+1. **The model asks, the program acts.** Everything the model can do goes through code we wrote: validation first, then the call, then the audit row.
+2. **Confirmation is not the model's to give.** The schema has no `confirm` argument; the loop sets it from what the *user* typed. That is the whole safety design for writes, and it fits in one small class.
+3. **Errors are information.** A bad argument, an unknown tool or a failing tool becomes a tool result in plain words; the model reads it and tries again. Only the model chain itself failing is an HTTP error.
+4. **Bounded loops.** Four rounds and four calls per reply, then a forced text answer: a model that keeps asking for tools cannot spin forever.
+5. **A client of your own server.** The loop talks MCP to this very application. It costs a local round trip and means the same code can drive a Python server, or any other, without change.
+6. **Data is not instructions.** Tool results are wrapped as untrusted text so a document that says "ignore your instructions" is a claim to read, not an order.
+
+### Questions
+
+1. A model calls `create_followup_task` with `"confirm": true` in its arguments. What happens, and why?
+2. The user writes "yes, go ahead" in the *next* message. Who sets `confirm` to true, and where in the code?
+3. A tool throws because Qdrant is down. Does the user see a 500? What does the model see?
+4. The model asks for tools five times in a row. What does the fifth model call look like?
+5. Why does the loop use an MCP client to reach tools that live in the same application?
+
+### Code tour
+
+`ToolsChatController.java` (the loop), `ToolCallRunner.java` (one call), `ToolSchemas.java` and `ConfirmationRule.java`, then `ToolsChatTests.java` (every case above, against the real MCP server and a real Postgres). Try it: `just tools "What are Acme Fabrication's open deals?"`.
+
