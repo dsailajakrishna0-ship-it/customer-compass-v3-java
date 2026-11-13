@@ -88,6 +88,10 @@ kb-ingest id:
 kb-search id query:
     @python3 -c 'import json,sys,urllib.request as u; r=u.Request("http://localhost:8001/api/v1/knowledge-bases/"+sys.argv[1]+"/search", json.dumps({"query":sys.argv[2]}).encode(), {"Content-Type":"application/json"}); print(json.dumps(json.load(u.urlopen(r)), indent=2))' {{id}} "{{query}}"
 
+# ask across all knowledge bases (Java extension E1.2). STRATEGY=route|all|agent (default route). Example: STRATEGY=all just multi "How long must workers stay out after spraying?"
+multi question:
+    @python3 contracts/http/ask.py multi "$1"
+
 # ask the tool-calling copilot (the model calls tools through MCP; a write needs your "yes" in the next question). Example: just tools "What are Acme Fabrication's open deals?"  (MODEL=<id> picks a model)
 tools question:
     @python3 contracts/http/ask.py tools "$1"
