@@ -63,6 +63,19 @@ rerank:
   model: ${RERANK_MODEL:}
   timeout-seconds: ${RERANK_TIMEOUT_SECONDS:5.0}
 
+# Extra knowledge bases (a Java-edition extension, ADR 0017). The CRM documents are always "crm"; each entry here is
+# another corpus with its own Qdrant collection. A router (or a model) reads the description to decide whether to
+# search it.
+knowledge-bases:
+  extra:
+    - id: agri-supply
+      label: Orchard Valley Agri-Supply handbook
+      description: >-
+        Handbook of a farm-supply business: crop protection products and their re-entry and harvest intervals,
+        cold chain for seedlings and biologicals, seed lot shelf life, sprayer calibration, delivery windows and
+        pallet rules, organic certification, supply agreement renewals and the recall procedure.
+      source-dir: ${KB_AGRI_SUPPLY_DIR:}
+
 # The account follow-up agent's hard limits (the Python edition's AGENT_* settings)
 agent:
   max-steps: ${AGENT_MAX_STEPS:8}

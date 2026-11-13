@@ -76,6 +76,18 @@ agent question:
 security-log query='limit=20':
     @curl -s "localhost:8001/api/v1/security-audit-log?{{query}}" | python3 -m json.tool
 
+# the knowledge bases and their chunk counts (Java extension E1). Example: just kb-list
+kb-list:
+    @curl -s localhost:8001/api/v1/knowledge-bases | python3 -m json.tool
+
+# (re)build an extra knowledge base from its folder. Example: just kb-ingest agri-supply
+kb-ingest id:
+    @curl -s -X POST localhost:8001/api/v1/knowledge-bases/{{id}}/ingest | python3 -m json.tool
+
+# search one knowledge base. Example: just kb-search agri-supply "re-entry interval after spraying"
+kb-search id query:
+    @python3 -c 'import json,sys,urllib.request as u; r=u.Request("http://localhost:8001/api/v1/knowledge-bases/"+sys.argv[1]+"/search", json.dumps({"query":sys.argv[2]}).encode(), {"Content-Type":"application/json"}); print(json.dumps(json.load(u.urlopen(r)), indent=2))' {{id}} "{{query}}"
+
 # ask the tool-calling copilot (the model calls tools through MCP; a write needs your "yes" in the next question). Example: just tools "What are Acme Fabrication's open deals?"  (MODEL=<id> picks a model)
 tools question:
     @python3 contracts/http/ask.py tools "$1"
