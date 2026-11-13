@@ -72,6 +72,10 @@ crm question:
 agent question:
     @python3 contracts/http/ask.py agent "$1"
 
+# what the guard has flagged, newest first (J6.1). Example: just security-log  or  just security-log 'event_type=input'
+security-log query='limit=20':
+    @curl -s "localhost:8001/api/v1/security-audit-log?{{query}}" | python3 -m json.tool
+
 # ask the tool-calling copilot (the model calls tools through MCP; a write needs your "yes" in the next question). Example: just tools "What are Acme Fabrication's open deals?"  (MODEL=<id> picks a model)
 tools question:
     @python3 contracts/http/ask.py tools "$1"

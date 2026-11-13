@@ -14,6 +14,22 @@ public record RetrievedChunk(
     Integer page,
     String sheet) {
 
+  /** The same chunk with other text (the guard's neutralised copy; citations keep the original). */
+  public RetrievedChunk withContent(String text) {
+    return new RetrievedChunk(
+        chunkId,
+        documentId,
+        documentTitle,
+        sourcePath,
+        docType,
+        companyName,
+        chunkIndex,
+        text,
+        similarity,
+        page,
+        sheet);
+  }
+
   /** Where in the file the chunk is, for a citation: "page 3", "sheet Deals", or nothing. */
   public String location() {
     if (page != null) {

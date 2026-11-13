@@ -54,6 +54,10 @@ agent:
   timeout-seconds: ${AGENT_TIMEOUT_SECONDS:180}
   max-revisions: ${AGENT_MAX_REVISIONS:1}
 
+# The prompt-injection guard's security audit log (the Python edition's SECURITY_AUDIT_RETENTION_DAYS)
+guard:
+  audit-retention-days: ${SECURITY_AUDIT_RETENTION_DAYS:90}
+
 # MCP tool servers the tools chat can use (the Python edition's MCP_* settings). The Java server is this
 # application itself (an empty URL means "http://localhost:<this port>/mcp"); the FastMCP (Python)
 # server is optional: set MCP_FASTMCP_URL (for example http://localhost:8002/mcp) to use it.

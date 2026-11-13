@@ -1,5 +1,7 @@
 package com.customercompass.api.chat;
 
+import com.customercompass.api.guard.ChatGuard;
+import com.customercompass.api.guard.PromptGuard;
 import com.customercompass.api.llm.ChatMessage;
 import com.customercompass.api.llm.GenerationResult;
 import com.customercompass.api.llm.LlmUnavailableException;
@@ -39,7 +41,7 @@ import tools.jackson.databind.ObjectMapper;
  *
  * <p>Whether a task is confirmed is decided here, from the user's own latest message, never by the
  * model: the tool schema does not even offer a {@code confirm} argument. Tool results are data, so
- * each is wrapped in untrusted-context tags (the scan for injected commands arrives in J6).
+ * each is wrapped in untrusted-context tags and scanned for injected commands (J6.1).
  */
 @RestController
 @RequestMapping("/api/v1/chat/tools")
@@ -82,6 +84,7 @@ class ToolsChatController {
   private final McpToolClient mcp;
   private final ToolCallRunner runner;
   private final ModelGateway gateway;
+  private final ChatGuard guard;
   private final ObjectMapper json;
 
   ToolsChatController(
@@ -89,7 +92,9 @@ class ToolsChatController {
       McpToolClient mcp,
       ToolCallRunner runner,
       ModelGateway gateway,
-      ObjectMapper json) {
+      ObjectMapper json,
+      ChatGuard guard) {
+    this.guard = guard;
     this.servers = servers;
     this.mcp = mcp;
     this.runner = runner;
@@ -108,6 +113,7 @@ class ToolsChatController {
     ChatRequest request = ChatRequestValidator.validate(body, json, true);
     List<ChatMessage> messages = request.messages();
     String question = messages.get(messages.size() - 1).content();
+    PromptGuard.Finding questionFinding = PromptGuard.scan(question);
     // The user's own words decide a confirmation, never anything the model puts in a tool call.
     boolean userConfirmed = ConfirmationRule.looksLikeConfirmation(question);
 
@@ -124,6 +130,10 @@ class ToolsChatController {
       connected = true;
 
       var conversation = new ArrayList<>(messages);
+      conversation.set(
+          conversation.size() - 1, new ChatMessage("user", questionFinding.neutralizedText()));
+      var findings = new ArrayList<java.util.Map.Entry<PromptGuard.Finding, String>>();
+      findings.add(java.util.Map.entry(questionFinding, "user_input"));
       var toolsUsed = new ArrayList<Map<String, Object>>();
       GenerationResult result = null;
       boolean answered = false;
@@ -139,8 +149,11 @@ class ToolsChatController {
         conversation.add(ChatMessage.assistantToolCalls(result.content(), calls));
         for (ToolCall call : calls) {
           String toolText = runner.run(session, call, userConfirmed, toolsUsed);
+          PromptGuard.Finding toolFinding = PromptGuard.scan(toolText);
+          findings.add(java.util.Map.entry(toolFinding, "tool: " + call.name()));
           conversation.add(
-              ChatMessage.toolResult(call.id(), call.name(), RagContext.wrapUntrusted(toolText)));
+              ChatMessage.toolResult(
+                  call.id(), call.name(), RagContext.wrapUntrusted(toolFinding.neutralizedText())));
         }
       }
       if (!answered) {
@@ -151,11 +164,13 @@ class ToolsChatController {
       }
 
       var response = new LinkedHashMap<String, Object>();
-      response.put("message", result.content());
+      ChatGuard.Outcome outcome =
+          guard.finalizeAnswer("chat/tools", PromptGuard.report(findings), result.content());
+      response.put("message", outcome.answer());
       response.put("toolsUsed", toolsUsed);
       response.put("mcpServer", backend.id());
       response.put("usage", ChatController.usage(result));
-      response.put("guardrail", ChatController.unflagged());
+      response.put("guardrail", outcome.guardrail());
       return response;
     } catch (LlmUnavailableException | EmbeddingsUnavailableException e) {
       throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());

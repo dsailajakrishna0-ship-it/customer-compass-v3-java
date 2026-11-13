@@ -231,6 +231,23 @@ check(
     str(audit[:1]),
 )
 
+status, sec, _ = get("/api/v1/security-audit-log?limit=3")
+check("security-audit-log: 200 and a list of at most the limit", status == 200 and isinstance(sec, list) and len(sec) <= 3, f"{status}")
+check(
+    "security-audit-log: a row has id, event_type, endpoint, pattern, location, excerpt, created_at",
+    all(list(r) == ["id", "event_type", "endpoint", "pattern", "location", "excerpt", "created_at"] for r in sec),
+    str(sec[:1]),
+)
+status, body, _ = get("/api/v1/security-audit-log?event_type=nope")
+check(
+    "security-audit-log: an unknown event_type is 422 string_pattern_mismatch",
+    status == 422 and body["detail"][0]["type"] == "string_pattern_mismatch" and body["detail"][0]["loc"] == ["query", "event_type"],
+    f"{status} {body}",
+)
+for query, kind in (("limit=0", "greater_than_equal"), ("limit=501", "less_than_equal"), ("limit=x", "int_parsing")):
+    status, body, _ = get(f"/api/v1/security-audit-log?{query}")
+    check(f"security-audit-log: {query} is 422 {kind}", status == 422 and body["detail"][0]["type"] == kind, f"{status} {body}")
+
 # The account follow-up agent. Everything here stops before a model is asked, so it needs no key and writes nothing.
 for payload, kind in (("{}", "missing"), ('{"message":""}', "string_too_short"), (json.dumps({"message": "x" * 1001}), "string_too_long")):
     status, body = post("/api/v1/agent/recommend", payload)

@@ -29,7 +29,7 @@ The contract is the 26 tests in `apps/api-py/tests/contract/` plus `docs/api-ref
 
 | Item | Python today | Java today | Plan |
 | --- | --- | --- | --- |
-| Guardrail on `/chat` | Prompt-injection scan of the question, scan of the answer, audit log | The `guardrail` field is always unflagged | J6 |
+| Guardrail on `/chat` | Prompt-injection scan of the question, scan of the answer, audit log | The same rules (ADR 0013): the question and the answer are scanned, detections go to `security_audit_log`, `GET /security-audit-log` | Done in J6.1 |
 | Raw tool-call markup from a small model (Python PR #67) | Treated as a failed attempt, next model answers | The same, since J4.2 | Done |
 | A body that is not valid JSON | `loc: ["body", <character position>]` and Python's own message in `ctx` | `loc: ["body"]`, no `ctx` | Accepted gap; every other chat validation error is byte-identical (checked by sending the same 15 bodies to both editions: 14 identical, this is the one difference) |
 | Documents ingested | 19 (16 Markdown, 1 PDF, 1 Excel, 1 Word), 33 chunks | The same: 19 and 33, chunk counts equal file by file | Done in J3.2 |
@@ -37,11 +37,11 @@ The contract is the 26 tests in `apps/api-py/tests/contract/` plus `docs/api-ref
 | Document ids | Follow the sorted file list | The same sorted list, so the ids are equal (3 is the PDF, 9 the Excel file, 14 the Word file) | Done in J3.2 |
 | Retrieval mode | `dense` (default), `hybrid` and an optional reranker behind settings | Dense only | Hybrid and the reranker in a later slice (ADR 0006) |
 | `GET /documents/vector-search-info` | Reports exact versus approximate search by collection size | Not built (Spring AI's store does not expose search parameters) | Decide with hybrid |
-| Prompt-injection scan of the question and of retrieved chunks | Yes, with an audit log | The context is wrapped as untrusted, nothing is scanned | J6 |
+| Prompt-injection scan of the question and of retrieved chunks | Yes, with an audit log | Scanned and redacted before the model sees it; citations keep the original (J6.1) | Done in J6.1 |
 | Company scope in retrieval | `company_id` equal to X or null | `company_id` equal to X or 0 (company-agnostic documents are stored with 0; ADR 0007). Ingest again after upgrading | Not visible through the API |
 | MCP tool servers | Two (FastMCP in Python, Spring Boot in a separate service) behind a radio button; default FastMCP | One built in, inside the API at `/mcp` (ADR 0008), default `springboot`; the Python server can be added with `MCP_FASTMCP_URL`. `GET /mcp/servers` lists both | Done in J4.3 |
-| Tool results and tool arguments | Scanned for prompt injection, with an audit log | Wrapped as untrusted data, not scanned | J6 |
+| Tool results and tool arguments | Scanned for prompt injection, with an audit log | Results scanned and redacted, then wrapped (J6.1); arguments are not scanned (the schemas validate them) | Done in J6.1 (results) |
 | The `confirm` rule | The user's latest message decides (substring of yes, confirm, approve, go ahead, ...) | The same | Done |
 | The agent (`/agent/recommend`, `/agent/confirm`) | A LangGraph graph; a paused run saved in Postgres and resumed by `/confirm` | A LangGraph4j graph (ADR 0011); a paused run saved in Postgres by the LangGraph4j saver and resumed by `/confirm` (ADR 0012) | J6 (guard) |
-| Prompt-injection scan in the agent (request, stored text, output, the note on confirm) | Yes, with audit events | None; `guardrail` is always unflagged | J6 |
+| Prompt-injection scan in the agent (request, stored text, output, the note on confirm) | Yes, with audit events | None; `guardrail` is always unflagged | J6.2 |
 
