@@ -1,6 +1,6 @@
 # Stage J3: documents and RAG
 
-Ports Python Stage 4 (ingestion, retrieval, `/chat/rag`, `/chat/crm`). Decisions: [ADR 0004](../adr/0004-documents-and-vector-store.md). Cut into slices: **J3.1** ingestion of Markdown (this page), J3.2 PDF, Word and Excel with page and sheet in citations, J3.3 retrieval and `POST /chat/rag`, J3.4 `POST /chat/crm`.
+Ports Python Stage 4 (ingestion, retrieval, `/chat/rag`, `/chat/crm`). Decisions: [ADR 0004](../adr/0004-documents-and-vector-store.md). Cut into slices: **J3.1** ingestion of Markdown (this page), J3.2 PDF, Word and Excel with page and sheet in citations, J3.3 retrieval and `POST /chat/rag`, J3.4 `POST /chat/crm`, **J3.5** the optional reranker (below), J3.6 hybrid search (planned).
 
 ## J3.1: ingest Markdown documents
 
@@ -165,3 +165,28 @@ flowchart LR
 
 `QueryRouter.java` and `QueryRouterTests.java`, then `CrmFacts.java`, then `CrmChatController.java`, then `CrmChatTests.java` (the test `aQuestionAboutOneCompanyNeverRetrievesAnotherCompanysDocuments` is the safety property).
 
+## J3.5: the optional reranker
+
+Decisions: [ADR 0015](../adr/0015-optional-reranker.md).
+
+```mermaid
+flowchart LR
+  q["question"] --> search["dense search<br/>RETRIEVAL_CANDIDATES chunks, floor 0.45"]
+  search -->|"RERANK_PROVIDER=off"| top["first top k"]
+  search -->|"voyage / cohere"| rr["Reranker<br/>one HTTP call, 5 s limit"]
+  rr -->|"ranking"| ordered["its order decides the top k"]
+  rr -.->|"any failure"| top
+```
+
+| Piece | File | Job | Python twin |
+| --- | --- | --- | --- |
+| The call | `rag/Reranker.java` | request per provider, parse and sort the reply, never throw | `rag/rerank.py` |
+| Settings | `rag/RerankProperties.java` | provider, candidates, model, timeout, keys | `config.py` |
+| Where it plugs in | `rag/Retriever.java` | longer shortlist, then rerank | `rag/retrieve.py` (`_rerank`) |
+
+### Concepts
+
+1. **Two-stage retrieval.** A fast, approximate first stage finds candidates; a slow, accurate second stage orders a short list.
+2. **Optional enrichment never breaks the product.** Every failure falls back to the first stage's order.
+3. **Do not trust the reply's order.** Sort by score, drop duplicates and out-of-range indexes.
+4. **Keys stay out of logs.** Only the error type and status are logged.

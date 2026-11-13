@@ -138,6 +138,20 @@ Needs: Java 21, Docker, `just`, `uv` (it fetches the small `mcp` client library)
 
 **Stop:** `Ctrl+C` in the `just run` terminal, then `just db-stop` and `just qdrant-stop`.
 
+## J3.5: the optional reranker
+
+Needs the J3.3 setup (`just db`, `just qdrant`, `just run`, both keys, ingest). Without a Voyage or Cohere key the reranker stays off, which is the default and still correct.
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just test` | all tests pass; read `RerankerTests` and `RerankRetrievalTests` | Both providers' requests, ranking, every failure, the shortlist and its order |
+| 2 | `just rag "What does Clause 7.3 say about the renewal notice period?"` | Cited sources as before (the default is off) | Nothing changes unless you turn it on |
+| 3 | Restart with `RERANK_PROVIDER=voyage VOYAGE_API_KEY=<your key> just run`, repeat step 2 | The same question answers; the API log has `reranked candidates=20 kept=4` and the order of the sources may differ from step 2 | The reranker re-orders the top k |
+| 4 | Restart with `RERANK_PROVIDER=voyage` and **no** key, repeat step 2 | Still answers; the log has `rerank_skipped provider=voyage reason=no_api_key` | No key means the search order, not an error |
+| 5 | Restart with `RERANK_PROVIDER=voyage VOYAGE_API_KEY=wrong`, repeat step 2 | Still answers; the log has `rerank_failed provider=voyage error=IOException status=401`, and no key or reply text | A provider failure never breaks the answer |
+
+Optional keys: a Voyage key is free to create on voyageai.com; Cohere's Trial key is limited to 1,000 calls a month.
+
 ## J3.4: the CRM copilot, `POST /api/v1/chat/crm`
 
 Needs: the same as J3.3 (both keys). **Ingest again first** (J3.2 step 6): documents ingested before J3.4 lack the `company_id` marker the company scope uses (ADR 0007). Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run`. Ask a question with `just crm "..."`.

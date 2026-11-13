@@ -49,7 +49,7 @@ class McpToolsTests {
     Integer askedCompany = -1;
 
     FakeRetriever() {
-      super(null, null, null);
+      super(null, null, null, null, null);
     }
 
     @Override

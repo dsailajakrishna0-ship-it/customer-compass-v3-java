@@ -98,7 +98,7 @@ class ToolsChatTests {
   /** Document search without embeddings: one canned chunk, or a failure for the query "boom". */
   static class FakeRetriever extends Retriever {
     FakeRetriever() {
-      super(null, null, null);
+      super(null, null, null, null, null);
     }
 
     @Override

@@ -48,6 +48,16 @@ rag:
   embedding-dimensions: ${EMBEDDING_DIMENSIONS:768}
   sample-data-dir: ${SAMPLE_DATA_DIR:}
 
+# The optional reranker (the Python edition's RERANK_PROVIDER etc.): off | voyage | cohere. A second model re-orders
+# the search results; any failure keeps the search order.
+rerank:
+  provider: ${RERANK_PROVIDER:off}
+  candidates: ${RETRIEVAL_CANDIDATES:20}
+  voyage-api-key: ${VOYAGE_API_KEY:}
+  cohere-api-key: ${COHERE_API_KEY:}
+  model: ${RERANK_MODEL:}
+  timeout-seconds: ${RERANK_TIMEOUT_SECONDS:5.0}
+
 # The account follow-up agent's hard limits (the Python edition's AGENT_* settings)
 agent:
   max-steps: ${AGENT_MAX_STEPS:8}
