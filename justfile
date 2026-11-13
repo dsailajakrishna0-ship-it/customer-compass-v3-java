@@ -2,6 +2,7 @@
 # Run `just` to list them.
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
+set positional-arguments
 
 api := "apps/api-java"
 
@@ -54,4 +55,16 @@ qdrant:
 # stop the throw-away Qdrant (its data goes with it)
 qdrant-stop:
     docker stop cc-java-qdrant
+
+# ask the general chat a question; the API must be running (just run). Example: just chat "What is the capital of France?"
+chat question:
+    @python3 contracts/http/ask.py chat "$1"
+
+# ask the document chat (answers from the ingested documents, with citations). Example: just rag "What does Clause 7.3 say about the renewal notice period?"
+rag question:
+    @python3 contracts/http/ask.py rag "$1"
+
+# ask the CRM copilot (facts from the database and/or documents). Example: just crm "What open deals does Acme Fabrication have?"
+crm question:
+    @python3 contracts/http/ask.py crm "$1"
 

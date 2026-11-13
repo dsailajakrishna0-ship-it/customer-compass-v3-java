@@ -2,27 +2,25 @@
 
 One section per PR, newest first. Each says how to start, what to run, what you should see, and how to stop.
 
+For a quick, ordered walk through everything the Java edition does today, use the [smoke test](smoke-test.md); this guide has the detail for each stage.
+
 > **Scratch ports are 25432 (Postgres), 26333 and 26334 (Qdrant).** They are below 32768 on purpose: Linux uses 32768 to 60999 for temporary outgoing connections, and a program that holds one of those numbers (a VPN client did) makes `just db` fail with "address already in use". If a port is still taken, `ss -tanp | grep <port>` shows who has it.
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
 ## J3.4: the CRM copilot, `POST /api/v1/chat/crm`
 
-Needs: the same as J3.3 (both keys). **Ingest again first** (J3.2 step 6): documents ingested before J3.4 lack the `company_id` marker the company scope uses (ADR 0007). Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run`. Helper, once:
-
-```bash
-crm() { curl -s -X POST localhost:8001/api/v1/chat/crm -H 'Content-Type: application/json' -d "{\"messages\":[{\"role\":\"user\",\"content\":\"$1\"}]}" | python3 -m json.tool; }
-```
+Needs: the same as J3.3 (both keys). **Ingest again first** (J3.2 step 6): documents ingested before J3.4 lack the `company_id` marker the company scope uses (ADR 0007). Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run`. Ask a question with `just crm "..."`.
 
 | # | Do | Expect | What it shows |
 | --- | --- | --- | --- |
 | 1 | `just test` | all tests pass (109); read `QueryRouterTests` and `CrmChatTests` | The routing rules and the prompt |
-| 2 | `crm "What open deals does Acme Fabrication have?"` | An answer with Premium Operations Plan renewal, $48,000.00, 2026-10-15; `"facts"` holds Acme's summary (`"relationshipStatus": "customer"`, `wonDealsCount` 1); `"citations": []`; `"scopedCompany": "Acme Fabrication"` | Deal words go to SQL facts only |
-| 3 | `crm "What did Acme Fabrication say about onboarding in their emails?"` | An answer from Acme's documents; `"facts": null`; every citation has `"companyName": "Acme Fabrication"` (or `null` for a product overview) | Document words go to retrieval, scoped to the company |
-| 4 | `crm "What open deals does a company we have never heard of have?"` | `"message": "I could not find a matching company or deal data for that question."`, `"facts": null`, `"scopedCompany": null`, no `usage` | An unknown company: nothing invented, no model call |
-| 5 | `crm "Which deals did Riverside Health Group discuss on the call?"` | Both: `facts` (Fleet Visibility expansion, 40000.00) and `citations`, all from Riverside | Deal and call words use both |
-| 6 | `crm "What did Vertex Analytics say about rate limits in their emails?"` | Citations from Vertex only, plus possibly one with `"companyName": null` (the product overview) | Another customer's documents are never retrieved |
-| 7 | `crm "What did customers say in their emails about pricing?"` | `"scopedCompany": null` and citations from several companies | No company named, no scope |
+| 2 | `just crm "What open deals does Acme Fabrication have?"` | An answer with Premium Operations Plan renewal, $48,000.00, 2026-10-15; `"facts"` holds Acme's summary (`"relationshipStatus": "customer"`, `wonDealsCount` 1); `"citations": []`; `"scopedCompany": "Acme Fabrication"` | Deal words go to SQL facts only |
+| 3 | `just crm "What did Acme Fabrication say about onboarding in their emails?"` | An answer from Acme's documents; `"facts": null`; every citation has `"companyName": "Acme Fabrication"` (or `null` for a product overview) | Document words go to retrieval, scoped to the company |
+| 4 | `just crm "What open deals does a company we have never heard of have?"` | `"message": "I could not find a matching company or deal data for that question."`, `"facts": null`, `"scopedCompany": null`, no `usage` | An unknown company: nothing invented, no model call |
+| 5 | `just crm "Which deals did Riverside Health Group discuss on the call?"` | Both: `facts` (Fleet Visibility expansion, 40000.00) and `citations`, all from Riverside | Deal and call words use both |
+| 6 | `just crm "What did Vertex Analytics say about rate limits in their emails?"` | Citations from Vertex only, plus possibly one with `"companyName": null` (the product overview) | Another customer's documents are never retrieved |
+| 7 | `just crm "What did customers say in their emails about pricing?"` | `"scopedCompany": null` and citations from several companies | No company named, no scope |
 | 8 | `just contract` | `OK`, including the `chat/crm` checks | The shared contract |
 | 9 | Web app, mode **CRM copilot (facts + documents)**, ask step 2's and step 3's questions | The answer, a facts panel, and a source list | The unchanged web app against the Java API |
 
@@ -32,21 +30,17 @@ With J3.4 the Java edition has the document and CRM chat of the Python edition's
 
 ## J3.3: retrieval and `POST /api/v1/chat/rag`
 
-Needs: the same as J3.1 and J3.2, **and** an OpenRouter key (`OPENROUTER_API_KEY`) for the answers. Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run` with both keys exported. **Ingest first** (J3.2 step 6): 19 documents, 33 chunks. Free models are sometimes rate-limited; a 503 that names the models tried is normal, wait and retry. Replace `ask` below by this helper once:
-
-```bash
-ask() { curl -s -X POST localhost:8001/api/v1/chat/rag -H 'Content-Type: application/json' -d "{\"messages\":[{\"role\":\"user\",\"content\":\"$1\"}]}" | python3 -m json.tool; }
-```
+Needs: the same as J3.1 and J3.2, **and** an OpenRouter key (`OPENROUTER_API_KEY`) for the answers. Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run` with both keys exported. **Ingest first** (J3.2 step 6): 19 documents, 33 chunks. Free models are sometimes rate-limited; a 503 that names the models tried is normal, wait and retry. Ask a question with `just rag "..."` (it prints the JSON answer; no quoting to worry about).
 
 | # | Do | Expect | What it shows |
 | --- | --- | --- | --- |
 | 1 | `just test` | all tests pass (92); read `RagChatTests` | The flow, with a scripted model that records what it is shown |
-| 2 | Before ingesting (`just db-stop`, `just db`, restart the API) run `ask "What is in the documents?"` | `"message": "I could not find any ingested documents relevant to that question."`, `"citations": []`, no `usage` | Nothing found means no model call |
-| 3 | `ask "What did Maya Chen ask about the renewal of the Premium Operations Plan?"` | A cited answer; `citations` lists up to 4 sources (the Renewal planning call with Maya Chen first), similarity 0.6 to 0.8 | Retrieval and citations |
-| 4 | `ask "What is the capital of France?"` | The "could not find" sentence, `citations: []` | The 0.45 floor and no model call |
-| 5 | `ask "What does Clause 7.3 say about the renewal notice period?"` | 60 days' notice; the first citation is the service agreement with `"page": 2` | A PDF page in a citation |
-| 6 | `ask "Which plan costs 3400 USD a month and how many vehicles does it track?"` | Fleet Plus, 250 vehicles; the first citation has `"sheet": "Rate card"` | An Excel sheet in a citation |
-| 7 | `ask "How often are accounts with access to clinical data reviewed?"` | Every quarter; the first citation is the Riverside data handling policy with no `page` or `sheet` | A Word file in a citation |
+| 2 | Before ingesting (`just db-stop`, `just db`, restart the API) run `just rag "What is in the documents?"` | `"message": "I could not find any ingested documents relevant to that question."`, `"citations": []`, no `usage` | Nothing found means no model call |
+| 3 | `just rag "What did Maya Chen ask about the renewal of the Premium Operations Plan?"` | A cited answer; `citations` lists up to 4 sources (the Renewal planning call with Maya Chen first), similarity 0.6 to 0.8 | Retrieval and citations |
+| 4 | `just rag "What is the capital of France?"` | The "could not find" sentence, `citations: []` | The 0.45 floor and no model call |
+| 5 | `just rag "What does Clause 7.3 say about the renewal notice period?"` | 60 days' notice; the first citation is the service agreement with `"page": 2` | A PDF page in a citation |
+| 6 | `just rag "Which plan costs 3400 USD a month and how many vehicles does it track?"` | Fleet Plus, 250 vehicles; the first citation has `"sheet": "Rate card"` | An Excel sheet in a citation |
+| 7 | `just rag "How often are accounts with access to clinical data reviewed?"` | Every quarter; the first citation is the Riverside data handling policy with no `page` or `sheet` | A Word file in a citation |
 | 8 | After step 3 run `docker exec cc-java-db psql -U customer_compass -d customer_compass -c "update ingestion_runs set embedding_model='google:old-model'"`, then ask again | `503` and "The documents were embedded with google:old-model, but the embedding model is now google:gemini-embedding-001. Click Ingest documents ..." | A mismatched index is refused with the fix. Ingest again to restore |
 | 9 | `just contract` | `OK`, including three `chat/rag` checks | The shared contract |
 | 10 | Web app, mode **Document knowledge (RAG)**: ask step 5's question | The answer with a source list; the PDF source line ends "page 2" | The unchanged web app against the Java API |
