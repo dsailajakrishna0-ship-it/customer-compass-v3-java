@@ -68,7 +68,7 @@ class ChatController {
     ChatRequest request = ChatRequestValidator.validate(body, json);
     List<ChatMessage> messages = new java.util.ArrayList<>(request.messages());
     ChatMessage last = messages.get(messages.size() - 1);
-    PromptGuard.Finding question = PromptGuard.scan(last.content());
+    PromptGuard.Finding question = guard.question(last.content());
     messages.set(messages.size() - 1, new ChatMessage(last.role(), question.neutralizedText()));
     var report = PromptGuard.report(java.util.Map.entry(question, "user_input"));
     GenerationResult result;

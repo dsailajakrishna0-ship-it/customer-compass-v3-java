@@ -113,7 +113,7 @@ class ToolsChatController {
     ChatRequest request = ChatRequestValidator.validate(body, json, true);
     List<ChatMessage> messages = request.messages();
     String question = messages.get(messages.size() - 1).content();
-    PromptGuard.Finding questionFinding = PromptGuard.scan(question);
+    PromptGuard.Finding questionFinding = guard.question(question);
     // The user's own words decide a confirmation, never anything the model puts in a tool call.
     boolean userConfirmed = ConfirmationRule.looksLikeConfirmation(question);
 

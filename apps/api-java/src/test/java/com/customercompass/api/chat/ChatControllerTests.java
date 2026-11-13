@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.customercompass.api.guard.ChatGuard;
 import com.customercompass.api.guard.GuardProperties;
+import com.customercompass.api.guard.InputGuard;
 import com.customercompass.api.guard.SecurityAudit;
 import com.customercompass.api.llm.ChatMessage;
 import com.customercompass.api.llm.Completion;
@@ -42,7 +43,12 @@ class ChatControllerTests {
     var properties = new LlmProperties(key, "", 60, 2, 1, 30, "");
     var gateway = new ModelGateway(properties, CATALOG, client, Sleeper.REAL, Clock.systemUTC());
     return new ChatController(
-        gateway, JSON, new ChatGuard(new SecurityAudit(null, new GuardProperties(90)), null));
+        gateway,
+        JSON,
+        new ChatGuard(
+            new SecurityAudit(null, GuardProperties.defaults()),
+            null,
+            new InputGuard(null, GuardProperties.defaults())));
   }
 
   private Map<String, Object> ask(ChatController controller, String body) {

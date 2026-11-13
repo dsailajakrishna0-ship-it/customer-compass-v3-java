@@ -43,5 +43,6 @@ The contract is the 26 tests in `apps/api-py/tests/contract/` plus `docs/api-ref
 | Tool results and tool arguments | Scanned for prompt injection, with an audit log | Results scanned and redacted, then wrapped (J6.1); arguments are not scanned (the schemas validate them) | Done in J6.1 (results) |
 | The `confirm` rule | The user's latest message decides (substring of yes, confirm, approve, go ahead, ...) | The same | Done |
 | The agent (`/agent/recommend`, `/agent/confirm`) | A LangGraph graph; a paused run saved in Postgres and resumed by `/confirm` | A LangGraph4j graph (ADR 0011); a paused run saved in Postgres by the LangGraph4j saver and resumed by `/confirm` (ADR 0012) | J6 (guard) |
-| Prompt-injection scan in the agent (request, stored text, output, the note on confirm) | Yes, with audit events | None; `guardrail` is always unflagged | J6.2 |
+| Prompt-injection scan in the agent (request, stored text, output, the note on confirm) | Yes, with audit events | The same (ADR 0014): request, interactions, document chunks, the three output texts and the note on confirm; audit events with endpoint `agent` | Done in J6.2 |
+| The optional LLM classifier (`GUARD_MODE`, `GUARD_MODEL`) | `rules` default, `llm`, `both`; flags only, fails open | The same (ADR 0014) | Done in J6.2 |
 

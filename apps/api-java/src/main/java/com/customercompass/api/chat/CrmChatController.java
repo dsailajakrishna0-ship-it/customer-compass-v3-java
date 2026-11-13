@@ -98,7 +98,7 @@ class CrmChatController {
     ChatRequest request = ChatRequestValidator.validate(body, json);
     List<ChatMessage> messages = request.messages();
     String question = messages.get(messages.size() - 1).content();
-    PromptGuard.Finding questionFinding = PromptGuard.scan(question);
+    PromptGuard.Finding questionFinding = guard.question(question);
     try {
       QueryRoute route = router.classify(question);
       String scopedCompany = route.company() == null ? null : route.company().name();
