@@ -1,6 +1,6 @@
 # Stage J5: the agent
 
-Ports Python Stage 3 (the account follow-up agent as a graph, with a human approval and a durable pause). Decisions: [ADR 0011](../adr/0011-agent-graph-on-langgraph4j.md). Cut into slices: **J5.1** the graph and the two routes (this page), J5.2 the durable pause (a Postgres checkpointer, so a paused run survives an API restart).
+Ports Python Stage 3 (the account follow-up agent as a graph, with a human approval and a durable pause). Decisions: [ADR 0011](../adr/0011-agent-graph-on-langgraph4j.md). Cut into slices: **J5.1** the graph and the two routes (this page), **J5.2** the durable pause (a Postgres saver, so a paused run survives an API restart; below). Decisions for J5.2: [ADR 0012](../adr/0012-durable-pause-postgres-saver.md).
 
 ## J5.1: the agent graph, `POST /agent/recommend` and `POST /agent/confirm`
 
@@ -49,3 +49,27 @@ flowchart TD
 ### Code tour
 
 `AgentWorkflow.java` (`build`, then the nodes in order), `Agents.java`, then `AgentApiTests.java` (each test is one rule from the Python edition's contract). Try it: `just agent "Analyze Acme Fabrication and recommend a next action"`.
+
+## J5.2: the durable pause
+
+```mermaid
+flowchart LR
+  rec["POST /agent/recommend<br/>graph finishes"] --> pause["ApprovalGate.pause<br/>saved in Postgres, stops before human_approval"]
+  pause -. "API may restart here" .-> conf["POST /agent/confirm"]
+  conf -->|"run found"| resume["updateState(approved) + resume"]
+  resume -->|"yes"| write["write node: create the task"]
+  resume -->|"no"| none(["nothing written"])
+  conf -->|"no run found"| direct["direct write, as in J5.1"]
+```
+
+| Piece | File | Job | Python twin |
+| --- | --- | --- | --- |
+| The gate | `agent/ApprovalGate.java` | second graph, Postgres saver, pause, resume, derived thread id | the checkpointer in `agent/workflow.py` |
+| Wiring | `agent/AgentController.java`, `AgentWorkflow.java` | `/recommend` pauses after a completed run; `/confirm` resumes | `routes/agent.py` |
+
+### Concepts
+
+1. **A pause is saved state, not a waiting thread.** Nothing in memory waits for the human: the run is rows in Postgres, so it survives a restart.
+2. **The caller never sees a run id.** The id is derived from the company and the note both routes already carry.
+3. **A finished run is deleted.** The same confirm twice cannot write twice.
+4. **The fallback keeps the contract.** With no saved run, `/confirm` behaves exactly as in J5.1.

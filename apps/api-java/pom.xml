@@ -108,10 +108,16 @@
       <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
     </dependency>
 
-    <!-- J5: the agent graph (LangGraph4j, the Java twin of the Python edition's LangGraph; ADR 0011). -->
+    <!-- J5: the agent graph (LangGraph4j, the Java twin of the Python edition's LangGraph; ADR 0011) and
+         the Postgres saver that keeps a paused run across an API restart (ADR 0012). -->
     <dependency>
       <groupId>org.bsc.langgraph4j</groupId>
       <artifactId>langgraph4j-core</artifactId>
+      <version>${langgraph4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.bsc.langgraph4j</groupId>
+      <artifactId>langgraph4j-postgres-saver</artifactId>
       <version>${langgraph4j.version}</version>
     </dependency>
 

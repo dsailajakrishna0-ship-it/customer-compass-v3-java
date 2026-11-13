@@ -103,12 +103,15 @@ public class AgentWorkflow {
   private final CrmTools tools;
   private final AgentProperties limits;
   private final Clock clock;
+  private final ApprovalGate gate;
 
-  public AgentWorkflow(CrmFacts facts, CrmTools tools, AgentProperties limits, Clock clock) {
+  public AgentWorkflow(
+      CrmFacts facts, CrmTools tools, AgentProperties limits, Clock clock, ApprovalGate gate) {
     this.facts = facts;
     this.tools = tools;
     this.limits = limits;
     this.clock = clock;
+    this.gate = gate;
   }
 
   // ------------------------------------------------------------------------------ entry point
@@ -155,6 +158,8 @@ public class AgentWorkflow {
       return response(
           "company_not_found", ctx.trace, "message", "Name a company from the CRM to analyze.");
     }
+    // The run is finished except for the human's answer: stop at the gate and save it in Postgres.
+    gate.pause(finalState.data());
     return completed(finalState, ctx);
   }
 
