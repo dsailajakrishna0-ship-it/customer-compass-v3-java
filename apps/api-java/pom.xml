@@ -100,6 +100,13 @@
       <artifactId>spring-ai-google-genai-embedding</artifactId>
     </dependency>
 
+    <!-- J4: the MCP tool server, served by this application at /mcp (Spring AI MCP server, streamable
+         HTTP). The tools are @McpTool methods; the starter finds them and builds the tool list. -->
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+    </dependency>
+
     <!-- J3.2: reading PDF, Word and Excel files (Apache PDFBox and Apache POI). -->
     <dependency>
       <groupId>org.apache.pdfbox</groupId>

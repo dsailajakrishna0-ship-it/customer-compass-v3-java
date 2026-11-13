@@ -8,6 +8,27 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## J4.1: the MCP tool server (inside the API)
+
+Needs: Java 21, Docker, `just`, `uv` (it fetches the small `mcp` client library), and for steps 6 and 7 a Google key (document search embeds the query). Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run` with `GOOGLE_API_KEY` exported, and ingest (J3.2 step 6). The tools are served by the API itself at `http://localhost:8001/mcp`.
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just test` | all tests pass (118); read `McpToolsTests` | A real MCP client against the real server and a real Postgres |
+| 2 | `just mcp-contract` | `http://localhost:8001/mcp: OK (4 cases)` | The Python edition's own checker passes against this server |
+| 3 | `uv run --with mcp python contracts/call_tool.py http://localhost:8001/mcp` | The four tools, each with its arguments | The tool list a model would see |
+| 4 | `just mcp-call get_open_deals '{"company_name": "Acme"}'` | Acme Fabrication's one open deal (Premium Operations Plan renewal, 48000.00, 2026-10-15), no database id | A read tool; "Acme" is enough |
+| 5 | `just mcp-call get_company_summary '{"company_name": "Globex"}'` | `"status": "not_found"` and `No company matching "Globex" was found.` | Nothing is invented |
+| 6 | `just mcp-call search_documents '{"query": "renewal notice period", "company_name": "Acme"}'` | Up to 4 results, all with `"companyName": "Acme Fabrication"`, the service agreement first (similarity about 0.7) | Document search through the tool, scoped to a company |
+| 7 | `just mcp-call search_documents '{"query": "API rate limit"}'` | Results from several companies (Vertex first) | No company named, no scope |
+| 8 | `just mcp-call create_followup_task '{"company_name": "Acme", "note": "Call about pricing"}'`, then `curl -s localhost:8001/api/v1/tasks` | `"status": "proposed"` and **no new task** | A write is only proposed |
+| 9 | `docker exec cc-java-db psql -U customer_compass -d customer_compass -c "select tool_name, status, result_summary from tool_audit_log order by id"` | One row per call above: `executed`, `error` and `proposed` | Every call is audited |
+| 10 | Stop Qdrant (`just qdrant-stop`), run step 6 again | An error that says "The vector store (Qdrant) is not reachable. Start it (just qdrant) ..." | A clear failure, not a stack trace. `just qdrant` again; the API reconnects within a minute |
+
+`create_followup_task` with `"confirm": true` really writes a task (and a `confirmed` audit row): `docker exec cc-java-db psql -U customer_compass -d customer_compass -c "delete from tasks where note = 'Call about pricing'"` removes it. The chat that decides when to confirm comes in J4.3; until then the web app's tool-calling mode still does not work.
+
+**Stop:** `Ctrl+C` in the `just run` terminal, then `just db-stop` and `just qdrant-stop`.
+
 ## J3.4: the CRM copilot, `POST /api/v1/chat/crm`
 
 Needs: the same as J3.3 (both keys). **Ingest again first** (J3.2 step 6): documents ingested before J3.4 lack the `company_id` marker the company scope uses (ADR 0007). Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run`. Ask a question with `just crm "..."`.

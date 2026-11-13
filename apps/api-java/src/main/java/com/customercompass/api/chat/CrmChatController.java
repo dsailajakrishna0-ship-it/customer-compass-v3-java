@@ -11,6 +11,7 @@ import com.customercompass.api.rag.EmbeddingsUnavailableException;
 import com.customercompass.api.rag.RagContext;
 import com.customercompass.api.rag.RetrievedChunk;
 import com.customercompass.api.rag.Retriever;
+import com.customercompass.api.rag.VectorIndex;
 import com.customercompass.api.web.ApiException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -147,6 +148,9 @@ class CrmChatController {
       throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
     } catch (RuntimeException e) {
       log.error("crm_chat_failed", e);
+      if (VectorIndex.isUnavailable(e)) {
+        throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, VectorIndex.UNAVAILABLE_MESSAGE);
+      }
       throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "Could not answer the CRM question.");
     }
   }

@@ -84,6 +84,25 @@ public class VectorIndex {
     store = newStore();
   }
 
+  /** What a caller is told when Qdrant cannot be reached at all. */
+  public static final String UNAVAILABLE_MESSAGE =
+      "The vector store (Qdrant) is not reachable. Start it (just qdrant) and try again;"
+          + " the API reconnects by itself within a minute.";
+
+  /**
+   * True when the failure, or anything it was caused by, is gRPC saying the server is unavailable:
+   * Qdrant is not running, or not yet. Spring AI wraps such errors in several layers.
+   */
+  public static boolean isUnavailable(Throwable error) {
+    for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+      if (cause instanceof io.grpc.StatusRuntimeException grpc
+          && grpc.getStatus().getCode() == io.grpc.Status.Code.UNAVAILABLE) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /** How many chunks are stored, in total or for one document. */
   public long count(Long documentId) {
     Common.Filter filter =

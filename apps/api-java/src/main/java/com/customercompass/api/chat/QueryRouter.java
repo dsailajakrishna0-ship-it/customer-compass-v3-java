@@ -63,15 +63,7 @@ public class QueryRouter {
 
   /** The first company whose name is clearly referenced in the text, or null. */
   static CompanyRef findMentionedCompany(String text, List<CompanyRef> companies) {
-    String lower = text.toLowerCase(Locale.ROOT);
-    for (CompanyRef company : companies) {
-      for (String word : company.name().split("\\s+")) {
-        if (word.length() > 3 && lower.contains(word.toLowerCase(Locale.ROOT))) {
-          return company;
-        }
-      }
-    }
-    return null;
+    return CompanyRef.findMentioned(text, companies);
   }
 
   private static boolean matchesAny(String text, List<String> keywords) {

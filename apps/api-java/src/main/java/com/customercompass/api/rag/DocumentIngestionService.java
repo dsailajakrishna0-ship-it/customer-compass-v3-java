@@ -166,6 +166,9 @@ public class DocumentIngestionService {
    * request detail, so it is replaced by the exception type; the full error is in the API log.
    */
   private static String safeMessage(Exception e) {
+    if (VectorIndex.isUnavailable(e)) {
+      return VectorIndex.UNAVAILABLE_MESSAGE;
+    }
     if (e instanceof EmbeddingsUnavailableException || e instanceof IllegalArgumentException) {
       return e.getMessage();
     }
