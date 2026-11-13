@@ -68,7 +68,7 @@ Free models are sometimes slow or rate-limited. A 503 that names the models trie
 
 1. Open <http://localhost:5173>. The company list loads. Click **Acme Fabrication**: its contacts, deals and interactions show.
 2. Open the chat. Mode **General chat**: `What is the capital of France?` gives an answer and a usage footer.
-3. Mode **Document knowledge (RAG)**: ask the Clause 7.3 question. The answer has a numbered source list and the PDF source line ends "page 2". Then the Excel question: its source line ends "sheet Rate card".
+3. Mode **Document knowledge (RAG)**: type `What does Clause 7.3 say about the renewal notice period?`. The answer says 60 days' written notice, with a numbered source list, and the PDF source line ends "page 2". Then type `Which plan costs 3400 USD a month and how many vehicles does it track?`: Fleet Plus, 250 vehicles, and its source line ends "sheet Rate card".
 4. Mode **CRM copilot (facts + documents)**: `What open deals does Acme Fabrication have?` shows a facts panel. Then `What did Acme Fabrication say about onboarding in their emails?` shows sources, all Acme's.
 5. **Expected to fail** (they belong to later stages): the **Tool-calling copilot** (J4) and the **Account follow-up agent** (J5).
 6. The prompt-injection tag ("Potential prompt injection detected") does not appear yet; the guard is stage J6.
