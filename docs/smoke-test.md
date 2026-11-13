@@ -17,12 +17,7 @@ Run these from the repository root. Each row is a check; run the command in the 
 | E | **Documents ingested:** `curl -s localhost:26333/collections/java_document_chunks \| python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["points_count"])'` prints `33` | `curl -s -X POST localhost:8001/api/v1/documents/ingest` (10 to 30 seconds with real Gemini) |
 | F | **Web app:** `curl -s -o /dev/null -w '%{http_code}\n' localhost:5173` prints `200` | In terminal C: `cd apps/web && npm ci && npm run dev` (leave it running) |
 
-Two helpers for terminal B (define them once per terminal):
-
-```bash
-rag() { curl -s -X POST localhost:8001/api/v1/chat/rag -H 'Content-Type: application/json' -d "{\"messages\":[{\"role\":\"user\",\"content\":\"$1\"}]}" | python3 -m json.tool; }
-crm() { curl -s -X POST localhost:8001/api/v1/chat/crm -H 'Content-Type: application/json' -d "{\"messages\":[{\"role\":\"user\",\"content\":\"$1\"}]}" | python3 -m json.tool; }
-```
+Asking a question is one command from the repository root (no shell functions to define, and quotes or apostrophes in the question are fine): `just rag "..."` for the document chat, `just crm "..."` for the CRM copilot and `just chat "..."` for the general chat. They print the JSON answer.
 
 The Python edition's API uses port 8001 too: stop it first (`docker compose stop api-py` in that repo) if it is running.
 
@@ -52,20 +47,20 @@ Free models are sometimes slow or rate-limited. A 503 that names the models trie
 
 **Needs:** rows A, B, C, D, E.
 
-1. `rag "What does Clause 7.3 say about the renewal notice period?"`: 60 days' notice, and the first citation has `"page": 2`.
-2. `rag "Which plan costs 3400 USD a month and how many vehicles does it track?"`: Fleet Plus, 250 vehicles, the first citation has `"sheet": "Rate card"`.
-3. `rag "How often are accounts with access to clinical data reviewed?"`: every quarter, a citation with no `page` or `sheet`.
-4. `rag "What is the capital of France?"`: "I could not find any ingested documents relevant to that question.", `"citations": []`, and no `usage` (the model was not called).
+1. `just rag "What does Clause 7.3 say about the renewal notice period?"`: 60 days' notice, and the first citation has `"page": 2`.
+2. `just rag "Which plan costs 3400 USD a month and how many vehicles does it track?"`: Fleet Plus, 250 vehicles, the first citation has `"sheet": "Rate card"`.
+3. `just rag "How often are accounts with access to clinical data reviewed?"`: every quarter, a citation with no `page` or `sheet`.
+4. `just rag "What is the capital of France?"`: "I could not find any ingested documents relevant to that question.", `"citations": []`, and no `usage` (the model was not called).
 
 ## 4. The CRM copilot (J3.4)
 
 **Needs:** rows A, B, C, D, E.
 
-1. `crm "What open deals does Acme Fabrication have?"`: Premium Operations Plan renewal, $48,000.00, 2026-10-15; `facts` is filled in; `"citations": []`; `"scopedCompany": "Acme Fabrication"`.
-2. `crm "What did Acme Fabrication say about onboarding in their emails?"`: every citation has `"companyName": "Acme Fabrication"` or `null`. Never another company.
-3. `crm "What did Vertex Analytics say about rate limits in their emails?"`: citations from Vertex only, possibly one with `null` (a product overview).
-4. `crm "Which deals did Riverside Health Group discuss on the call?"`: `facts` for Riverside (Fleet Visibility expansion, 40000.00) plus citations from Riverside.
-5. `crm "What open deals does a company we have never heard of have?"`: "I could not find a matching company or deal data for that question.", `"facts": null`, no `usage`.
+1. `just crm "What open deals does Acme Fabrication have?"`: Premium Operations Plan renewal, $48,000.00, 2026-10-15; `facts` is filled in; `"citations": []`; `"scopedCompany": "Acme Fabrication"`.
+2. `just crm "What did Acme Fabrication say about onboarding in their emails?"`: every citation has `"companyName": "Acme Fabrication"` or `null`. Never another company.
+3. `just crm "What did Vertex Analytics say about rate limits in their emails?"`: citations from Vertex only, possibly one with `null` (a product overview).
+4. `just crm "Which deals did Riverside Health Group discuss on the call?"`: `facts` for Riverside (Fleet Visibility expansion, 40000.00) plus citations from Riverside.
+5. `just crm "What open deals does a company we have never heard of have?"`: "I could not find a matching company or deal data for that question.", `"facts": null`, no `usage`.
 
 ## 5. The web app (10 minutes, the most valuable part)
 
