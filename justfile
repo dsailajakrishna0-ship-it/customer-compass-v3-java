@@ -108,6 +108,18 @@ eval-multi-record:
 supervise question:
     @python3 contracts/http/ask.py supervise "$1"
 
+# E3.3: the fixed pipeline against the supervisor, replayed from the recorded runs (no keys, no network)
+eval-supervisor:
+    @python3 evals/supervisor/compare_agents.py
+
+# E3.3: replay and fail if the counts differ from evals/supervisor/baseline.json
+eval-supervisor-check:
+    @python3 evals/supervisor/compare_agents.py --check
+
+# E3.3: run the cases against the running API (CRM documents and agri-supply ingested, keys set) for whatever is not recorded yet. API_URL, MODEL and EMBEDDING_MODEL are optional
+eval-supervisor-record:
+    @python3 evals/supervisor/compare_agents.py --record
+
 # ask the tool-calling copilot (the model calls tools through MCP; a write needs your "yes" in the next question). Example: just tools "What are Acme Fabrication's open deals?"  (MODEL=<id> picks a model)
 tools question:
     @python3 contracts/http/ask.py tools "$1"
