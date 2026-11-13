@@ -1,6 +1,6 @@
 # Stage E3: a supervisor with specialist agents (Java extension)
 
-Not a port: the Java edition's own extension (see [java-extensions.md](../java-extensions.md)). Decisions: [ADR 0020](../adr/0020-supervisor-with-specialist-agents.md). Cut into slices: **E3.1** the supervisor graph (this page), E3.2 more autonomy, E3.3 a comparison with the fixed pipeline.
+Not a port: the Java edition's own extension (see [java-extensions.md](../java-extensions.md)). Decisions: [ADR 0020](../adr/0020-supervisor-with-specialist-agents.md). Cut into slices: **E3.1** the supervisor graph (this page), **E3.2** an answer team and supervisor-written queries (below), E3.3 a comparison with the fixed pipeline.
 
 ## E3.1: `POST /api/v1/agent/supervise`
 
@@ -53,3 +53,36 @@ An unreadable or disallowed answer is replaced by the first allowed entry (the f
 5. **Specialists are reusable.** Four of the five are the fixed pipeline's own nodes; the fifth (the researcher) uses the multi-source search of E1. Adding a specialist is adding a node, a precondition and a line in the prompt.
 6. **Decisions are data.** The response lists every turn: who chose (`supervisor` or `code`), why, what was allowed, and what the model proposed when it was overridden.
 7. **The human gate stays.** However the work was coordinated, nothing is written until `POST /agent/confirm` with a yes.
+
+## E3.2: an answer team and the supervisor's own search words
+
+Decisions: [ADR 0021](../adr/0021-answer-team-and-supervisor-queries.md). The same route, `POST /api/v1/agent/supervise`, now handles two kinds of request; code decides which team runs (the rule that already separated a follow-up from a simple question).
+
+```mermaid
+flowchart TD
+  req["request"] --> kind{"follow-up or question?<br/>(code)"}
+  kind -->|follow-up| team1["task team: crm_facts, researcher, analyst, reviewer, drafter<br/>approval gate"]
+  kind -->|question| team2["answer team: crm_facts, researcher, answerer"]
+  team2 --> sup{"supervisor:<br/>search again (own words)<br/>or answer now"}
+  sup -->|researcher + query| res["researcher"]
+  res --> sup
+  sup -->|answerer| ans["answerer<br/>cites [E1]...; no valid citation = fixed 'not found' text"]
+  ans --> out["status answered<br/>message, grounded, citations, supervisor"]
+```
+
+| State of a question | Allowed |
+| --- | --- |
+| customer not loaded | `crm_facts` |
+| no research yet | `researcher` (one choice: no model call) |
+| researched | `answerer`, and `researcher` once more (a real choice: the supervisor is asked) |
+| answered | `FINISH` |
+
+### Concepts
+
+1. **Route to a team, not only to a step.** The supervisor coordinates different sets of specialists depending on the kind of work. Here the team is chosen in code, because the approval gate must never depend on a model's mood.
+2. **A decision with content.** The supervisor does not only pick a name: it can write the words the researcher searches for. Model-written text is still untrusted input: trimmed, capped and only honoured for the researcher.
+3. **Fail closed on grounding.** An answer is shown only if it cites evidence that exists; otherwise the fixed "could not find" text is shown and `grounded` is false.
+4. **No customer is fine for a question** and not for a follow-up: the same specialist, different rules per team.
+5. **Decisions stay visible.** `supervisor.turns` records who chose each step, why, and the search words.
+6. **What was left out.** Parallel specialists need a state merge for the evidence list; with such short specialists it would only buy latency.
+

@@ -9,7 +9,9 @@ public enum AgentRole {
   REVIEWER("reviewer"),
   TASK_DRAFTER("task_drafter"),
   /** The supervisor of the specialist team (the E3 extension). */
-  SUPERVISOR("supervisor");
+  SUPERVISOR("supervisor"),
+  /** Answers a plain question from the evidence (the E3.2 extension). */
+  ANSWERER("answerer");
 
   private final String wireName;
 

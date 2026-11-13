@@ -141,7 +141,7 @@ class AgentsTests {
             case ANALYST -> analyst;
             case REVIEWER -> reviewer;
             case TASK_DRAFTER -> drafter;
-            case SUPERVISOR -> throw new IllegalStateException("not used by these tests");
+            case SUPERVISOR, ANSWERER -> throw new IllegalStateException("not used by these tests");
           });
     }
   }

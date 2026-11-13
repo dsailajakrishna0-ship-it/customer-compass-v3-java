@@ -45,6 +45,7 @@ final class AgentTestSupport {
     private final Deque<String> reviewer = new ArrayDeque<>();
     private final Deque<String> drafter = new ArrayDeque<>();
     private final Deque<String> supervisor = new ArrayDeque<>();
+    private final Deque<String> answerer = new ArrayDeque<>();
     volatile boolean down;
     volatile long delayMillis;
 
@@ -56,6 +57,8 @@ final class AgentTestSupport {
       reviewer.clear();
       drafter.clear();
       supervisor.clear();
+      answerer.clear();
+      answerer.add("Acme is a fabrication company [E1].");
       analyst.add(GOOD_RECOMMENDATION);
       reviewer.add(APPROVE);
       drafter.add(DRAFT);
@@ -78,6 +81,13 @@ final class AgentTestSupport {
     RoleModel supervisor(String... replies) {
       supervisor.clear();
       supervisor.addAll(List.of(replies));
+      return this;
+    }
+
+    /** What the answerer says (the plain-question team), in order. */
+    RoleModel answerer(String... replies) {
+      answerer.clear();
+      answerer.addAll(List.of(replies));
       return this;
     }
 
@@ -106,6 +116,9 @@ final class AgentTestSupport {
       } else if (system.startsWith("You are the Supervisor")) {
         calls.add("supervisor");
         queue = supervisor.isEmpty() ? new ArrayDeque<>(List.of("no idea")) : supervisor;
+      } else if (system.startsWith("You are the Answerer")) {
+        calls.add("answerer");
+        queue = answerer;
       } else if (system.startsWith("You are the Reviewer")) {
         calls.add("reviewer");
         queue = reviewer;

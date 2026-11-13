@@ -27,7 +27,7 @@ The account follow-up agent (J5, ADR 0011) is a fixed pipeline: classify, gather
 
 ## Consequences
 
-- With the allowed lists, the supervisor can only reorder two optional steps. That is deliberate for a first slice: autonomy within guardrails. Widening it (more specialists, parallel work, a specialist that answers a question directly) is what E3.2 would add.
+- With the allowed lists, the supervisor can only reorder two optional steps. That is deliberate for a first slice: autonomy within guardrails. E3.2 widens it (an answer team and the supervisor writing its own search words; ADR 0021); parallel specialists are still left out.
 - A run costs the pipeline's model calls plus one supervisor call per genuine choice (usually one or two); `supervisor.modelDecisions` and `codeDecisions` count them.
 - Every decision is in the response, so a reader can see why the researcher ran, why the supervisor's answer was overridden, or why a run stopped.
 - Counting steps: the step budget covers the specialists' steps (four per allowed turn), the turn limit covers the supervisor's decisions.
