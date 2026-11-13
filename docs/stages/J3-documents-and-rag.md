@@ -1,6 +1,6 @@
 # Stage J3: documents and RAG
 
-Ports Python Stage 4 (ingestion, retrieval, `/chat/rag`, `/chat/crm`). Decisions: [ADR 0004](../adr/0004-documents-and-vector-store.md). Cut into slices: **J3.1** ingestion of Markdown (this page), J3.2 PDF, Word and Excel with page and sheet in citations, J3.3 retrieval and `POST /chat/rag`, J3.4 `POST /chat/crm`, **J3.5** the optional reranker (below), J3.6 hybrid search (planned).
+Ports Python Stage 4 (ingestion, retrieval, `/chat/rag`, `/chat/crm`). Decisions: [ADR 0004](../adr/0004-documents-and-vector-store.md). Cut into slices: **J3.1** ingestion of Markdown (this page), J3.2 PDF, Word and Excel with page and sheet in citations, J3.3 retrieval and `POST /chat/rag`, J3.4 `POST /chat/crm`, **J3.5** the optional reranker (below), **J3.6** hybrid search (below).
 
 ## J3.1: ingest Markdown documents
 
@@ -190,3 +190,37 @@ flowchart LR
 2. **Optional enrichment never breaks the product.** Every failure falls back to the first stage's order.
 3. **Do not trust the reply's order.** Sort by score, drop duplicates and out-of-range indexes.
 4. **Keys stay out of logs.** Only the error type and status are logged.
+
+## J3.6: hybrid search
+
+Decisions: [ADR 0016](../adr/0016-hybrid-search-keyword-collection.md).
+
+```mermaid
+flowchart TD
+  ingest["ingestion"] --> chunks[("chunks collection<br/>dense vector + payload")]
+  ingest --> kw[("chunks_bm25 collection<br/>BM25 sparse vector + company_id")]
+  q["question"] --> d["dense search<br/>top N, no floor"]
+  q --> k["keyword search<br/>top N, same filter"]
+  chunks --> d
+  kw --> k
+  d --> rrf["reciprocal rank fusion<br/>k = 60"]
+  k --> rrf
+  rrf --> floor["similarity floor 0.45<br/>(cosine; computed from the stored vector for keyword-only hits)"]
+  floor --> rr["optional reranker (J3.5)"]
+  rr --> out["top k chunks"]
+```
+
+| Piece | File | Job | Python twin |
+| --- | --- | --- | --- |
+| Keyword vectors | `rag/Sparse.java` | tokenize, hash, BM25 weights | `rag/sparse.py` |
+| Keyword collection | `rag/KeywordIndex.java`, `VectorIndex.recreate` | create with the IDF modifier, store, search, fetch | `rag/qdrant_store.py` |
+| Fusion and mode | `rag/Retriever.java` (`hybrid`, `rrfFuse`, `cosine`) | the two searches, merge, floor | `rag/retrieve.py` |
+| Settings | `rag/RetrievalProperties.java` | `RETRIEVAL_MODE`, `RRF_K` | `config.py` |
+
+### Concepts
+
+1. **Meaning and exact words fail differently.** Embeddings blur a clause number; keywords miss a paraphrase. Using both covers each other's blind spot.
+2. **BM25 in two halves.** Term frequency is computed here per chunk; rarity (IDF) is applied by Qdrant across the collection.
+3. **Fuse ranks, not scores.** Cosine and BM25 are on different scales; reciprocal rank fusion only uses positions, so there is nothing to tune.
+4. **One floor for both modes.** A keyword-only hit is scored by meaning too, so "no relevant source" still means no sources.
+5. **Measure before switching the default.** In V3's own evals hybrid was slightly worse than dense on our golden set; that is why the default is `dense`.

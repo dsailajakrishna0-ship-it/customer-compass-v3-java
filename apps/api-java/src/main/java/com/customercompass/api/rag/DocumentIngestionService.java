@@ -39,8 +39,11 @@ public class DocumentIngestionService {
   private final JdbcClient jdbc;
   private final RagProperties properties;
   private final VectorIndex index;
+  private final KeywordIndex keywords;
 
-  public DocumentIngestionService(JdbcClient jdbc, RagProperties properties, VectorIndex index) {
+  public DocumentIngestionService(
+      JdbcClient jdbc, RagProperties properties, VectorIndex index, KeywordIndex keywords) {
+    this.keywords = keywords;
     this.jdbc = jdbc;
     this.properties = properties;
     this.index = index;
@@ -89,6 +92,7 @@ public class DocumentIngestionService {
                   metadata(document, documentId, companyId, piece)));
         }
         index.store().add(points); // embeds every chunk, then stores vector and payload
+        keywords.add(points); // and the keyword vector of each chunk, under the same id
         chunksCreated += points.size();
         documentsProcessed++;
       }
