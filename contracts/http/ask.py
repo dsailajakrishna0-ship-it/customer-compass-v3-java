@@ -3,7 +3,7 @@
 
     python3 contracts/http/ask.py rag "What does Clause 7.3 say about the renewal notice period?"
 
-The route is chat, rag, crm, tools, agent or multi (the Java extension: STRATEGY=route|all|agent). The address is http://localhost:8001 unless API_URL says otherwise.
+The route is chat, rag, crm, tools, agent, multi (the Java extension: STRATEGY=route|all|agent) or supervise (the Java extension: a supervisor with specialist agents). The address is http://localhost:8001 unless API_URL says otherwise.
 Optional: MODEL=<model id> asks a particular model; MCP_SERVER=<id> picks the tool server for tools.
 The question is built into JSON here, so quotes and apostrophes in it need no escaping in the shell.
 Standard library only. Exit code 1 when the API answers with an error (the answer is still printed).
@@ -15,7 +15,7 @@ import sys
 import urllib.error
 import urllib.request
 
-ROUTES = {"chat": "/api/v1/chat", "rag": "/api/v1/chat/rag", "crm": "/api/v1/chat/crm", "tools": "/api/v1/chat/tools", "agent": "/api/v1/agent/recommend", "multi": "/api/v1/chat/multi"}
+ROUTES = {"chat": "/api/v1/chat", "rag": "/api/v1/chat/rag", "crm": "/api/v1/chat/crm", "tools": "/api/v1/chat/tools", "agent": "/api/v1/agent/recommend", "multi": "/api/v1/chat/multi", "supervise": "/api/v1/agent/supervise"}
 
 
 def main(argv: list[str]) -> int:
@@ -24,7 +24,7 @@ def main(argv: list[str]) -> int:
         return 2
     base = os.environ.get("API_URL", "http://localhost:8001").rstrip("/")
     # the agent takes one "message"; the chat routes take a list of messages
-    payload = {"message": argv[2]} if argv[1] == "agent" else {"messages": [{"role": "user", "content": argv[2]}]}
+    payload = {"message": argv[2]} if argv[1] in ("agent", "supervise") else {"messages": [{"role": "user", "content": argv[2]}]}
     if os.environ.get("MODEL"):
         payload["model"] = os.environ["MODEL"]
     if argv[1] == "multi" and os.environ.get("STRATEGY"):

@@ -10,9 +10,9 @@ Several knowledge bases (for example the CRM documents and a farm-supply handboo
 
 | Slice | What | Status |
 | --- | --- | --- |
-| E1.1 | A knowledge-base registry, a second corpus with its own collection, `GET /knowledge-bases`, `POST /knowledge-bases/{id}/ingest`, `POST /knowledge-bases/{id}/search`. [ADR 0017](adr/0017-knowledge-bases.md), [guide](stages/E1-multi-source-rag.md) | In review |
-| E1.2 | Three ways to decide where to search, behind `POST /chat/multi`: a router picks, search everything and merge (reciprocal rank fusion, then the optional reranker), or the model picks through a tool argument. [ADR 0018](adr/0018-multi-source-routing-strategies.md) | In review |
-| E1.3 | A comparison of the three on 24 labelled questions (one corpus, both, neither), replayable without keys; `just eval-multi`. [ADR 0019](adr/0019-multi-source-strategy-results.md) | In review |
+| E1.1 | A knowledge-base registry, a second corpus with its own collection, `GET /knowledge-bases`, `POST /knowledge-bases/{id}/ingest`, `POST /knowledge-bases/{id}/search`. [ADR 0017](adr/0017-knowledge-bases.md), [guide](stages/E1-multi-source-rag.md) | Merged |
+| E1.2 | Three ways to decide where to search, behind `POST /chat/multi`: a router picks, search everything and merge (reciprocal rank fusion, then the optional reranker), or the model picks through a tool argument. [ADR 0018](adr/0018-multi-source-routing-strategies.md) | Merged |
+| E1.3 | A comparison of the three on 24 labelled questions (one corpus, both, neither), replayable without keys; `just eval-multi`. [ADR 0019](adr/0019-multi-source-strategy-results.md) | Merged |
 
 ## New routes and settings (E1.1)
 
@@ -25,3 +25,23 @@ Several knowledge bases (for example the CRM documents and a farm-supply handboo
 | `knowledge-bases.extra[]` (`application.yml`) | `id`, `label`, `description`, `source-dir` of each extra knowledge base |
 | `KB_AGRI_SUPPLY_DIR` | Folder of the sample farm-supply handbook (default: `sample-data/knowledge-bases/agri-supply`) |
 | `modelCalls` in `routing` | How many model calls the answer cost (router, tool rounds, answer) |
+
+## E2 (reserved)
+
+A second vector database for multi-source RAG (Qdrant first, Weaviate second) and a store comparison. Parked by the owner; not started.
+
+## E3: a supervisor with specialist agents
+
+A coordinator that chooses, turn by turn, which specialist works next, with its choices enforced in code. Different from the fixed pipeline of the follow-up agent (J5).
+
+| Slice | What | Status |
+| --- | --- | --- |
+| E3.1 | `POST /agent/supervise`: a LangGraph4j supervisor graph over five specialists (CRM facts, researcher over all knowledge bases, analyst, reviewer, drafter), allowed-lists enforced in code, the same approval gate. [ADR 0020](adr/0020-supervisor-with-specialist-agents.md), [guide](stages/E3-supervisor.md) | In review |
+| E3.2 | More autonomy: a specialist that answers a question directly, parallel specialists | Planned |
+| E3.3 | A comparison of the supervisor and the fixed pipeline on the same cases | Planned |
+
+| Route or setting | What it does |
+| --- | --- |
+| `POST /api/v1/agent/supervise` | The request of `/agent/recommend`; the answer adds `supervisor` (every decision) and waits at the same gate, so `/agent/confirm` resumes it |
+| `SUPERVISOR_MAX_TURNS` (`supervisor.max-turns`) | How often the supervisor may decide (default 10) |
+

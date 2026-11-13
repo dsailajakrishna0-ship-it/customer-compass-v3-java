@@ -458,7 +458,7 @@ public class AgentWorkflow {
    * The response of a completed run. The gate step is last: nothing was written, the user is asked.
    */
   @SuppressWarnings("unchecked")
-  private Map<String, Object> completed(FlowState state, RunContext ctx) {
+  Map<String, Object> completed(FlowState state, RunContext ctx) {
     var company = state.<Map<String, Object>>value("company").orElseThrow();
     var recommendation = state.<Map<String, Object>>value("recommendation").orElseThrow();
     var review = state.<Map<String, Object>>value("review").orElseThrow();
@@ -506,7 +506,7 @@ public class AgentWorkflow {
   }
 
   /** route, status and trace first, then the extras in the order given. */
-  private static Map<String, Object> response(String status, Trace trace, Object... extras) {
+  static Map<String, Object> response(String status, Trace trace, Object... extras) {
     var body = new LinkedHashMap<String, Object>();
     body.put("route", "agent");
     body.put("status", status);
@@ -520,7 +520,7 @@ public class AgentWorkflow {
   // ------------------------------------------------------------------------------ helpers
 
   /** One audit event per match, as plain data so the run's state can be saved. */
-  private static List<Map<String, Object>> eventsOf(PromptGuard.Finding finding, String location) {
+  static List<Map<String, Object>> eventsOf(PromptGuard.Finding finding, String location) {
     var out = new ArrayList<Map<String, Object>>();
     for (int i = 0; i < finding.matchedPatterns().size(); i++) {
       var event = new LinkedHashMap<String, Object>();
@@ -536,7 +536,7 @@ public class AgentWorkflow {
   }
 
   /** Stored text (an interaction, a document) is scanned and cleaned before any agent reads it. */
-  private static void addScanned(
+  static void addScanned(
       List<Map<String, Object>> items,
       List<Map<String, Object>> events,
       String source,
@@ -604,7 +604,7 @@ public class AgentWorkflow {
     return value == null ? "None" : String.valueOf(value);
   }
 
-  private static <T extends Throwable> T find(Throwable error, Class<T> type) {
+  static <T extends Throwable> T find(Throwable error, Class<T> type) {
     for (Throwable cause = error; cause != null; cause = cause.getCause()) {
       if (type.isInstance(cause)) {
         return type.cast(cause);
@@ -617,7 +617,7 @@ public class AgentWorkflow {
    * The failure the caller should see: a model or embeddings problem as it is, anything else
    * wrapped.
    */
-  private static RuntimeException unwrap(ExecutionException error) {
+  static RuntimeException unwrap(ExecutionException error) {
     for (Throwable cause = error; cause != null; cause = cause.getCause()) {
       if (cause instanceof com.customercompass.api.llm.LlmUnavailableException llm) {
         return llm;

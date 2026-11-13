@@ -7,7 +7,9 @@ package com.customercompass.api.agent;
 public enum AgentRole {
   ANALYST("analyst"),
   REVIEWER("reviewer"),
-  TASK_DRAFTER("task_drafter");
+  TASK_DRAFTER("task_drafter"),
+  /** The supervisor of the specialist team (the E3 extension). */
+  SUPERVISOR("supervisor");
 
   private final String wireName;
 
