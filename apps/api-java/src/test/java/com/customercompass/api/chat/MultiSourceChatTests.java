@@ -241,6 +241,7 @@ class MultiSourceChatTests {
     assertThat(citations(body))
         .allMatch(c -> ((String) c.get("sourcePath")).contains("knowledge-bases/agri-supply/"));
     assertThat(model.roles).containsExactly("router", "answer");
+    assertThat(routing(body)).containsEntry("modelCalls", 2);
   }
 
   @Test
@@ -280,6 +281,7 @@ class MultiSourceChatTests {
     assertThat(citations(body)).isEmpty();
     assertThat(routing(body)).containsEntry("searched", List.of());
     assertThat(model.roles).containsExactly("router");
+    assertThat(routing(body)).containsEntry("modelCalls", 1);
   }
 
   @Test
@@ -310,6 +312,7 @@ class MultiSourceChatTests {
         .containsExactlyInAnyOrder("crm", "agri-supply");
     assertThat(citations(body)).extracting(c -> c.get("number")).containsExactly(1, 2, 3, 4);
     assertThat(model.roles).containsExactly("answer");
+    assertThat(routing(body)).containsEntry("modelCalls", 1);
   }
 
   // ------------------------------------------------------------------ agent
@@ -339,6 +342,7 @@ class MultiSourceChatTests {
     assertThat(cites.get(0)).containsEntry("knowledgeBase", "agri-supply");
     assertThat(cites.get(cites.size() - 1)).containsEntry("knowledgeBase", "crm");
     assertThat(model.roles).containsExactly("agent", "agent", "agent");
+    assertThat(routing).containsEntry("modelCalls", 3);
   }
 
   @Test

@@ -146,7 +146,9 @@ class MultiSourceChatController {
     var routing = new LinkedHashMap<String, Object>();
     routing.put("strategy", strategy);
     List<KnowledgeBase> targets;
+    int modelCalls = 0;
     if (strategy.equals("route")) {
+      modelCalls++; // the router
       MultiSourceSearch.Route route =
           search.route(questionFinding.neutralizedText(), request.model());
       targets = route.ids().stream().map(id -> bases.find(id).orElseThrow()).toList();
@@ -161,6 +163,7 @@ class MultiSourceChatController {
         targets.isEmpty() ? List.of() : search.searchAll(question, targets, TOP_K);
     var report = PromptGuard.report(java.util.Map.entry(questionFinding, "user_input"));
     if (found.isEmpty()) {
+      routing.put("modelCalls", modelCalls);
       var none = new LinkedHashMap<String, Object>();
       none.put("message", NOTHING_FOUND);
       none.put("citations", List.of());
@@ -185,6 +188,7 @@ class MultiSourceChatController {
         gateway.generate(RagChatController.GROUNDED_SYSTEM_PROMPT, augmented, request.model());
     ChatGuard.Outcome outcome =
         guard.finalizeAnswer("chat/multi", PromptGuard.report(findings), result.content());
+    routing.put("modelCalls", modelCalls + 1); // plus the answer
     var response = new LinkedHashMap<String, Object>();
     response.put("message", outcome.answer());
     response.put("citations", citations(found));
@@ -216,7 +220,9 @@ class MultiSourceChatController {
 
     GenerationResult result = null;
     boolean answered = false;
+    int modelCalls = 0;
     for (int round = 0; round < MAX_TOOL_ITERATIONS; round++) {
+      modelCalls++;
       result = gateway.generate(system, conversation, request.model(), tools, "auto");
       if (result.toolCalls().isEmpty()) {
         answered = true;
@@ -232,6 +238,7 @@ class MultiSourceChatController {
     }
     if (!answered) {
       conversation.add(new ChatMessage("user", MAX_CALLS_MESSAGE));
+      modelCalls++;
       result = gateway.generate(system, conversation, request.model(), tools, "none");
     }
     ChatGuard.Outcome outcome =
@@ -240,6 +247,7 @@ class MultiSourceChatController {
     routing.put("strategy", "agent");
     routing.put("searched", searchedIds);
     routing.put("toolsUsed", used);
+    routing.put("modelCalls", modelCalls);
     var response = new LinkedHashMap<String, Object>();
     response.put("message", outcome.answer());
     response.put("citations", citations(all));

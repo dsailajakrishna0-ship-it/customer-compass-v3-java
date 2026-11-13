@@ -1,0 +1,2539 @@
+{
+ "meta": {
+  "model": "meta-llama/llama-3.1-8b-instruct",
+  "embedding_model": "gemini-embedding-2",
+  "recorded": "2026-11-13"
+ },
+ "runs": {
+  "route": {
+   "mq-01": {
+    "ok": true,
+    "ms": 5081,
+    "message": "Maya Chen asked whether the premium tier includes onboarding support for two additional factory floors that Acme is bringing online next quarter. [1]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "Both CRM and Agri-supply contain information about contracts and agreements.",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-02": {
+    "ok": true,
+    "ms": 6954,
+    "message": "Based on the provided context, Ravi Patel requested the following pricing breakdown:\n\n1. The current single-site premium rate\n2. The rate per additional site\n3. Whether a multi-site discount applies at three or more locations\n\n[1] Source: [crm] Volume discount request from Ravi Patel (email)",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "The question involves a customer request, which could be recorded in CRM or a pricing breakdown which could be related to a supply agreement in agri-supply.",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-03": {
+    "ok": true,
+    "ms": 5873,
+    "message": "The \"Export full history\" button times out because it builds the CSV synchronously in the request instead of generating it in the background. [1]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-support-export-timeout.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "vertex-support-rate-limit.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "Both CRM and agri-supply knowledge bases contain information about business operations and processes.",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-04": {
+    "ok": true,
+    "ms": 4911,
+    "message": "Carlos Mendez asked for pilot pricing for a 90-day trial covering the three busiest co-packer routes. [1]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "vertex-call-renewal.md"
+     }
+    ],
+    "searched": [
+     "crm"
+    ],
+    "modelCalls": 2,
+    "reason": "The question involves a customer's inquiry, which is likely stored in the CRM's customer emails or support tickets.",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-05": {
+    "ok": true,
+    "ms": 6245,
+    "message": "Based on the provided sources, the answer is:\n\nYes, the support package includes coverage during major holidays.\n\n[1] Source: [crm] Quarterly check-in with Elena Torres (note)\n\nThis source confirms that holiday coverage is included in the support package, as mentioned in the context.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "harborpine-note-checkin.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "harborpine-note-checkin.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "Both CRM and Agri-supply contain information about support packages",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-06": {
+    "ok": true,
+    "ms": 7305,
+    "message": "Based on the provided context, Jordan Brooks' top priorities for delivery visibility are:\n\n1. A single view that shows delivery status per fleet customer. [1]\n2. Alerts when a delivery is delayed beyond a configurable threshold. [1]\n3. The ability to share a read-only status link with the fleet customer directly, to reduce inbound \"where is my shipment\" calls. [1]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "northstar-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "The question involves delivery visibility which could be related to customer service in CRM and also to supply chain in agri-supply.",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-07": {
+    "ok": true,
+    "ms": 4982,
+    "message": "Three implementation sessions are included per year. [1]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "product-premium-operations-plan.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "Both CRM and Agri-supply knowledge bases contain information related to business operations and contracts.",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-08": {
+    "ok": true,
+    "ms": 4712,
+    "message": "According to the exit interview call [1], Summit Builders left due to a budget restructuring that resulted in a company-wide freeze on new vendor contracts. This was unrelated to any dissatisfaction with the product itself.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "summit-note-churn.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "summit-note-churn.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "Possible customer or supplier information",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-09": {
+    "ok": true,
+    "ms": 6595,
+    "message": "Based on the provided sources, the answer is:\n\nThe time after spraying before workers may enter the block without protective equipment is as follows:\n\n* Most fungicides in the Valley range have a 12 hour REI [2].\n* The copper-based products have 24 hours [2].\n* The concentrated insecticide OV-Insect-40 has 48 hours [2].\n\nSo, the answer depends on the specific product used.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "pesticide-reentry-intervals.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "summit-note-churn.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "pesticide-reentry-intervals.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "Both CRM and Agri-supply contain information about crop protection products and their re-entry intervals.",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-10": {
+    "ok": true,
+    "ms": 3089,
+    "message": "Seedlings must stay between 2 and 6 degrees Celsius from the warehouse to the customer door. [1]",
+    "citations": [
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "seed-lot-shelf-life.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     }
+    ],
+    "searched": [
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "cold chain for seedlings and biologicals",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-11": {
+    "ok": true,
+    "ms": 4547,
+    "message": "85 percent [2]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "seed-lot-shelf-life.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "Both CRM and agri-supply knowledge bases contain information related to seed and crop protection products.",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-12": {
+    "ok": true,
+    "ms": 5346,
+    "message": "The coverage was uneven because the sprayer had not been recalibrated to match the new low-drift nozzles, which required a different pressure setting (4.5 bar) to achieve the label flow rate. As a result, the outer rows received roughly 30 percent less product. [2]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "both contain information on equipment and processes that could affect coverage",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-13": {
+    "ok": true,
+    "ms": 3096,
+    "message": "Cold chain orders ship on Monday to Thursday only. [1]",
+    "citations": [
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     }
+    ],
+    "searched": [
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "cold chain for seedlings and biologicals",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-14": {
+    "ok": true,
+    "ms": 4764,
+    "message": "According to the provided context, the following products are allowed under the Willow Creek co-op's organic certification:\n\n1. Copper fungicide\n2. Sulphur products\n3. Biological controls\n\n[1]",
+    "citations": [
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "riverside-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     }
+    ],
+    "searched": [
+     "agri-supply",
+     "crm"
+    ],
+    "modelCalls": 2,
+    "reason": "the question is related to a specific business's certification and products",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-15": {
+    "ok": true,
+    "ms": 3504,
+    "message": "Within four hours, support lists every customer who received the lot, using the lot number on the delivery notes. [1]",
+    "citations": [
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     }
+    ],
+    "searched": [
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "The knowledge base contains information on the recall procedure.",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-16": {
+    "ok": true,
+    "ms": 4887,
+    "message": "A 2 percent discount applies when an invoice is paid within 10 days. [2]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "Both CRM and Agri-supply may contain information about payment terms and discounts",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-17": {
+    "ok": true,
+    "ms": 10002,
+    "message": "Based on the provided sources, here are the renewal notice and renewal terms for each agreement:\n\n1. Acme Fabrication service agreement:\n\t* Renewal notice: 60 days' written notice before the renewal date (Source: [1])\n\t* Renewal terms: Automatic renewal on 1 October for twelve months, with a price change for the renewal term that must be sent to the customer at least 90 days before the renewal date (Source: [1])\n2. Farm-supply supply agreement (Stonebridge Orchards):\n\t* Renewal notice: Automatic unless either party gives notice 60 days before the end of the agreement year (Source: [2])\n\t* Renewal terms: Prices for seed and biologicals are fixed for the season once the order is confirmed, and volume discount tiers stay the same (Source: [2])\n3. Premium Operations Plan (Riverside Health Group):\n\t* Renewal notice: Not specified (Source: [3])\n\t* Renewal terms: Not specified (Source: [3])\n\nNote that the renewal notice and renewal terms for the Premium Operations Plan are not specified in the provided sources.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "riverside-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "Both customer agreements and farm-supply supply agreements have renewal terms",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-18": {
+    "ok": true,
+    "ms": 10480,
+    "message": "Based on the provided sources, here's what I found:\n\nFor Acme Fabrication:\n\n* The current single-site premium rate is not specified, but it is mentioned that they will go from one site license to three under the Premium Operations Plan.\n* The rate per additional site is not specified, but it is mentioned that a multi-site discount applies.\n* The multi-site discount is not specified, but it is mentioned that a pricing breakdown should be sent to show whether a multi-site discount applies at three or more locations.\n\nFor Stonebridge Orchards:\n\n* The volume discount tiers are 5 percent above 20 tonnes and 8 percent above 40 tonnes of fertiliser.\n* Fuel and freight surcharges follow the quarterly index.\n* Prices for seed and biologicals are fixed for the season once the order is confirmed.\n* A 2 percent discount applies when an invoice is paid within 10 days.\n\n[1] [2] [3] [4]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "Both CRM and agri-supply knowledge bases contain information about business operations and customer relationships.",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-19": {
+    "ok": true,
+    "ms": 8615,
+    "message": "Based on the provided sources, here's how support handles a problem report for the Northstar alerting question and the sprayer calibration ticket:\n\nFor the Northstar alerting question [3]:\nSupport confirmed that delay alerts can be configured per fleet customer, not just globally, and that this is included in the base Fleet Visibility package with no additional cost.\n\nFor the sprayer calibration ticket [2]:\nSupport asked for specific details (ground speed, nozzle codes, and pressure used) to identify the cause of the issue (uneven coverage after sprayer calibration). They then provided a resolution, which included recalibrating the sprayer at 4.5 bar, re-treating the under-dosed rows within the re-entry window, and recording the new settings on the block board. No product credit was issued because the label rate was respected on the section.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "northstar-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-support-alerting.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "Both the Northstar alerting question and the sprayer calibration ticket are related to support handling.",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-20": {
+    "ok": true,
+    "ms": 11175,
+    "message": "Based on the provided sources, here is a comparison of the delivery and rollout timelines in the Fleet Visibility package with the farm-supply delivery windows:\n\nThe Fleet Visibility package does not provide specific information about delivery and rollout timelines. However, it does mention that a delivery is delayed beyond a configurable threshold, which suggests that there may be some flexibility in the delivery schedule.\n\nOn the other hand, the farm-supply delivery windows are quite specific:\n\n* Standard orders ship on Tuesdays and Fridays.\n* Cold chain orders ship Monday to Thursday only, so that a delivery never waits at a depot over a weekend.\n\nIt's worth noting that the Fleet Visibility package is a CRM solution, while the farm-supply delivery windows are related to the agricultural supply business. Therefore, it's not clear whether the delivery and rollout timelines in the Fleet Visibility package would be similar to or compatible with the farm-supply delivery windows.\n\nSources:\n\n[1] [crm] Discovery session with Jordan Brooks (note)\n[2] [agri-supply] Delivery windows and pallet rules (product)\n[3] [crm] Discovery call on supply-chain visibility (note)\n[4] [agri-supply] Cold chain handling for seedlings and biologicals (product)",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "northstar-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "Both knowledge bases contain information related to delivery timelines.",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-21": {
+    "ok": true,
+    "ms": 5033,
+    "message": "I don't have the information to answer that question based on the provided context. The context appears to be related to CRM (customer relationship management) and business operations, and does not contain any information about the capital of France.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "riverside-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "Neither knowledge base is specifically about geography or countries.",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-22": {
+    "ok": true,
+    "ms": 5687,
+    "message": "I don't have any information about baking a chocolate cake in the provided context. The context appears to be related to CRM (customer relationship management) and supply chain visibility, with sources from [crm] and [agri-supply]. I don't have any information about baking a chocolate cake in these sources.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "none of the knowledge bases are directly related to baking",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-23": {
+    "ok": true,
+    "ms": 4564,
+    "message": "I don't have any information about the weather in Chicago. The provided context is about customer support conversations, renewal planning, and product information, but it doesn't contain any data about the weather.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "northstar-support-alerting.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "Neither CRM nor agri-supply knowledge bases contain weather information.",
+    "tools": [],
+    "flagged": false
+   },
+   "mq-24": {
+    "ok": true,
+    "ms": 3784,
+    "message": "I don't have the answer to that question in the provided sources.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": "no specific knowledge about football World Cup",
+    "tools": [],
+    "flagged": false
+   }
+  },
+  "all": {
+   "mq-01": {
+    "ok": true,
+    "ms": 2641,
+    "message": "Maya Chen asked whether the premium tier includes onboarding support for two additional factory floors that Acme is bringing online next quarter. [1]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-02": {
+    "ok": true,
+    "ms": 3747,
+    "message": "Based on the provided context, Ravi Patel requested the following pricing breakdown:\n\n1. The current single-site premium rate\n2. The rate per additional site\n3. Whether a multi-site discount applies at three or more locations\n\nThis information was requested in two separate emails, [1] and [3].",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-03": {
+    "ok": true,
+    "ms": 2934,
+    "message": "The \"Export full history\" button times out because it builds the CSV synchronously in the request instead of generating it in the background. [1]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-support-export-timeout.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "vertex-support-rate-limit.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-04": {
+    "ok": true,
+    "ms": 2287,
+    "message": "A 90-day trial covering the three busiest co-packer routes. [1]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-05": {
+    "ok": true,
+    "ms": 5435,
+    "message": "Based on the provided context, I can answer the question as follows:\n\nAccording to [1] Source: [crm] Quarterly check-in with Elena Torres (note), holiday coverage is included in the support package.\n\nAdditionally, [3] Source: [crm] Quarterly check-in with Elena Torres (note) confirms that Elena Torres, the owner of Harbor & Pine, was assured that holiday coverage is included in the support package during the quarterly check-in call.\n\nTherefore, the answer is: Yes, the support package covers major holidays.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "harborpine-note-checkin.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "harborpine-note-checkin.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-06": {
+    "ok": true,
+    "ms": 4098,
+    "message": "Based on the provided context, Jordan Brooks' top priorities for delivery visibility are:\n\n1. A single view that shows delivery status per fleet customer. [3]\n2. Alerts when a delivery is delayed beyond a configurable threshold. [3]\n3. The ability to share a read-only status link with the fleet customer directly, to reduce inbound \"where is my shipment\" calls. [3]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "northstar-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-07": {
+    "ok": true,
+    "ms": 2135,
+    "message": "Three implementation sessions are included per year. [1]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "product-premium-operations-plan.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-08": {
+    "ok": true,
+    "ms": 3787,
+    "message": "According to Dana Whitfield, Summit Builders left due to a company-wide budget restructuring that froze all new vendor contracts, unrelated to any dissatisfaction with the product itself [1].",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "summit-note-churn.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "summit-note-churn.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-09": {
+    "ok": true,
+    "ms": 2716,
+    "message": "Based on the provided sources, the answer is:\n\nMost fungicides in the Valley range have a 12 hour REI [2].",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "pesticide-reentry-intervals.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "summit-note-churn.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "pesticide-reentry-intervals.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-10": {
+    "ok": true,
+    "ms": 2234,
+    "message": "Seedlings must be kept between 2 and 6 degrees Celsius during delivery. [2]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "northstar-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "seed-lot-shelf-life.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-11": {
+    "ok": true,
+    "ms": 2302,
+    "message": "According to the provided sources, the germination percentage needed to sell vegetable seed is 85% [2].",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "seed-lot-shelf-life.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-12": {
+    "ok": true,
+    "ms": 3181,
+    "message": "The coverage was uneven because the sprayer had been calibrated for the old nozzles at 3 bar, but the low-drift nozzles needed 4.5 bar to reach the label flow rate [2].",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-13": {
+    "ok": true,
+    "ms": 2669,
+    "message": "Based on the provided sources, cold chain orders ship on Monday to Thursday only, so that a delivery never waits at a depot over a weekend. [2]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "product-fleet-visibility.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-14": {
+    "ok": true,
+    "ms": 3995,
+    "message": "According to the source [2], the products allowed under the Willow Creek co-op's organic certification are:\n\n1. Copper fungicide\n2. Sulphur products\n3. Biological controls\n\nThese are the only products listed by the certifier as being allowed under the co-op's organic certification.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "riverside-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-15": {
+    "ok": true,
+    "ms": 2452,
+    "message": "Within four hours, customers who received the recalled lot must be listed using the lot number on the delivery notes. [2]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "riverside-support-compliance.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-16": {
+    "ok": true,
+    "ms": 2864,
+    "message": "A 2 percent discount applies when an invoice is paid within 10 days. [2]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-17": {
+    "ok": true,
+    "ms": 10412,
+    "message": "Based on the provided sources, here are the renewal notice and renewal terms that apply:\n\n1. For the Acme Fabrication service agreement, the renewal notice is 60 days' written notice before the renewal date (Source [1], Section 7.3), and the renewal term is for 12 months (Source [1], Section 7.3).\n2. For the farm-supply supply agreement with Stonebridge Orchards, the renewal notice is 60 days before the end of the agreement year (Source [2]), and the renewal term is automatic unless either party gives notice (Source [2]).\n3. For the Premium Operations Plan with Riverside Health Group, the renewal notice is not explicitly stated, but it is implied that it is 60 days before the end of the agreement year, similar to the farm-supply supply agreement (Source [3]).\n\nAs for the renewal terms, the following apply:\n\n* For the Acme Fabrication service agreement, a price change for the renewal term must be sent to the customer at least 90 days before the renewal date (Source [1], Section 7.4).\n* For the farm-supply supply agreement with Stonebridge Orchards, prices for seed and biologicals are fixed for the season once the order is confirmed (Source [2]).\n* For the Premium Operations Plan with Riverside Health Group, adding a second location under the same plan only requires a site-license add-on rather than a brand-new contract (Source [3]).",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "riverside-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-18": {
+    "ok": true,
+    "ms": 9349,
+    "message": "Based on the provided sources, here's what I can determine about volume discounts and pricing for Acme and Stonebridge Orchards:\n\nFor Acme Fabrication:\n\n* The current single-site premium rate is not specified in the provided sources.\n* The rate per additional site is not specified in the provided sources.\n* A multi-site discount applies at three or more locations, as per the volume discount request from Ravi Patel [1].\n\nFor Stonebridge Orchards:\n\n* The volume discount tiers are as follows: 5 percent above 20 tonnes and 8 percent above 40 tonnes of fertiliser [2].\n* Fuel and freight surcharges follow the quarterly index [2].\n* Prices for seed and biologicals are fixed for the season once the order is confirmed [2].\n* A 2 percent discount applies when an invoice is paid within 10 days [2].\n\nNote that the provided sources do not specify the current single-site premium rate for Acme Fabrication, so I am unable to provide a specific answer for that part of the question.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-19": {
+    "ok": true,
+    "ms": 9116,
+    "message": "Based on the provided sources, here's how support handles a problem report in the two scenarios:\n\n1. Northstar alerting question:\n\t* Support confirmed that alert thresholds are configurable per customer, not just globally.\n\t* This is included in the base Fleet Visibility package with no additional cost.\n\t* [3] Source: [crm] Pre-sales support conversation on alerting limits (support)\n2. Sprayer calibration ticket:\n\t* Support asked for specific details such as ground speed, nozzle codes, and pressure used.\n\t* The cause of the problem was identified as the sprayer being calibrated for the old nozzles at 3 bar, whereas the low-drift nozzles required 4.5 bar to reach the label flow rate.\n\t* The resolution involved recalibrating the sprayer at 4.5 bar, re-treating the under-dosed rows within the re-entry window, and recording the new settings on the block board.\n\t* [2] Source: [agri-supply] Support ticket, uneven coverage after sprayer calibration (support)",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "northstar-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-support-alerting.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-20": {
+    "ok": true,
+    "ms": 7467,
+    "message": "Based on the provided sources, I can compare the delivery and rollout timelines in the Fleet Visibility package with the farm-supply delivery windows as follows:\n\nThe Fleet Visibility package does not explicitly mention a delivery or rollout timeline. However, the discovery session with Jordan Brooks [1] implies that a proposal covering the Fleet Visibility rollout, including implementation timeline, is being requested.\n\nOn the other hand, the farm-supply delivery windows are specified in the [2] source: Standard orders ship on Tuesdays and Fridays, while cold chain orders ship Monday to Thursday only, so that a delivery never waits at a depot over a weekend.\n\nThere is no direct comparison to be made between the Fleet Visibility package and the farm-supply delivery windows, as the former does not provide specific delivery or rollout timelines.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "northstar-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-21": {
+    "ok": true,
+    "ms": 2355,
+    "message": "I'm not able to find the answer to your question in the provided sources.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "riverside-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-22": {
+    "ok": true,
+    "ms": 2295,
+    "message": "I don't have any information about baking a chocolate cake in the provided context.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-23": {
+    "ok": true,
+    "ms": 3053,
+    "message": "I'm not able to answer that question as it is not related to the provided context. The context appears to be about customer support and product information for a company, and does not mention the weather in Chicago.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "northstar-support-alerting.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-24": {
+    "ok": true,
+    "ms": 2683,
+    "message": "I don't have information about the 2018 football World Cup winner in the provided context.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   }
+  },
+  "agent": {
+   "mq-01": {
+    "ok": true,
+    "ms": 1390,
+    "message": "Maya Chen asked about the renewal of the Premium Operations Plan, specifically whether the premium tier includes onboarding support for two additional factory floors that Acme is bringing online next quarter. She also mentioned that the dashboard export feature has been slow for her team recently and asked whether that was a known issue.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "riverside-call-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "vertex-call-renewal.md"
+     }
+    ],
+    "searched": [
+     "crm"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "Maya Chen Premium Operations Plan renewal"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-02": {
+    "ok": true,
+    "ms": 2038,
+    "message": "Unfortunately, the search results do not contain the pricing breakdown details requested by Ravi Patel.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-rate-card.xlsx"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-rate-card.xlsx"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     }
+    ],
+    "searched": [
+     "crm"
+    ],
+    "modelCalls": 3,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "Ravi Patel pricing breakdown"
+     ],
+     [
+      "crm",
+      "Ravi Patel pricing breakdown details"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-03": {
+    "ok": true,
+    "ms": 1253,
+    "message": "The Export full history button times out because it builds the CSV synchronously in the request instead of generating it in the background. This is a known issue, and a workaround is to export in 30-day windows until a background-export feature ships [1]. Additionally, the default API rate limit (500 requests/minute) may be hit while running a bulk export of historical usage data, but a temporary rate-limit increase can be requested for scheduled bulk jobs with 24 hours' notice [2].",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-support-export-timeout.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "vertex-support-rate-limit.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-support-export-timeout.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "vertex-support-rate-limit.md"
+     }
+    ],
+    "searched": [
+     "crm"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "Export full history button time out"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-04": {
+    "ok": true,
+    "ms": 1570,
+    "message": "Based on the search results, it appears that Carlos Mendez asked about pricing for the Fleet Visibility pilot, specifically a 90-day trial covering three co-packer routes. According to [1], he mentioned that he needs to get pilot pricing before he can get sign-off to move forward. \n\nThe Fleet Visibility pilot pricing is not explicitly stated in the search results, but [3] provides a rate card for Northstar Logistics, which includes different plans with their respective monthly prices. However, it is unclear if this rate card is related to the Fleet Visibility pilot pricing.\n\nTherefore, the answer to the question is that Carlos Mendez asked about pricing for the Fleet Visibility pilot, but the specific pricing information is not available in the search results.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-rate-card.xlsx"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     }
+    ],
+    "searched": [
+     "crm"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "Carlos Mendez pilot pricing"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-05": {
+    "ok": true,
+    "ms": 1090,
+    "message": "Based on the search results, it appears that the support package does cover major holidays. According to the notes from the quarterly check-in with Elena Torres, it was confirmed that holiday coverage is included in the support package [1]. Additionally, the Premium Operations Plan overview states that standard support is included, which implies that it covers major holidays [4]. Therefore, the answer to the question is yes, the support package does cover major holidays [1, 4].",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "harborpine-note-checkin.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "crm",
+      "doc": "harborpine-note-checkin.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "product-premium-operations-plan.md"
+     }
+    ],
+    "searched": [
+     "crm"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "support package holidays"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-06": {
+    "ok": true,
+    "ms": 1469,
+    "message": "Based on the search results, Jordan Brooks' top priorities for delivery visibility are:\n\n1. A single view that shows delivery status per fleet customer. [1]\n2. Alerts when a delivery is delayed beyond a configurable threshold. [1]\n3. The ability to share a read-only status link with the fleet customer directly, to reduce inbound \"where is my shipment\" calls. [2]\n\nAdditionally, Jordan asked about configuring delay alerts per fleet customer, and we confirmed that alert thresholds are configurable per customer, not just globally, and that this is included in the base Fleet Visibility package with no add-on required. [3]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "northstar-note-discovery.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-note-discovery.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-support-alerting.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-support-alerting.md"
+     }
+    ],
+    "searched": [
+     "crm"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "Jordan Brooks delivery visibility priorities"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-07": {
+    "ok": true,
+    "ms": 1159,
+    "message": "Based on the search results, it appears that the Premium Operations Plan includes up to three implementation sessions per year at no extra cost.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "product-premium-operations-plan.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "product-premium-operations-plan.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     }
+    ],
+    "searched": [
+     "crm"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "implementation sessions per year"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-08": {
+    "ok": true,
+    "ms": 1148,
+    "message": "It appears that Summit Builders left due to a budget restructuring that froze all new vendor contracts company-wide. This was unrelated to any dissatisfaction with the product itself, and the team had found the evaluation period useful. They planned to revisit the product once the budget freeze lifts, likely in a future fiscal year. [1]",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "summit-note-churn.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "riverside-email-feedback.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-note-discovery.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "summit-note-churn.md"
+     }
+    ],
+    "searched": [
+     "crm"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "Summit Builders left"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-09": {
+    "ok": true,
+    "ms": 1195,
+    "message": "Based on the search results, the re-entry interval after spraying varies depending on the product used. Most fungicides in the Valley range have a 12 hour re-entry interval, while the copper-based products have a 24 hour re-entry interval, and the concentrated insecticide OV-Insect-40 has a 48 hour re-entry interval.",
+    "citations": [
+     {
+      "kb": "agri-supply",
+      "doc": "pesticide-reentry-intervals.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "pesticide-reentry-intervals.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     }
+    ],
+    "searched": [
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "agri-supply",
+      "re-entry interval after spraying"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-10": {
+    "ok": true,
+    "ms": 1089,
+    "message": "According to the cold chain handling for seedlings and biologicals, seedlings must be kept at a temperature range of 2 to 6 degrees Celsius during delivery.",
+    "citations": [
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "seed-lot-shelf-life.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     }
+    ],
+    "searched": [
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "agri-supply",
+      "seedling delivery temperature range"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-11": {
+    "ok": true,
+    "ms": 1127,
+    "message": "Based on the search results, the germination percentage needed to sell vegetable seed is 85% or above.",
+    "citations": [
+     {
+      "kb": "agri-supply",
+      "doc": "seed-lot-shelf-life.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     }
+    ],
+    "searched": [
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "agri-supply",
+      "germination percentage vegetable seed"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-12": {
+    "ok": true,
+    "ms": 1270,
+    "message": "The uneven coverage after switching to low-drift nozzles was caused by the sprayer not being recalibrated at the correct pressure. The low-drift nozzles require 4.5 bar to reach the label flow rate, but the sprayer had been calibrated at 3 bar for the old nozzles. This resulted in the outer rows receiving roughly 30 percent less product [1]. To resolve the issue, the sprayer needed to be recalibrated at 4.5 bar, and the under-dosed rows needed to be re-treated within the re-entry window [2].",
+    "citations": [
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "pesticide-reentry-intervals.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     }
+    ],
+    "searched": [
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "agri-supply",
+      "low-drift nozzles uneven coverage"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-13": {
+    "ok": true,
+    "ms": 1333,
+    "message": "Cold chain orders ship on Monday to Thursday. [1]",
+    "citations": [
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     }
+    ],
+    "searched": [
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "agri-supply",
+      "cold chain orders ship days"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-14": {
+    "ok": true,
+    "ms": 1358,
+    "message": "Based on the search results, the products allowed under the Willow Creek co-op's organic certification are:\n\n1. Copper fungicide\n2. Sulphur products\n3. Biological controls\n\nThese products are listed by the certifier as being compliant with the co-op's organic certification standards.",
+    "citations": [
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     }
+    ],
+    "searched": [
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "agri-supply",
+      "Willow Creek co-op organic certification products"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-15": {
+    "ok": true,
+    "ms": 1193,
+    "message": "Customers must be listed when a product is recalled within four hours. [1]",
+    "citations": [
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     }
+    ],
+    "searched": [
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "agri-supply",
+      "recall customer notification timeline"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-16": {
+    "ok": true,
+    "ms": 2254,
+    "message": "Unfortunately, the provided knowledge base search results do not contain information about the early payment discount for Stonebridge Orchards.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "product-premium-operations-plan.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "product-premium-operations-plan.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     }
+    ],
+    "searched": [
+     "crm"
+    ],
+    "modelCalls": 3,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "Stonebridge Orchards early payment discount"
+     ],
+     [
+      "crm",
+      "Stonebridge Orchards early payment discount"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-17": {
+    "ok": true,
+    "ms": 2179,
+    "message": "Based on the search results, the renewal notice and terms for the customer agreements and the farm-supply supply agreement are as follows:\n\n* Customer Agreements:\n + Renewal is automatic on 1 October for twelve months, unless either party gives 60 days' written notice before the renewal date.\n + A price change for the renewal term must be sent to the customer at least 90 days before the renewal date.\n + Invoice payment terms are 30 days from the corrected invoice.\n* Farm-Supply Supply Agreement:\n + Renewal is automatic unless either party gives notice 60 days before the end of the agreement year.\n + Prices for seed and biologicals are fixed for the season once the order is confirmed.\n + A 2 percent discount applies when an invoice is paid within 10 days.\n + Standard orders ship on Tuesdays and Fridays, while cold chain orders ship Monday to Thursday only.\n + Pallets are 1.2 by 1.0 meters and carry at most 900 kilograms.\n + Orders placed before 14:00 are picked the same day. A missed delivery window is rebooked at no charge once; the second rebooking is billed as a handling fee.\n + Only the copper fungicide, the sulphur products, and the biological controls are allowed under the organic certification for the Valley range.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "riverside-call-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "renewal notice and terms customer agreements"
+     ],
+     [
+      "agri-supply",
+      "renewal notice and terms farm-supply supply agreement"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-18": {
+    "ok": true,
+    "ms": 3274,
+    "message": "Based on the search results, it appears that the volume discounts and pricing for Acme and Stonebridge Orchards are as follows:\n\nFor Acme:\n\n* The Premium Operations Plan includes up to three implementation sessions per year at no extra cost.\n* Each additional site is billed at 70% of the single-site rate.\n* Accounts with three or more sites receive an automatic 10% discount on the combined multi-site total.\n* The pilot pricing for a 90-day trial covering three busiest co-packer routes is a separate one-time cost.\n\nFor Stonebridge Orchards:\n\n* The annual supply agreement renews at the same pricing, with volume discount tiers of 5% above 20 tonnes and 8% above 40 tonnes of fertiliser.\n* Fuel and freight surcharges follow the quarterly index.\n* Prices for seed and biologicals are fixed for the season once the order is confirmed.\n* A 2% discount applies when an invoice is paid within 10 days.\n* Standard orders ship on Tuesdays and Fridays, with cold chain orders shipping Monday to Thursday only.\n* Pallets are 1.2 by 1.0 metres and carry at most 900 kilograms.\n* Orders placed before 14:00 are picked the same day, with a missed delivery window rebooked at no charge once.\n* The copper fungicide, the sulphur products, and the biological controls are allowed under the organic certification for the Willow Creek co-op.\n* The re-entry interval (REI) for most fungicides in the Valley range is 12 hours, with 24 hours for copper-based products and 48 hours for the concentrated insecticide OV-Insect-40.\n* The pre-harvest interval (PHI) for OV-Insect-40 is 14 days for stone fruit and 21 days for leafy greens.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "product-premium-operations-plan.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "product-premium-operations-plan.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "annual-supply-agreement-renewal.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "organic-certification-note.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "pesticide-reentry-intervals.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 3,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "volume discounts pricing Acme Stonebridge Orchards"
+     ],
+     [
+      "crm",
+      "volume discounts pricing Acme Stonebridge Orchards"
+     ],
+     [
+      "agri-supply",
+      "Stonebridge Orchards volume discounts pricing"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-19": {
+    "ok": true,
+    "ms": 3482,
+    "message": "Based on the search results, here's how support handles a problem report:\n\n1. The support team receives a problem report and tries to reproduce the issue.\n2. If the issue is related to a specific feature or functionality, the support team will try to find a solution or a workaround.\n3. If the issue is related to a technical problem, the support team will escalate it to the engineering team for further investigation and resolution.\n4. The support team will keep the customer informed about the progress and provide updates on the resolution.\n5. If the issue is related to a product or service, the support team will provide information and guidance on how to use the product or service correctly.\n\nRegarding the Northstar alerting question and the sprayer calibration ticket:\n\n1. The Northstar alerting question is related to the Fleet Visibility rollout package, which includes alerting as a feature. The support team confirmed that alert thresholds are configurable per customer, not just globally.\n2. The sprayer calibration ticket is related to the uneven coverage after sprayer calibration. The support team identified the cause as the sprayer being calibrated for the old nozzles at 3 bar, while the low-drift nozzles need 4.5 bar to reach the label flow rate. The resolution was to recalibrate at 4.5 bar, re-treat the under-dosed rows within the re-entry window, and record the new settings on the block board.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-support-export-timeout.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "vertex-support-rate-limit.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "riverside-data-handling-policy.docx"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-support-alerting.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-note-discovery.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "product-fleet-visibility.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-support-alerting.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-email-pricing.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "summit-note-churn.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-support-alerting.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-support-export-timeout.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "pesticide-reentry-intervals.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "sprayer-calibration-support.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "pesticide-reentry-intervals.md"
+     }
+    ],
+    "searched": [
+     "crm",
+     "agri-supply"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "support handle problem report process"
+     ],
+     [
+      "crm",
+      "Northstar alerting question"
+     ],
+     [
+      "crm",
+      "sprayer calibration ticket"
+     ],
+     [
+      "agri-supply",
+      "sprayer calibration"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-20": {
+    "ok": true,
+    "ms": 1804,
+    "message": "Based on the search results, it appears that the delivery and rollout timelines in the Fleet Visibility package are different from the farm-supply delivery windows.\n\nThe Fleet Visibility package has a typical rollout timeline of four to six weeks, which includes two weeks for carrier feed integration, one to two weeks for configuring per-customer alert thresholds, and one to two weeks for user acceptance testing before go-live.\n\nIn contrast, the farm-supply delivery windows have a standard shipping schedule of Tuesdays and Fridays for standard orders, and Monday to Thursday for cold chain orders. Orders placed before 14:00 are picked the same day, and missed delivery windows are rebooked at no charge once.\n\nTherefore, the delivery and rollout timelines in the Fleet Visibility package are not directly comparable to the farm-supply delivery windows.",
+    "citations": [
+     {
+      "kb": "agri-supply",
+      "doc": "delivery-windows-pallets.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "cold-chain-handling.md"
+     },
+     {
+      "kb": "agri-supply",
+      "doc": "recall-procedure.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "product-fleet-visibility.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "product-fleet-visibility.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-note-discovery.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "goldenvalley-note-discovery.md"
+     }
+    ],
+    "searched": [
+     "agri-supply",
+     "crm"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "agri-supply",
+      "delivery windows"
+     ],
+     [
+      "crm",
+      "Fleet Visibility package delivery timeline"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-21": {
+    "ok": true,
+    "ms": 1134,
+    "message": "The search results do not contain the answer to the question \"What is the capital of France?\"",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "crm",
+      "doc": "product-premium-operations-plan.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "riverside-call-renewal.md"
+     }
+    ],
+    "searched": [
+     "crm"
+    ],
+    "modelCalls": 2,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "capital of France"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-22": {
+    "ok": true,
+    "ms": 2223,
+    "message": "Unfortunately, the search results do not contain any information about baking a chocolate cake.",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-support-export-timeout.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "vertex-call-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-email-discount.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-support-export-timeout.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "vertex-call-renewal.md"
+     }
+    ],
+    "searched": [
+     "crm"
+    ],
+    "modelCalls": 3,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "chocolate cake recipe"
+     ],
+     [
+      "crm",
+      "chocolate cake recipe"
+     ]
+    ],
+    "flagged": false
+   },
+   "mq-23": {
+    "ok": true,
+    "ms": 268,
+    "message": "I don't have access to real-time information about the current weather in Chicago.",
+    "citations": [],
+    "searched": [],
+    "modelCalls": 1,
+    "reason": null,
+    "tools": [],
+    "flagged": false
+   },
+   "mq-24": {
+    "ok": true,
+    "ms": 2100,
+    "message": "The search results do not contain the answer to the question \"Who won the 2018 football World Cup?\"",
+    "citations": [
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "crm",
+      "doc": "harborpine-note-checkin.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-rate-card.xlsx"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-service-agreement.pdf"
+     },
+     {
+      "kb": "crm",
+      "doc": "harborpine-note-checkin.md"
+     },
+     {
+      "kb": "crm",
+      "doc": "northstar-rate-card.xlsx"
+     },
+     {
+      "kb": "crm",
+      "doc": "acme-call-renewal.md"
+     }
+    ],
+    "searched": [
+     "crm"
+    ],
+    "modelCalls": 3,
+    "reason": null,
+    "tools": [
+     [
+      "crm",
+      "2018 football World Cup winner"
+     ],
+     [
+      "crm",
+      "2018 football World Cup winner"
+     ]
+    ],
+    "flagged": false
+   }
+  }
+ }
+}
