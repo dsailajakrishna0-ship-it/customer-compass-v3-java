@@ -8,6 +8,16 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## E1.3: the strategy comparison (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just eval-multi` | A table with the columns route, all and agent, and the model and embedding model it was recorded with; no keys, no network | The recorded comparison |
+| 2 | `just eval-multi-check` | `OK: every count matches baseline.json` | The table replays exactly |
+| 3 | Read `evals/knowledge-bases/recorded.json`, `mq-16` under `agent` | `searched` `["crm"]` and the same query twice | Why the agent missed one question |
+| 4 | Read `mq-21` under `route` | A `reason` that says neither knowledge base fits, and `searched` with both | A router that reasons one way and answers another |
+| 5 | Optional, with keys: both knowledge bases ingested, the API running (`API_URL` if not 8001), then `MODEL=<id> EMBEDDING_MODEL=gemini-embedding-001 just eval-multi-record` after moving `recorded.json` aside | A new recording (72 requests, 10 to 30 minutes), then `just eval-multi` | Re-measuring with the default embedding model or another chat model |
+
 ## E1.2: three ways to decide where to search (Java extension)
 
 Needs both keys (embeddings and answers), `just db`, `just qdrant`, `just run`, the CRM documents ingested (J3.2 step 6) and `just kb-ingest agri-supply` (E1.1). `MODEL=<id> just multi "..."` picks a model; `STRATEGY=route|all|agent` picks the strategy (default `route`). A run takes 5 to 40 seconds on a free model.

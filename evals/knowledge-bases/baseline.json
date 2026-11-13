@@ -1,0 +1,83 @@
+{
+ "route": {
+  "questions": 24,
+  "hit": 19,
+  "answerable": 20,
+  "hit_by_kind": {
+   "crm": {
+    "hit": 8,
+    "of": 8
+   },
+   "agri": {
+    "hit": 8,
+    "of": 8
+   },
+   "both": {
+    "hit": 3,
+    "of": 4
+   }
+  },
+  "searched_exactly_the_right_knowledge_bases": 8,
+  "searched_at_least_the_right_ones": 24,
+  "citations_from_the_wrong_knowledge_base": 40,
+  "citations_total": 96,
+  "neither_declined": 0,
+  "neither": 4,
+  "model_calls_total": 48,
+  "failed": 0
+ },
+ "all": {
+  "questions": 24,
+  "hit": 19,
+  "answerable": 20,
+  "hit_by_kind": {
+   "crm": {
+    "hit": 8,
+    "of": 8
+   },
+   "agri": {
+    "hit": 8,
+    "of": 8
+   },
+   "both": {
+    "hit": 3,
+    "of": 4
+   }
+  },
+  "searched_exactly_the_right_knowledge_bases": 4,
+  "searched_at_least_the_right_ones": 24,
+  "citations_from_the_wrong_knowledge_base": 48,
+  "citations_total": 96,
+  "neither_declined": 0,
+  "neither": 4,
+  "model_calls_total": 24,
+  "failed": 0
+ },
+ "agent": {
+  "questions": 24,
+  "hit": 19,
+  "answerable": 20,
+  "hit_by_kind": {
+   "crm": {
+    "hit": 8,
+    "of": 8
+   },
+   "agri": {
+    "hit": 7,
+    "of": 8
+   },
+   "both": {
+    "hit": 4,
+    "of": 4
+   }
+  },
+  "searched_exactly_the_right_knowledge_bases": 20,
+  "searched_at_least_the_right_ones": 23,
+  "citations_from_the_wrong_knowledge_base": 28,
+  "citations_total": 136,
+  "neither_declined": 1,
+  "neither": 4,
+  "model_calls_total": 52,
+  "failed": 0
+ }
+}

@@ -92,6 +92,18 @@ kb-search id query:
 multi question:
     @python3 contracts/http/ask.py multi "$1"
 
+# E1.3: the strategy comparison table, replayed from the recorded answers (no keys, no network)
+eval-multi:
+    @python3 evals/knowledge-bases/compare_strategies.py
+
+# E1.3: replay and fail if the counts differ from evals/knowledge-bases/baseline.json
+eval-multi-check:
+    @python3 evals/knowledge-bases/compare_strategies.py --check
+
+# E1.3: ask the running API (both knowledge bases ingested, keys set) for whatever is not recorded yet. API_URL, MODEL and EMBEDDING_MODEL are optional labels/targets
+eval-multi-record:
+    @python3 evals/knowledge-bases/compare_strategies.py --record
+
 # ask the tool-calling copilot (the model calls tools through MCP; a write needs your "yes" in the next question). Example: just tools "What are Acme Fabrication's open deals?"  (MODEL=<id> picks a model)
 tools question:
     @python3 contracts/http/ask.py tools "$1"
