@@ -6,12 +6,12 @@ Last checked against `customer-compass-v3` `main` at commit `99c59d8` (Stage 4.2
 
 | Python stage | Merged there | API contract changed? | Java stage | Java status |
 | --- | --- | --- | --- | --- |
-| 0 Foundation | Yes | n/a | J0, J1 | J0.1 to J0.3 done or in review; J1 in review |
-| 1 Model layer | Yes | Gateway, usage footer, `/llm/models` | J2 | J2.1 (gateway, `/llm/models`) merged; J2.2 (Spring AI client, `POST /chat`) in review |
-| 2 Tools and MCP | 2.1, 2.2a, 2.2b | `/chat/tools`, `/mcp/servers`, `contracts/mcp-tools.json` | J4 | J4.1 and J4.2 merged; J4.3 (`/chat/tools`, `/mcp/servers`, `/tool-audit-log`) in review. J4 is then complete |
-| 3 LangGraph port | 3.1, 3.2a, 3.2b | No (26 contract tests unchanged) | J5 | J5.1 (the graph and both routes) merged; J5.2 (the durable pause) in review |
-| 4 Retrieval upgrade | 4.1a, 4.1b, 4.2, 4.3 | 4.2 adds optional `page` and `sheet` to `/chat/rag` citations | J3 (RAG) | J3.1 to J3.4 merged; J3.5 (the optional reranker) merged; J3.6 (hybrid search) in review. J3 is then complete |
-| 5 and later | No | Unknown | J6 to J8 | Planned |
+| 0 Foundation | Yes | n/a | J0, J1 | J0 and J1 merged |
+| 1 Model layer | Yes | Gateway, usage footer, `/llm/models` | J2 | J2 merged (gateway, `/llm/models`, Spring AI client, `POST /chat`) |
+| 2 Tools and MCP | 2.1, 2.2a, 2.2b | `/chat/tools`, `/mcp/servers`, `contracts/mcp-tools.json` | J4 | J4 merged (MCP server inside the API, `/chat/tools`, `/mcp/servers`, `/tool-audit-log`) |
+| 3 LangGraph port | 3.1, 3.2a, 3.2b | No (26 contract tests unchanged) | J5 | J5 merged (the graph, both routes, the durable pause) |
+| 4 Retrieval upgrade | 4.1a, 4.1b, 4.2, 4.3 | 4.2 adds optional `page` and `sheet` to `/chat/rag` citations | J3 (RAG) | J3.1 to J3.5 merged; J3.6 (hybrid search) in review. J3 is then complete |
+| 5 and later (Python Stage 8 guard is ported as J6; tracing, evals and comparisons are Stage 5) | No | Unknown | J6 to J8 | J6 (guard and audit) merged; J7 (evals and observability) and J8 (plain-Java comparison) planned |
 
 ## Contract gaps
 
@@ -36,13 +36,13 @@ The contract is the 26 tests in `apps/api-py/tests/contract/` plus `docs/api-ref
 | Keyword vector (hybrid search) | Stored beside the meaning vector | A second collection `<name>_bm25` with one BM25 sparse vector per chunk, same ids (ADR 0016) | Done in J3.6 |
 | Document ids | Follow the sorted file list | The same sorted list, so the ids are equal (3 is the PDF, 9 the Excel file, 14 the Word file) | Done in J3.2 |
 | Retrieval mode | `dense` (default), `hybrid` and an optional reranker behind settings | Dense by default; `RETRIEVAL_MODE=hybrid` (ADR 0016) and an optional reranker (`RERANK_PROVIDER`, ADR 0015), same settings | Done in J3.5 and J3.6 |
-| `GET /documents/vector-search-info` | Reports exact versus approximate search by collection size | Not built (Spring AI's store does not expose search parameters) | Decide with hybrid |
+| `GET /documents/vector-search-info` | Reports exact versus approximate search by collection size | Not built (Spring AI's store does not expose search parameters; hybrid search did not need it) | Accepted gap |
 | Prompt-injection scan of the question and of retrieved chunks | Yes, with an audit log | Scanned and redacted before the model sees it; citations keep the original (J6.1) | Done in J6.1 |
 | Company scope in retrieval | `company_id` equal to X or null | `company_id` equal to X or 0 (company-agnostic documents are stored with 0; ADR 0007). Ingest again after upgrading | Not visible through the API |
 | MCP tool servers | Two (FastMCP in Python, Spring Boot in a separate service) behind a radio button; default FastMCP | One built in, inside the API at `/mcp` (ADR 0008), default `springboot`; the Python server can be added with `MCP_FASTMCP_URL`. `GET /mcp/servers` lists both | Done in J4.3 |
 | Tool results and tool arguments | Scanned for prompt injection, with an audit log | Results scanned and redacted, then wrapped (J6.1); arguments are not scanned (the schemas validate them) | Done in J6.1 (results) |
 | The `confirm` rule | The user's latest message decides (substring of yes, confirm, approve, go ahead, ...) | The same | Done |
-| The agent (`/agent/recommend`, `/agent/confirm`) | A LangGraph graph; a paused run saved in Postgres and resumed by `/confirm` | A LangGraph4j graph (ADR 0011); a paused run saved in Postgres by the LangGraph4j saver and resumed by `/confirm` (ADR 0012) | J6 (guard) |
+| The agent (`/agent/recommend`, `/agent/confirm`) | A LangGraph graph; a paused run saved in Postgres and resumed by `/confirm` | A LangGraph4j graph (ADR 0011); a paused run saved in Postgres by the LangGraph4j saver and resumed by `/confirm` (ADR 0012) | Done in J5.2 |
 | Prompt-injection scan in the agent (request, stored text, output, the note on confirm) | Yes, with audit events | The same (ADR 0014): request, interactions, document chunks, the three output texts and the note on confirm; audit events with endpoint `agent` | Done in J6.2 |
 | The optional LLM classifier (`GUARD_MODE`, `GUARD_MODEL`) | `rules` default, `llm`, `both`; flags only, fails open | The same (ADR 0014) | Done in J6.2 |
 
