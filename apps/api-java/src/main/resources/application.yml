@@ -1,6 +1,16 @@
 spring:
   application:
     name: api-java
+  ai:
+    mcp:
+      server:
+        # the tool server lives inside this API: http://localhost:8001/mcp (J4.1)
+        name: customer-compass-tools-java
+        version: 0.1.0
+        type: SYNC
+        protocol: STREAMABLE
+        streamable-http:
+          mcp-endpoint: /mcp
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/customer_compass}
     username: ${DATABASE_USER:customer_compass}
