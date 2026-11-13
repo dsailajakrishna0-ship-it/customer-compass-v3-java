@@ -48,6 +48,14 @@ rag:
   embedding-dimensions: ${EMBEDDING_DIMENSIONS:768}
   sample-data-dir: ${SAMPLE_DATA_DIR:}
 
+# MCP tool servers the tools chat can use (the Python edition's MCP_* settings). The Java server is this
+# application itself (an empty URL means "http://localhost:<this port>/mcp"); the FastMCP (Python)
+# server is optional: set MCP_FASTMCP_URL (for example http://localhost:8002/mcp) to use it.
+mcp:
+  backend: ${MCP_BACKEND:springboot}
+  fastmcp-url: ${MCP_FASTMCP_URL:}
+  springboot-url: ${MCP_SPRINGBOOT_URL:}
+
 # Origin of the web app's dev server (the Python edition allows the same one)
 app:
   cors-allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}

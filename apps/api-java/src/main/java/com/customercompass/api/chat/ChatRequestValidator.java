@@ -63,6 +63,11 @@ final class ChatRequestValidator {
   }
 
   static ChatRequest validate(JsonNode body, ObjectMapper json) {
+    return validate(body, json, false);
+  }
+
+  /** With {@code withMcpServer} the optional string field mcpServer is checked and returned too. */
+  static ChatRequest validate(JsonNode body, ObjectMapper json, boolean withMcpServer) {
     var problems = new ArrayList<Map<String, Object>>();
     if (body == null || !body.isObject()) {
       problems.add(
@@ -130,10 +135,26 @@ final class ChatRequestValidator {
                 json));
       }
     }
+    String mcpServer = null;
+    JsonNode serverNode = withMcpServer ? body.get("mcpServer") : null;
+    if (serverNode != null && !serverNode.isNull()) {
+      if (serverNode.isTextual()) {
+        mcpServer = serverNode.asText();
+      } else {
+        problems.add(
+            problem(
+                "string_type",
+                List.of("body", "mcpServer"),
+                "Input should be a valid string",
+                serverNode,
+                null,
+                json));
+      }
+    }
     if (!problems.isEmpty()) {
       throw new RequestValidationException(problems);
     }
-    return new ChatRequest(List.copyOf(messages), model);
+    return new ChatRequest(List.copyOf(messages), model, mcpServer);
   }
 
   private static void message(

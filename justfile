@@ -68,6 +68,10 @@ rag question:
 crm question:
     @python3 contracts/http/ask.py crm "$1"
 
+# ask the tool-calling copilot (the model calls tools through MCP; a write needs your "yes" in the next question). Example: just tools "What are Acme Fabrication's open deals?"  (MODEL=<id> picks a model)
+tools question:
+    @python3 contracts/http/ask.py tools "$1"
+
 # check the MCP tool server (served by the API at /mcp) against contracts/mcp-tools.json: the same check the Python edition's tool servers pass. Needs `uv`; the API running
 mcp-contract url="http://localhost:8001/mcp":
     @uv run --with mcp python contracts/check_server.py {{url}}
@@ -75,4 +79,3 @@ mcp-contract url="http://localhost:8001/mcp":
 # call one MCP tool by hand. Example: just mcp-call get_open_deals '{"company_name": "Acme"}'
 mcp-call tool args url="http://localhost:8001/mcp":
     @uv run --with mcp python contracts/call_tool.py {{url}} {{tool}} '{{args}}'
-

@@ -3,7 +3,8 @@
 
     python3 contracts/http/ask.py rag "What does Clause 7.3 say about the renewal notice period?"
 
-The route is chat, rag or crm. The address is http://localhost:8001 unless API_URL says otherwise.
+The route is chat, rag, crm or tools. The address is http://localhost:8001 unless API_URL says otherwise.
+Optional: MODEL=<model id> asks a particular model; MCP_SERVER=<id> picks the tool server for tools.
 The question is built into JSON here, so quotes and apostrophes in it need no escaping in the shell.
 Standard library only. Exit code 1 when the API answers with an error (the answer is still printed).
 """
@@ -14,7 +15,7 @@ import sys
 import urllib.error
 import urllib.request
 
-ROUTES = {"chat": "/api/v1/chat", "rag": "/api/v1/chat/rag", "crm": "/api/v1/chat/crm"}
+ROUTES = {"chat": "/api/v1/chat", "rag": "/api/v1/chat/rag", "crm": "/api/v1/chat/crm", "tools": "/api/v1/chat/tools"}
 
 
 def main(argv: list[str]) -> int:
@@ -22,7 +23,12 @@ def main(argv: list[str]) -> int:
         print(__doc__, file=sys.stderr)
         return 2
     base = os.environ.get("API_URL", "http://localhost:8001").rstrip("/")
-    body = json.dumps({"messages": [{"role": "user", "content": argv[2]}]}).encode()
+    payload = {"messages": [{"role": "user", "content": argv[2]}]}
+    if os.environ.get("MODEL"):
+        payload["model"] = os.environ["MODEL"]
+    if argv[1] == "tools" and os.environ.get("MCP_SERVER"):
+        payload["mcpServer"] = os.environ["MCP_SERVER"]
+    body = json.dumps(payload).encode()
     request = urllib.request.Request(
         base + ROUTES[argv[1]], data=body, headers={"Content-Type": "application/json"}, method="POST"
     )
