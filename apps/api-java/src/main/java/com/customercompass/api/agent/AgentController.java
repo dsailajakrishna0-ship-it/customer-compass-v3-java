@@ -1,5 +1,7 @@
 package com.customercompass.api.agent;
 
+import com.customercompass.api.guard.PromptGuard;
+import com.customercompass.api.guard.SecurityAudit;
 import com.customercompass.api.llm.LlmUnavailableException;
 import com.customercompass.api.llm.ModelGateway;
 import com.customercompass.api.mcp.CrmTools;
@@ -41,6 +43,7 @@ class AgentController {
   private final ModelGateway gateway;
   private final CrmTools tools;
   private final ApprovalGate gate;
+  private final SecurityAudit audit;
   private final ObjectMapper json;
 
   AgentController(
@@ -48,7 +51,9 @@ class AgentController {
       ModelGateway gateway,
       CrmTools tools,
       ApprovalGate gate,
+      SecurityAudit audit,
       ObjectMapper json) {
+    this.audit = audit;
     this.workflow = workflow;
     this.gateway = gateway;
     this.tools = tools;
@@ -96,6 +101,12 @@ class AgentController {
 
   Map<String, Object> confirm(JsonNode body) {
     AgentRequests.Confirm request = AgentRequests.confirm(body, json);
+    // The note arrives from the browser, so it is untrusted too: scan it and audit a detection.
+    PromptGuard.Finding note = PromptGuard.scan(request.note());
+    if (note.flagged()) {
+      audit.record(
+          "agent", PromptGuard.report(java.util.Map.entry(note, "user_input: task note")).events());
+    }
     // A run paused by /recommend continues from where it stopped; with none saved (the API
     // restarted without it, the note was edited) the answer is applied directly, as before.
     Map<String, Object> resumed =
@@ -107,7 +118,7 @@ class AgentController {
       return ApprovalGate.declined();
     }
     Map<String, Object> result =
-        tools.createFollowupTask(request.companyName(), request.note(), true);
+        tools.createFollowupTask(request.companyName(), note.neutralizedText(), true);
     if ("not_found".equals(result.get("status"))) {
       throw new ApiException(HttpStatus.NOT_FOUND, String.valueOf(result.get("message")));
     }

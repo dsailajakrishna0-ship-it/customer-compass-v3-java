@@ -179,7 +179,7 @@ public final class PromptGuard {
     return new Report(report.flagged() || extra.flagged(), reasons, events);
   }
 
-  static String sourceOf(String location) {
+  public static String sourceOf(String location) {
     if (location.startsWith("document")) {
       return "document";
     }

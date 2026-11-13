@@ -7,6 +7,9 @@ import com.customercompass.api.agent.Agents.Recommendation;
 import com.customercompass.api.agent.Agents.Review;
 import com.customercompass.api.crm.CompanySummary.CompanyRef;
 import com.customercompass.api.crm.CrmFacts;
+import com.customercompass.api.guard.InputGuard;
+import com.customercompass.api.guard.PromptGuard;
+import com.customercompass.api.guard.SecurityAudit;
 import com.customercompass.api.mcp.CrmTools;
 import com.customercompass.api.rag.EmbeddingsUnavailableException;
 import java.time.Clock;
@@ -97,6 +100,8 @@ public class AgentWorkflow {
     }
   }
 
+  private static final org.slf4j.Logger log =
+      org.slf4j.LoggerFactory.getLogger(AgentWorkflow.class);
   private static final ExecutorService RUNS = Executors.newVirtualThreadPerTaskExecutor();
 
   private final CrmFacts facts;
@@ -104,9 +109,19 @@ public class AgentWorkflow {
   private final AgentProperties limits;
   private final Clock clock;
   private final ApprovalGate gate;
+  private final InputGuard inputGuard;
+  private final SecurityAudit audit;
 
   public AgentWorkflow(
-      CrmFacts facts, CrmTools tools, AgentProperties limits, Clock clock, ApprovalGate gate) {
+      CrmFacts facts,
+      CrmTools tools,
+      AgentProperties limits,
+      Clock clock,
+      ApprovalGate gate,
+      InputGuard inputGuard,
+      SecurityAudit audit) {
+    this.inputGuard = inputGuard;
+    this.audit = audit;
     this.facts = facts;
     this.tools = tools;
     this.limits = limits;
@@ -199,7 +214,9 @@ public class AgentWorkflow {
   Map<String, Object> classify(FlowState state, RunContext ctx) {
     long started = System.nanoTime();
     String message = state.<String>value("message").orElseThrow();
-    CompanyRef company = CompanyRef.findMentioned(message, facts.companies());
+    // The request is guarded first; the company is found in the cleaned text.
+    PromptGuard.Finding question = inputGuard.guard(message);
+    CompanyRef company = CompanyRef.findMentioned(question.neutralizedText(), facts.companies());
     ctx.trace.record(
         "code",
         "identify_company",
@@ -207,11 +224,19 @@ public class AgentWorkflow {
         company == null ? "no company found" : company.name(),
         started,
         company == null ? "error" : "ok");
+    List<Map<String, Object>> events = eventsOf(question, "user_input");
     if (company == null) {
-      return Map.of("status", "company_not_found");
+      return Map.of("status", "company_not_found", "events", events);
     }
     return Map.of(
-        "company", Map.of("id", company.id(), "name", company.name()), "status", "completed");
+        "company",
+        Map.of("id", company.id(), "name", company.name()),
+        "status",
+        "completed",
+        "company_names",
+        facts.companies().stream().map(CompanyRef::name).toList(),
+        "events",
+        events);
   }
 
   /** Evidence steps 1 and 2: CRM facts and deals (a tool), then recent interactions (code). */
@@ -221,6 +246,8 @@ public class AgentWorkflow {
     String name = (String) company.get("name");
     int companyId = (Integer) company.get("id");
     var items = new ArrayList<Map<String, Object>>();
+    var events =
+        new ArrayList<>(state.<List<Map<String, Object>>>value("events").orElse(List.of()));
 
     ctx.spend();
     long started = System.nanoTime();
@@ -258,10 +285,12 @@ public class AgentWorkflow {
           interaction.occurredAt().length() >= 10
               ? interaction.occurredAt().substring(0, 10)
               : interaction.occurredAt();
-      addItem(
+      addScanned(
           items,
+          events,
           interaction.interactionType() + " " + date,
-          interaction.subject() + ": " + interaction.summary());
+          interaction.subject() + ": " + interaction.summary(),
+          "interaction: " + interaction.subject());
     }
     ctx.trace.record(
         "code",
@@ -269,7 +298,7 @@ public class AgentWorkflow {
         name,
         (items.size() - before) + " interaction(s)",
         started);
-    return Map.of("evidence", items);
+    return Map.of("evidence", items, "events", events);
   }
 
   /** Evidence step 3: search the ingested documents for this company. */
@@ -277,6 +306,8 @@ public class AgentWorkflow {
   Map<String, Object> documents(FlowState state, RunContext ctx) {
     String name = (String) state.<Map<String, Object>>value("company").orElseThrow().get("name");
     var items = new ArrayList<>(state.<List<Map<String, Object>>>value("evidence").orElseThrow());
+    var events =
+        new ArrayList<>(state.<List<Map<String, Object>>>value("events").orElse(List.of()));
 
     ctx.spend();
     long started = System.nanoTime();
@@ -285,11 +316,16 @@ public class AgentWorkflow {
     int before = items.size();
     var results = (List<Map<String, Object>>) docs.getOrDefault("results", List.of());
     for (Map<String, Object> doc : results.subList(0, Math.min(MAX_DOCS, results.size()))) {
-      addItem(items, "document: " + doc.get("title"), String.valueOf(doc.get("content")));
+      addScanned(
+          items,
+          events,
+          "document: " + doc.get("title"),
+          String.valueOf(doc.get("content")),
+          "document: " + doc.get("title"));
     }
     ctx.trace.record(
         "tool", "search_documents", name, (items.size() - before) + " document chunk(s)", started);
-    return Map.of("evidence", items);
+    return Map.of("evidence", items, "events", events);
   }
 
   /** The analyst proposes a next action (again, with the reviewer's reasons, on a revision). */
@@ -376,7 +412,44 @@ public class AgentWorkflow {
     Agents.DrafterRun run = Agents.runTaskDrafter(ctx.llm, recommendation);
     ctx.noteCall("task_drafter", run.result());
     ctx.trace.record("agent", "Task Drafter agent", recommendation.action(), run.note(), started);
-    return Map.of("task_note", run.note());
+
+    // The output guard scans every text the user will see: the same leak and cross-customer scan
+    // the chat routes use. Detections from the whole run are written to the audit log here.
+    String company = (String) state.<Map<String, Object>>value("company").orElseThrow().get("name");
+    List<String> names = state.<List<String>>value("company_names").orElse(List.of());
+    PromptGuard.Finding action = PromptGuard.scanOutput(recommendation.action(), company, names);
+    PromptGuard.Finding rationale =
+        PromptGuard.scanOutput(recommendation.rationale(), company, names);
+    PromptGuard.Finding note = PromptGuard.scanOutput(run.note(), company, names);
+    var all = new ArrayList<>(state.<List<Map<String, Object>>>value("events").orElse(List.of()));
+    all.addAll(eventsOf(action, "output: recommendation"));
+    all.addAll(eventsOf(rationale, "output: rationale"));
+    all.addAll(eventsOf(note, "output: task note"));
+    var events = new ArrayList<PromptGuard.Event>();
+    var reasons = new ArrayList<String>();
+    for (Map<String, Object> e : all) {
+      events.add(
+          new PromptGuard.Event(
+              (String) e.get("source"),
+              (String) e.get("pattern"),
+              (String) e.get("location"),
+              (String) e.get("snippet")));
+      reasons.add(e.get("pattern") + " (" + e.get("location") + ")");
+    }
+    if (!events.isEmpty()) {
+      log.warn("prompt_guard_flagged agent {}", reasons);
+      audit.record("agent", events);
+    }
+    var guarded =
+        new LinkedHashMap<String, Object>(
+            state.<Map<String, Object>>value("recommendation").orElseThrow());
+    guarded.put("action", action.neutralizedText());
+    guarded.put("rationale", rationale.neutralizedText());
+    var flagged = new LinkedHashMap<String, Object>();
+    flagged.put("flagged", !reasons.isEmpty());
+    flagged.put("reasons", reasons);
+    return Map.of(
+        "task_note", note.neutralizedText(), "recommendation", guarded, "flagged", flagged);
   }
 
   // ------------------------------------------------------------------------------ the result
@@ -412,9 +485,7 @@ public class AgentWorkflow {
     var proposed = new LinkedHashMap<String, Object>();
     proposed.put("companyName", company.get("name"));
     proposed.put("note", note);
-    var guardrail = new LinkedHashMap<String, Object>();
-    guardrail.put("flagged", false);
-    guardrail.put("reasons", List.of());
+    Map<String, Object> guardrail = state.<Map<String, Object>>value("flagged").orElseThrow();
     return response(
         "completed",
         ctx.trace,
@@ -447,6 +518,34 @@ public class AgentWorkflow {
   }
 
   // ------------------------------------------------------------------------------ helpers
+
+  /** One audit event per match, as plain data so the run's state can be saved. */
+  private static List<Map<String, Object>> eventsOf(PromptGuard.Finding finding, String location) {
+    var out = new ArrayList<Map<String, Object>>();
+    for (int i = 0; i < finding.matchedPatterns().size(); i++) {
+      var event = new LinkedHashMap<String, Object>();
+      event.put("source", PromptGuard.sourceOf(location));
+      event.put("pattern", finding.matchedPatterns().get(i));
+      event.put("location", location);
+      event.put(
+          "snippet",
+          i < finding.matchedSnippets().size() ? finding.matchedSnippets().get(i) : null);
+      out.add(event);
+    }
+    return out;
+  }
+
+  /** Stored text (an interaction, a document) is scanned and cleaned before any agent reads it. */
+  private static void addScanned(
+      List<Map<String, Object>> items,
+      List<Map<String, Object>> events,
+      String source,
+      String text,
+      String location) {
+    PromptGuard.Finding finding = PromptGuard.scan(text);
+    events.addAll(eventsOf(finding, location));
+    addItem(items, source, finding.neutralizedText());
+  }
 
   private static void addItem(List<Map<String, Object>> items, String source, String text) {
     var item = new LinkedHashMap<String, Object>();

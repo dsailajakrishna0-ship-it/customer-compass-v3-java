@@ -20,10 +20,17 @@ public class ChatGuard {
 
   private final SecurityAudit audit;
   private final CrmFacts facts;
+  private final InputGuard input;
 
-  public ChatGuard(SecurityAudit audit, CrmFacts facts) {
+  public ChatGuard(SecurityAudit audit, CrmFacts facts, InputGuard input) {
     this.audit = audit;
     this.facts = facts;
+    this.input = input;
+  }
+
+  /** The user's question after the guard: redacted by the rules, flagged by the classifier. */
+  public PromptGuard.Finding question(String text) {
+    return input.guard(text);
   }
 
   /** The answer after the output scan, and the guardrail field. */
