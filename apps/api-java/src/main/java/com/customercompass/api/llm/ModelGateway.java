@@ -31,6 +31,8 @@ public class ModelGateway {
           + "and restart the API.";
   static final String EMPTY_MESSAGE =
       "The model returned an empty response. Try again or pick a different model.";
+  static final String UNUSABLE_MESSAGE =
+      "The model returned an unusable reply. Try again or pick a different model.";
 
   private static final Logger log = LoggerFactory.getLogger(ModelGateway.class);
 
@@ -79,6 +81,19 @@ public class ModelGateway {
 
   public GenerationResult generate(
       String systemPrompt, List<ChatMessage> messages, String requestedModel) {
+    return generate(systemPrompt, messages, requestedModel, List.of(), "auto");
+  }
+
+  /**
+   * One model call through the chain, with tools offered. The model may answer with tool calls
+   * instead of (or besides) text; that is a valid answer. toolChoice "none" forces a text answer.
+   */
+  public GenerationResult generate(
+      String systemPrompt,
+      List<ChatMessage> messages,
+      String requestedModel,
+      List<ToolDefinition> tools,
+      String toolChoice) {
     List<String> chain = chain(requestedModel);
     if (chain.isEmpty()) {
       throw new LlmUnavailableException(NO_MODEL_MESSAGE);
@@ -88,8 +103,14 @@ public class ModelGateway {
     int from = 0; // where in the chain to start: moves past a model that answered with nothing
     while (true) {
       List<String> remaining = chain.subList(from, chain.size());
-      Answer answer = callChain(remaining, systemPrompt, messages);
-      if (answer.completion().content() != null && !answer.completion().content().isBlank()) {
+      Answer answer = callChain(remaining, systemPrompt, messages, tools, toolChoice);
+      Completion completion = answer.completion();
+      boolean hasText = completion.content() != null && !completion.content().isBlank();
+      // A small model may print its own tool-call markup as text instead of a structured call: that
+      // is a failed attempt, like an empty reply, and the next model gets the question.
+      boolean rawMarkup =
+          completion.toolCalls().isEmpty() && hasText && isRawToolMarkup(completion.content());
+      if ((hasText || !completion.toolCalls().isEmpty()) && !rawMarkup) {
         boolean fallbackUsed = !answer.model().equals(requested);
         if (fallbackUsed) {
           log.warn("llm_fallback_used requested={} answered={}", requested, answer.model());
@@ -102,19 +123,36 @@ public class ModelGateway {
             clock.millis() - started,
             answer.model().endsWith(":free") ? Double.valueOf(0.0) : null,
             fallbackUsed,
-            fallbackUsed ? requested : null);
+            fallbackUsed ? requested : null,
+            completion.toolCalls());
       }
-      log.warn("llm_empty_response model={}", answer.model());
+      log.warn(
+          rawMarkup ? "llm_raw_tool_markup model={}" : "llm_empty_response model={}",
+          answer.model());
       from = chain.indexOf(answer.model()) + 1;
       if (from >= chain.size()) {
-        throw new LlmUnavailableException(EMPTY_MESSAGE);
+        throw new LlmUnavailableException(rawMarkup ? UNUSABLE_MESSAGE : EMPTY_MESSAGE);
       }
     }
   }
 
   private record Answer(String model, Completion completion) {}
 
-  private Answer callChain(List<String> models, String systemPrompt, List<ChatMessage> messages) {
+  /** Special tokens some small models print as plain text instead of making a structured call. */
+  static final List<String> RAW_TOOL_MARKUP_PREFIXES =
+      List.of("<|tool_call_start|>", "<tool_call>", "<|python_tag|>");
+
+  static boolean isRawToolMarkup(String content) {
+    String start = content.stripLeading();
+    return RAW_TOOL_MARKUP_PREFIXES.stream().anyMatch(start::startsWith);
+  }
+
+  private Answer callChain(
+      List<String> models,
+      String systemPrompt,
+      List<ChatMessage> messages,
+      List<ToolDefinition> tools,
+      String toolChoice) {
     String lastError = "every model is cooling down after a recent failure";
     for (String model : models) {
       if (isBenched(model)) {
@@ -122,7 +160,8 @@ public class ModelGateway {
       }
       for (int attempt = 0; ; attempt++) {
         try {
-          return new Answer(model, client.complete(model, systemPrompt, messages));
+          return new Answer(
+              model, client.complete(model, systemPrompt, messages, tools, toolChoice));
         } catch (ModelCallException e) {
           lastError = e.kind().label();
           log.warn("llm_attempt_failed model={} error={}", model, e.kind().label());

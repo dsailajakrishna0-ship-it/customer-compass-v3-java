@@ -11,11 +11,16 @@ import java.util.List;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.tool.ToolCallback;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The real {@link ModelClient}: Spring AI's OpenAI chat model pointed at OpenRouter (which speaks
@@ -42,39 +47,141 @@ public class SpringAiModelClient implements ModelClient {
     this.baseUrl = baseUrl;
   }
 
+  private static final JsonMapper JSON = JsonMapper.builder().build();
+
   @Override
   public Completion complete(String model, String systemPrompt, List<ChatMessage> messages)
+      throws ModelCallException {
+    return complete(model, systemPrompt, messages, List.of(), "auto");
+  }
+
+  @Override
+  public Completion complete(
+      String model,
+      String systemPrompt,
+      List<ChatMessage> messages,
+      List<ToolDefinition> tools,
+      String toolChoice)
       throws ModelCallException {
     try {
       List<Message> prompt = new ArrayList<>();
       prompt.add(new SystemMessage(systemPrompt));
       for (ChatMessage message : messages) {
-        prompt.add(
-            "assistant".equals(message.role())
-                ? new AssistantMessage(message.content())
-                : new UserMessage(message.content()));
+        prompt.add(toSpringMessage(message));
       }
-      OpenAiChatOptions options =
+      OpenAiChatOptions.Builder options =
           OpenAiChatOptions.builder()
               .model(model)
               .temperature(TEMPERATURE)
-              .maxTokens(MAX_RESPONSE_TOKENS)
-              .build();
-      ChatResponse response = chatModel().call(new Prompt(prompt, options));
-      String text =
+              .maxTokens(MAX_RESPONSE_TOKENS);
+      if (tools != null && !tools.isEmpty()) {
+        // The model's tool calls come back to us; the chat loop runs them (through MCP), not Spring
+        // AI.
+        options.toolCallbacks(tools.stream().map(SpringAiModelClient::offered).toList());
+        if ("none".equals(toolChoice)) {
+          options.toolChoice("none");
+        }
+      }
+      ChatResponse response = chatModel().call(new Prompt(prompt, options.build()));
+      AssistantMessage output =
           response == null || response.getResult() == null
-              ? ""
-              : response.getResult().getOutput().getText();
+              ? null
+              : response.getResult().getOutput();
+      String text = output == null || output.getText() == null ? "" : output.getText();
       var usage = response == null ? null : response.getMetadata().getUsage();
       return new Completion(
-          text == null ? "" : text,
+          text,
           usage == null ? null : usage.getPromptTokens(),
-          usage == null ? null : usage.getCompletionTokens());
+          usage == null ? null : usage.getCompletionTokens(),
+          output == null ? List.of() : readToolCalls(output));
     } catch (ModelCallException e) {
       throw e;
     } catch (RuntimeException e) {
       throw translate(e);
     }
+  }
+
+  private static Message toSpringMessage(ChatMessage message) {
+    if ("tool".equals(message.role())) {
+      return ToolResponseMessage.builder()
+          .responses(
+              List.of(
+                  new ToolResponseMessage.ToolResponse(
+                      message.toolCallId(),
+                      message.toolName() == null ? "" : message.toolName(),
+                      message.content())))
+          .build();
+    }
+    if ("assistant".equals(message.role())) {
+      if (message.toolCalls().isEmpty()) {
+        return new AssistantMessage(message.content());
+      }
+      List<AssistantMessage.ToolCall> calls =
+          message.toolCalls().stream()
+              .map(
+                  call ->
+                      new AssistantMessage.ToolCall(
+                          call.id(),
+                          "function",
+                          call.name(),
+                          JSON.writeValueAsString(call.arguments())))
+              .toList();
+      return AssistantMessage.builder().content(message.content()).toolCalls(calls).build();
+    }
+    return new UserMessage(message.content());
+  }
+
+  /**
+   * A tool offered to the model. It is never run by Spring AI, so calling it is a programming
+   * error.
+   */
+  private static ToolCallback offered(ToolDefinition tool) {
+    var definition =
+        org.springframework.ai.tool.definition.ToolDefinition.builder()
+            .name(tool.name())
+            .description(tool.description())
+            .inputSchema(JSON.writeValueAsString(tool.parameters()))
+            .build();
+    return new ToolCallback() {
+      @Override
+      public org.springframework.ai.tool.definition.ToolDefinition getToolDefinition() {
+        return definition;
+      }
+
+      @Override
+      public String call(String toolInput) {
+        throw new IllegalStateException("Tools are run by the chat loop, not by Spring AI.");
+      }
+    };
+  }
+
+  /**
+   * The tool calls a model asked for. Arguments that are not a JSON object become an error on the
+   * call.
+   */
+  @SuppressWarnings("unchecked")
+  private static List<ToolCall> readToolCalls(AssistantMessage output) {
+    var calls = new ArrayList<ToolCall>();
+    for (AssistantMessage.ToolCall raw : output.getToolCalls()) {
+      String text = raw.arguments() == null || raw.arguments().isBlank() ? "{}" : raw.arguments();
+      try {
+        JsonNode arguments = JSON.readTree(text);
+        if (arguments.isObject()) {
+          calls.add(
+              new ToolCall(
+                  raw.id(), raw.name(), JSON.convertValue(arguments, java.util.Map.class)));
+        } else {
+          calls.add(
+              new ToolCall(
+                  raw.id(), raw.name(), java.util.Map.of(), "arguments must be a JSON object"));
+        }
+      } catch (JacksonException e) {
+        calls.add(
+            new ToolCall(
+                raw.id(), raw.name(), java.util.Map.of(), "arguments were not valid JSON"));
+      }
+    }
+    return calls;
   }
 
   /** Built on first use, so the application starts without a key (chat then says what to set). */

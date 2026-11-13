@@ -8,7 +8,7 @@ Last checked against `customer-compass-v3` `main` at commit `99c59d8` (Stage 4.2
 | --- | --- | --- | --- | --- |
 | 0 Foundation | Yes | n/a | J0, J1 | J0.1 to J0.3 done or in review; J1 in review |
 | 1 Model layer | Yes | Gateway, usage footer, `/llm/models` | J2 | J2.1 (gateway, `/llm/models`) merged; J2.2 (Spring AI client, `POST /chat`) in review |
-| 2 Tools and MCP | 2.1, 2.2a, 2.2b | `/chat/tools`, `/mcp/servers`, `contracts/mcp-tools.json` | J4 | J4.1 (the tool server, inside the API) in review; J4.2 (tool calling in the model layer) and J4.3 (`/chat/tools`, `/mcp/servers`, audit route) planned |
+| 2 Tools and MCP | 2.1, 2.2a, 2.2b | `/chat/tools`, `/mcp/servers`, `contracts/mcp-tools.json` | J4 | J4.1 merged; J4.2 (tool calling in the model layer) in review; J4.3 (`/chat/tools`, `/mcp/servers`, audit route) planned |
 | 3 LangGraph port | 3.1, 3.2a, 3.2b | No (26 contract tests unchanged) | J5 | Planned |
 | 4 Retrieval upgrade | 4.1a, 4.1b, 4.2, 4.3 | 4.2 adds optional `page` and `sheet` to `/chat/rag` citations | J3 (RAG) | J3.1 to J3.3 merged; J3.4 (`/chat/crm`) in review. J3 is then complete except hybrid search and the reranker |
 | 5 and later | No | Unknown | J6 to J8 | Planned |
@@ -30,7 +30,7 @@ The contract is the 26 tests in `apps/api-py/tests/contract/` plus `docs/api-ref
 | Item | Python today | Java today | Plan |
 | --- | --- | --- | --- |
 | Guardrail on `/chat` | Prompt-injection scan of the question, scan of the answer, audit log | The `guardrail` field is always unflagged | J6 |
-| Raw tool-call markup from a small model (Python PR #67) | Treated as a failed attempt, next model answers | Not ported; the gateway only knows empty replies | Port with the Python change once it is merged |
+| Raw tool-call markup from a small model (Python PR #67) | Treated as a failed attempt, next model answers | The same, since J4.2 | Done |
 | A body that is not valid JSON | `loc: ["body", <character position>]` and Python's own message in `ctx` | `loc: ["body"]`, no `ctx` | Accepted gap; every other chat validation error is byte-identical (checked by sending the same 15 bodies to both editions: 14 identical, this is the one difference) |
 | Documents ingested | 19 (16 Markdown, 1 PDF, 1 Excel, 1 Word), 33 chunks | The same: 19 and 33, chunk counts equal file by file | Done in J3.2 |
 | Keyword vector (hybrid search) | Stored beside the meaning vector | Not stored; one vector per chunk | Decision in J3.3 |

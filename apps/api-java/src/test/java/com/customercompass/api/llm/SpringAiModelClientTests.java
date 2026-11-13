@@ -164,4 +164,111 @@ class SpringAiModelClientTests {
 
     assertThat(ask().content()).isBlank();
   }
+
+  // ------------------------------------------------------------------ tools (J4.2)
+
+  private static final List<ToolDefinition> TOOLS =
+      List.of(
+          new ToolDefinition(
+              "get_open_deals",
+              "Get only the open deals for a company.",
+              java.util.Map.of(
+                  "type", "object",
+                  "properties",
+                      java.util.Map.of(
+                          "company_name",
+                          java.util.Map.of("type", "string", "description", "The company.")),
+                  "required", List.of("company_name"))));
+
+  private static final String TOOL_CALL_BODY =
+      """
+      {"id":"x","object":"chat.completion","created":1,"model":"a:free",
+       "choices":[{"index":0,"message":{"role":"assistant","content":null,
+         "tool_calls":[{"id":"call_1","type":"function","function":{"name":"get_open_deals","arguments":"{\\"company_name\\":\\"Acme\\"}"}}]},
+         "finish_reason":"tool_calls"}],
+       "usage":{"prompt_tokens":40,"completion_tokens":12,"total_tokens":52}}""";
+
+  private Completion askWithTools(String toolChoice) {
+    return client(5)
+        .complete(
+            "a:free",
+            "Use the tools.",
+            List.of(new ChatMessage("user", "Acme deals?")),
+            TOOLS,
+            toolChoice);
+  }
+
+  @Test
+  void theOfferedToolsAreSentWithTheirNamesDescriptionsAndArgumentSchemas() {
+    askWithTools("auto");
+
+    String body = requestBody.get();
+    assertThat(body).contains("\"tools\"").contains("\"type\":\"function\"");
+    assertThat(body).contains("\"name\":\"get_open_deals\"").contains("Get only the open deals");
+    assertThat(body).contains("\"company_name\"").contains("\"required\":[\"company_name\"]");
+  }
+
+  @Test
+  void withNoToolsNoneAreSent() {
+    ask();
+
+    assertThat(requestBody.get()).doesNotContain("\"tools\"").doesNotContain("tool_choice");
+  }
+
+  @Test
+  void aToolCallInTheReplyIsReadWithItsIdNameAndParsedArgumentsAndNoText() {
+    reply = TOOL_CALL_BODY;
+
+    Completion completion = askWithTools("auto");
+
+    assertThat(completion.content()).isBlank();
+    assertThat(completion.toolCalls())
+        .containsExactly(
+            new ToolCall("call_1", "get_open_deals", java.util.Map.of("company_name", "Acme")));
+    assertThat(completion.tokensIn()).isEqualTo(40);
+  }
+
+  @Test
+  void argumentsThatAreNotAJsonObjectBecomeAnErrorOnTheCallNotAnException() {
+    reply = TOOL_CALL_BODY.replace("{\\\"company_name\\\":\\\"Acme\\\"}", "not json");
+    assertThat(askWithTools("auto").toolCalls())
+        .extracting(ToolCall::error)
+        .containsExactly("arguments were not valid JSON");
+
+    reply = TOOL_CALL_BODY.replace("{\\\"company_name\\\":\\\"Acme\\\"}", "[1]");
+    assertThat(askWithTools("auto").toolCalls())
+        .extracting(ToolCall::error)
+        .containsExactly("arguments must be a JSON object");
+    assertThat(askWithTools("auto").toolCalls().get(0).arguments()).isEmpty();
+  }
+
+  @Test
+  void aToolConversationIsSentBackWithTheCallAndItsResult() {
+    var call = new ToolCall("call_1", "get_open_deals", java.util.Map.of("company_name", "Acme"));
+
+    client(5)
+        .complete(
+            "a:free",
+            "Use the tools.",
+            List.of(
+                new ChatMessage("user", "Acme deals?"),
+                ChatMessage.assistantToolCalls("", List.of(call)),
+                ChatMessage.toolResult("call_1", "get_open_deals", "{\"status\":\"executed\"}")),
+            TOOLS,
+            "auto");
+
+    String body = requestBody.get();
+    assertThat(body).contains("\"tool_calls\"").contains("\"id\":\"call_1\"");
+    assertThat(body).contains("\"role\":\"tool\"").contains("\"tool_call_id\":\"call_1\"");
+    assertThat(body).contains("executed");
+    assertThat(body.indexOf("\"role\":\"assistant\""))
+        .isLessThan(body.indexOf("\"role\":\"tool\""));
+  }
+
+  @Test
+  void aFinalAnswerCanBeForcedToTextWithToolChoiceNone() {
+    askWithTools("none");
+
+    assertThat(requestBody.get()).contains("\"tool_choice\":\"none\"");
+  }
 }
