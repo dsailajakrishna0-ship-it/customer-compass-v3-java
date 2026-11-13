@@ -34,6 +34,11 @@ public class VectorIndex {
     this(properties, null, null);
   }
 
+  /** An index over another collection (an extra knowledge base, ADR 0017). */
+  public static VectorIndex create(RagProperties properties) {
+    return new VectorIndex(properties);
+  }
+
   /** A seam for tests: a fake embedding model and a Qdrant client for a test container. */
   VectorIndex(
       RagProperties properties,

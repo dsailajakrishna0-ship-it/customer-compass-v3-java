@@ -6,15 +6,16 @@ Goal: the same product and API contract as the Python edition, built with the Ja
 
 | Stage | Name | Ports (Python edition) | Status |
 | --- | --- | --- | --- |
-| J0 | Foundation: repo, shared assets, CI | Stage 0 | J0.1 and J0.2 merged; J0.3 in review |
-| J1 | Spring Boot skeleton, Postgres + Flyway, CRM API | Stage 0 (V2 base) | In review (stacked on J0.3) |
-| J2 | Model layer: Spring AI chat, fallback chain, usage, `/llm/models`, HTTP contract tests | Stage 1, 3.1 | J2.1 gateway and model list merged; J2.2 Spring AI chat in review |
-| J3 | Documents and RAG: Spring AI `VectorStore` (Qdrant), Gemini embeddings, `/documents/*`, `/chat/rag`, `/chat/crm`; cut into J3.1 Markdown ingestion, J3.2 PDF, Word and Excel, J3.3 retrieval and `/chat/rag`, J3.4 `/chat/crm`, J3.5 optional reranker, J3.6 hybrid search | V2 base, Stage 4 | J3.1 to J3.5 merged; J3.6 (hybrid) in review |
-| J4 | Tools and MCP: Spring AI MCP server and client, `/chat/tools`, `/mcp/servers` | Stage 2 | J4.1 and J4.2 merged; J4.3 (tools chat) in review |
-| J5 | The agent: graph, human approval with a durable pause, `/agent/recommend` and `/agent/confirm` | Stage 3.2 | J5.1 merged; J5.2 (durable pause) in review |
-| J6 | Guardrails and audit: prompt guard, output guard, audit logs | V2 base | J6.1 merged; J6.2 (agent guard, LLM classifier) in review |
+| J0 | Foundation: repo, shared assets, CI | Stage 0 | Merged |
+| J1 | Spring Boot skeleton, Postgres + Flyway, CRM API | Stage 0 (V2 base) | Merged |
+| J2 | Model layer: Spring AI chat, fallback chain, usage, `/llm/models`, HTTP contract tests | Stage 1, 3.1 | Merged |
+| J3 | Documents and RAG: Spring AI `VectorStore` (Qdrant), Gemini embeddings, `/documents/*`, `/chat/rag`, `/chat/crm`; cut into J3.1 Markdown ingestion, J3.2 PDF, Word and Excel, J3.3 retrieval and `/chat/rag`, J3.4 `/chat/crm`, J3.5 optional reranker, J3.6 hybrid search | V2 base, Stage 4 | Merged (J3.1 to J3.6, including the optional reranker and hybrid search) |
+| J4 | Tools and MCP: Spring AI MCP server and client, `/chat/tools`, `/mcp/servers` | Stage 2 | Merged |
+| J5 | The agent: graph, human approval with a durable pause, `/agent/recommend` and `/agent/confirm` | Stage 3.2 | Merged (J5.1 graph, J5.2 durable pause) |
+| J6 | Guardrails and audit: prompt guard, output guard, audit logs | V2 base | Merged (J6.1 guard and audit log, J6.2 agent guard and LLM classifier) |
 | J7 | Evals and observability | Stage 5 | Planned |
 | J8 | The no-framework version (plain Java) and the comparison write-up | none | Idea |
+| E1 | Java extension: multi-source RAG with routing (several knowledge bases the model searches across); see [java-extensions.md](java-extensions.md) | none (Java only) | E1.1 (second knowledge base) in review; E1.2 (routing strategies) and E1.3 (comparison) planned |
 
 ## Stage J0: Foundation
 

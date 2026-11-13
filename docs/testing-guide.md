@@ -8,6 +8,22 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## E1.1: a second knowledge base (Java extension)
+
+Needs `just db`, `just qdrant`, `just run` with both keys (embeddings) and the CRM documents ingested (J3.2 step 6). The answers come from search only; no chat model is involved.
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just test` | all tests pass; read `KnowledgeBasesTests` | Ingestion, isolation, 404, 422 |
+| 2 | `just kb-list` | Two rows: `crm` (builtIn true, 33 chunks after ingest) and `agri-supply` (builtIn false, 0 chunks) | The registry |
+| 3 | `just kb-ingest agri-supply` | `"status": "completed"`, `"documentsProcessed": 8`, `chunksCreated` around 8 to 12 | The second corpus, in its own collection |
+| 4 | `just kb-list` again | `agri-supply` shows the chunk count; `crm` still has 33 | Ingesting one never touches the other |
+| 5 | `just kb-search agri-supply "How long must workers stay out of a block after spraying?"` | Chunks from `pesticide-reentry-intervals.md` first, every `sourcePath` under `knowledge-bases/agri-supply/` | Search of the second corpus |
+| 6 | `just kb-search crm "How long must workers stay out of a block after spraying?"` | Chunks, but none from `knowledge-bases` (CRM documents only, probably weak matches) | A search never leaves its own knowledge base |
+| 7 | `curl -s -X POST localhost:8001/api/v1/documents/ingest`, then `just kb-list` | `agri-supply` keeps its count | Re-ingesting the CRM documents does not wipe the other corpus |
+| 8 | `just kb-ingest crm` | 400: `The CRM documents are ingested with POST /api/v1/documents/ingest.` | The built-in corpus keeps its route |
+| 9 | `just contract` | `OK` | The shared contract is unchanged |
+
 ## J6.2: the agent's guard and the LLM classifier
 
 Needs both keys, `just db`, `just qdrant`, `just run`, ingest (as J5.1). A run takes 15 to 60 seconds.
