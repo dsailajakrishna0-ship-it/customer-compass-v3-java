@@ -3,6 +3,8 @@ package com.customercompass.api.chat;
 import com.customercompass.api.crm.CompanySummary;
 import com.customercompass.api.crm.CompanySummary.DealFact;
 import com.customercompass.api.crm.CrmFacts;
+import com.customercompass.api.guard.ChatGuard;
+import com.customercompass.api.guard.PromptGuard;
 import com.customercompass.api.llm.ChatMessage;
 import com.customercompass.api.llm.GenerationResult;
 import com.customercompass.api.llm.LlmUnavailableException;
@@ -67,6 +69,7 @@ class CrmChatController {
   private final CrmFacts crmFacts;
   private final Retriever retriever;
   private final ModelGateway gateway;
+  private final ChatGuard guard;
   private final ObjectMapper json;
 
   CrmChatController(
@@ -74,7 +77,9 @@ class CrmChatController {
       CrmFacts crmFacts,
       Retriever retriever,
       ModelGateway gateway,
-      ObjectMapper json) {
+      ObjectMapper json,
+      ChatGuard guard) {
+    this.guard = guard;
     this.router = router;
     this.crmFacts = crmFacts;
     this.retriever = retriever;
@@ -93,6 +98,7 @@ class CrmChatController {
     ChatRequest request = ChatRequestValidator.validate(body, json);
     List<ChatMessage> messages = request.messages();
     String question = messages.get(messages.size() - 1).content();
+    PromptGuard.Finding questionFinding = PromptGuard.scan(question);
     try {
       QueryRoute route = router.classify(question);
       String scopedCompany = route.company() == null ? null : route.company().name();
@@ -116,7 +122,14 @@ class CrmChatController {
         none.put("facts", null);
         none.put("citations", List.of());
         none.put("scopedCompany", scopedCompany);
-        none.put("guardrail", ChatController.unflagged());
+        none.put(
+            "guardrail",
+            guard
+                .finalizeAnswer(
+                    "chat/crm",
+                    PromptGuard.report(java.util.Map.entry(questionFinding, "user_input")),
+                    "")
+                .guardrail());
         return none;
       }
 
@@ -124,12 +137,22 @@ class CrmChatController {
       if (facts != null) {
         parts.add(factsBlock(facts));
       }
+      var findings = new ArrayList<java.util.Map.Entry<PromptGuard.Finding, String>>();
+      findings.add(java.util.Map.entry(questionFinding, "user_input"));
       if (!chunks.isEmpty()) {
-        parts.add("Source documents:\n" + RagContext.wrapUntrusted(RagContext.build(chunks)));
+        var safeChunks = new ArrayList<RetrievedChunk>();
+        for (RetrievedChunk chunk : chunks) {
+          PromptGuard.Finding finding = PromptGuard.scan(chunk.content());
+          findings.add(java.util.Map.entry(finding, "document: " + chunk.documentTitle()));
+          safeChunks.add(chunk.withContent(finding.neutralizedText()));
+        }
+        parts.add("Source documents:\n" + RagContext.wrapUntrusted(RagContext.build(safeChunks)));
       }
       var augmented = new ArrayList<>(messages.subList(0, messages.size() - 1));
       augmented.add(
-          new ChatMessage("user", String.join("\n", parts) + "\n\nQuestion: " + question));
+          new ChatMessage(
+              "user",
+              String.join("\n", parts) + "\n\nQuestion: " + questionFinding.neutralizedText()));
       GenerationResult result = gateway.generate(CRM_SYSTEM_PROMPT, augmented, request.model());
 
       var citations = new ArrayList<Map<String, Object>>();
@@ -137,12 +160,15 @@ class CrmChatController {
         citations.add(RagContext.citation(i, chunks.get(i)));
       }
       var response = new LinkedHashMap<String, Object>();
-      response.put("message", result.content());
+      ChatGuard.Outcome outcome =
+          guard.finalizeAnswer(
+              "chat/crm", PromptGuard.report(findings), result.content(), scopedCompany);
+      response.put("message", outcome.answer());
       response.put("facts", factsJson(facts));
       response.put("citations", citations);
       response.put("scopedCompany", scopedCompany);
       response.put("usage", ChatController.usage(result));
-      response.put("guardrail", ChatController.unflagged());
+      response.put("guardrail", outcome.guardrail());
       return response;
     } catch (LlmUnavailableException | EmbeddingsUnavailableException e) {
       throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());

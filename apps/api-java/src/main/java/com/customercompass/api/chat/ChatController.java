@@ -1,5 +1,8 @@
 package com.customercompass.api.chat;
 
+import com.customercompass.api.guard.ChatGuard;
+import com.customercompass.api.guard.PromptGuard;
+import com.customercompass.api.llm.ChatMessage;
 import com.customercompass.api.llm.GenerationResult;
 import com.customercompass.api.llm.LlmUnavailableException;
 import com.customercompass.api.llm.ModelGateway;
@@ -23,8 +26,8 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * POST /api/v1/chat: general chat with no documents and no CRM data (Python mode 1). The model is
  * called through {@link ModelGateway}, so a failing model falls back to the next one. The guard
- * (prompt-injection scan of the question, scan of the answer) arrives in J6; until then the
- * "guardrail" field always says nothing was flagged.
+ * scans the question (a matched phrase is redacted, the request still runs) and the answer, and
+ * writes every detection to the security audit log (J6.1).
  */
 @RestController
 @RequestMapping("/api/v1/chat")
@@ -41,10 +44,12 @@ class ChatController {
 
   private final ModelGateway gateway;
   private final ObjectMapper json;
+  private final ChatGuard guard;
 
-  ChatController(ModelGateway gateway, ObjectMapper json) {
+  ChatController(ModelGateway gateway, ObjectMapper json, ChatGuard guard) {
     this.gateway = gateway;
     this.json = json;
+    this.guard = guard;
   }
 
   /**
@@ -61,25 +66,23 @@ class ChatController {
   /** The route after parsing; also what the unit tests call. */
   Map<String, Object> chat(JsonNode body) {
     ChatRequest request = ChatRequestValidator.validate(body, json);
+    List<ChatMessage> messages = new java.util.ArrayList<>(request.messages());
+    ChatMessage last = messages.get(messages.size() - 1);
+    PromptGuard.Finding question = PromptGuard.scan(last.content());
+    messages.set(messages.size() - 1, new ChatMessage(last.role(), question.neutralizedText()));
+    var report = PromptGuard.report(java.util.Map.entry(question, "user_input"));
     GenerationResult result;
     try {
-      result = gateway.generate(GENERAL_SYSTEM_PROMPT, request.messages(), request.model());
+      result = gateway.generate(GENERAL_SYSTEM_PROMPT, messages, request.model());
     } catch (LlmUnavailableException e) {
       throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
     }
     var response = new LinkedHashMap<String, Object>();
-    response.put("message", result.content());
+    ChatGuard.Outcome outcome = guard.finalizeAnswer("chat", report, result.content());
+    response.put("message", outcome.answer());
     response.put("usage", usage(result));
-    response.put("guardrail", unflagged());
+    response.put("guardrail", outcome.guardrail());
     return response;
-  }
-
-  /** The guardrail field while the guard is not built yet (J6): nothing is ever flagged. */
-  static Map<String, Object> unflagged() {
-    var guardrail = new LinkedHashMap<String, Object>();
-    guardrail.put("flagged", false);
-    guardrail.put("reasons", List.of());
-    return guardrail;
   }
 
   /** The usage footer: which model answered, tokens, latency, cost and whether fallback ran. */

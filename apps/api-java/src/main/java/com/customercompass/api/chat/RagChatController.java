@@ -1,5 +1,7 @@
 package com.customercompass.api.chat;
 
+import com.customercompass.api.guard.ChatGuard;
+import com.customercompass.api.guard.PromptGuard;
 import com.customercompass.api.llm.ChatMessage;
 import com.customercompass.api.llm.GenerationResult;
 import com.customercompass.api.llm.LlmUnavailableException;
@@ -56,9 +58,11 @@ class RagChatController {
 
   private final Retriever retriever;
   private final ModelGateway gateway;
+  private final ChatGuard guard;
   private final ObjectMapper json;
 
-  RagChatController(Retriever retriever, ModelGateway gateway, ObjectMapper json) {
+  RagChatController(Retriever retriever, ModelGateway gateway, ObjectMapper json, ChatGuard guard) {
+    this.guard = guard;
     this.retriever = retriever;
     this.gateway = gateway;
     this.json = json;
@@ -75,6 +79,7 @@ class RagChatController {
     ChatRequest request = ChatRequestValidator.validate(body, json);
     List<ChatMessage> messages = request.messages();
     String question = messages.get(messages.size() - 1).content();
+    PromptGuard.Finding questionFinding = PromptGuard.scan(question);
     try {
       // Retrieval uses the original question: only what reaches the model is wrapped.
       List<RetrievedChunk> chunks = retriever.retrieve(question);
@@ -82,12 +87,31 @@ class RagChatController {
         var none = new LinkedHashMap<String, Object>();
         none.put("message", NOTHING_FOUND);
         none.put("citations", List.of());
-        none.put("guardrail", ChatController.unflagged());
+        none.put(
+            "guardrail",
+            guard
+                .finalizeAnswer(
+                    "chat/rag",
+                    PromptGuard.report(java.util.Map.entry(questionFinding, "user_input")),
+                    "")
+                .guardrail());
         return none;
       }
-      String context = RagContext.wrapUntrusted(RagContext.build(chunks));
+      // What reaches the model is scanned and wrapped; citations still show the original text.
+      var findings = new ArrayList<java.util.Map.Entry<PromptGuard.Finding, String>>();
+      findings.add(java.util.Map.entry(questionFinding, "user_input"));
+      var safeChunks = new ArrayList<RetrievedChunk>();
+      for (RetrievedChunk chunk : chunks) {
+        PromptGuard.Finding finding = PromptGuard.scan(chunk.content());
+        findings.add(java.util.Map.entry(finding, "document: " + chunk.documentTitle()));
+        safeChunks.add(chunk.withContent(finding.neutralizedText()));
+      }
+      String context = RagContext.wrapUntrusted(RagContext.build(safeChunks));
       var augmented = new ArrayList<>(messages.subList(0, messages.size() - 1));
-      augmented.add(new ChatMessage("user", "Context:\n" + context + "\n\nQuestion: " + question));
+      augmented.add(
+          new ChatMessage(
+              "user",
+              "Context:\n" + context + "\n\nQuestion: " + questionFinding.neutralizedText()));
       GenerationResult result =
           gateway.generate(GROUNDED_SYSTEM_PROMPT, augmented, request.model());
       var citations = new ArrayList<Map<String, Object>>();
@@ -95,10 +119,12 @@ class RagChatController {
         citations.add(RagContext.citation(i, chunks.get(i)));
       }
       var response = new LinkedHashMap<String, Object>();
-      response.put("message", result.content());
+      ChatGuard.Outcome outcome =
+          guard.finalizeAnswer("chat/rag", PromptGuard.report(findings), result.content());
+      response.put("message", outcome.answer());
       response.put("citations", citations);
       response.put("usage", ChatController.usage(result));
-      response.put("guardrail", ChatController.unflagged());
+      response.put("guardrail", outcome.guardrail());
       return response;
     } catch (LlmUnavailableException | EmbeddingsUnavailableException e) {
       throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
