@@ -11,10 +11,14 @@ import org.springframework.stereotype.Service;
 /**
  * Query-time retrieval: embed the question, ask Qdrant for the closest chunks, keep the ones that
  * are similar enough to cite. This is the Python edition's default mode (RETRIEVAL_MODE=dense).
- * Hybrid search and the reranker are later slices (ADR 0006).
+ * With a reranker configured (RERANK_PROVIDER, ADR 0015) the search hands it a longer shortlist and
+ * its order decides the final top k; if it fails the search order stays. Hybrid search is a later
+ * slice (ADR 0006).
  */
 @Service
 public class Retriever {
+
+  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Retriever.class);
 
   public static final int DEFAULT_TOP_K = 4;
 
@@ -29,11 +33,20 @@ public class Retriever {
   private final VectorIndex index;
   private final RagProperties properties;
   private final JdbcClient jdbc;
+  private final Reranker reranker;
+  private final RerankProperties rerank;
 
-  public Retriever(VectorIndex index, RagProperties properties, JdbcClient jdbc) {
+  public Retriever(
+      VectorIndex index,
+      RagProperties properties,
+      JdbcClient jdbc,
+      Reranker reranker,
+      RerankProperties rerank) {
     this.index = index;
     this.properties = properties;
     this.jdbc = jdbc;
+    this.reranker = reranker;
+    this.rerank = rerank;
   }
 
   public List<RetrievedChunk> retrieve(String question) {
@@ -55,14 +68,35 @@ public class Retriever {
 
   public List<RetrievedChunk> retrieve(String question, Integer companyId, int topK) {
     checkIndexModel();
+    // With a reranker we keep a longer shortlist for it to choose from; without one, just topK.
+    int pool = reranker.enabled() ? Math.max(rerank.candidates(), topK) : topK;
     SearchRequest.Builder request =
-        SearchRequest.builder().query(question).topK(topK).similarityThreshold(MIN_SIMILARITY);
+        SearchRequest.builder().query(question).topK(pool).similarityThreshold(MIN_SIMILARITY);
     if (companyId != null) {
       var f = new FilterExpressionBuilder();
       request.filterExpression(f.or(f.eq("company_id", companyId), f.eq("company_id", 0)).build());
     }
     List<Document> hits = index.store().similaritySearch(request.build());
-    return hits.stream().map(Retriever::chunk).toList();
+    List<RetrievedChunk> shortlist = hits.stream().map(Retriever::chunk).toList();
+    return rerank(question, shortlist, topK);
+  }
+
+  /**
+   * Re-orders the shortlist with the reranker when one is configured and answers; otherwise the
+   * first topK in the order the search gave them. Never throws because of the reranker.
+   */
+  private List<RetrievedChunk> rerank(String question, List<RetrievedChunk> shortlist, int topK) {
+    if (!reranker.enabled() || shortlist.size() <= 1) {
+      return shortlist.subList(0, Math.min(topK, shortlist.size()));
+    }
+    List<String> texts =
+        shortlist.stream().map(c -> c.documentTitle() + ": " + c.content()).toList();
+    var order = reranker.order(question, texts, topK);
+    if (order.isEmpty()) {
+      return shortlist.subList(0, Math.min(topK, shortlist.size()));
+    }
+    log.info("reranked candidates={} kept={}", shortlist.size(), order.get().size());
+    return order.get().stream().map(shortlist::get).toList();
   }
 
   /**
