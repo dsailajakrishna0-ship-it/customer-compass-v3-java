@@ -9,7 +9,7 @@ Last checked against `customer-compass-v3` `main` at commit `99c59d8` (Stage 4.2
 | 0 Foundation | Yes | n/a | J0, J1 | J0.1 to J0.3 done or in review; J1 in review |
 | 1 Model layer | Yes | Gateway, usage footer, `/llm/models` | J2 | J2.1 (gateway, `/llm/models`) merged; J2.2 (Spring AI client, `POST /chat`) in review |
 | 2 Tools and MCP | 2.1, 2.2a, 2.2b | `/chat/tools`, `/mcp/servers`, `contracts/mcp-tools.json` | J4 | J4.1 and J4.2 merged; J4.3 (`/chat/tools`, `/mcp/servers`, `/tool-audit-log`) in review. J4 is then complete |
-| 3 LangGraph port | 3.1, 3.2a, 3.2b | No (26 contract tests unchanged) | J5 | Planned |
+| 3 LangGraph port | 3.1, 3.2a, 3.2b | No (26 contract tests unchanged) | J5 | J5.1 (the graph and both routes) in review; J5.2 (the durable pause) planned |
 | 4 Retrieval upgrade | 4.1a, 4.1b, 4.2, 4.3 | 4.2 adds optional `page` and `sheet` to `/chat/rag` citations | J3 (RAG) | J3.1 to J3.3 merged; J3.4 (`/chat/crm`) in review. J3 is then complete except hybrid search and the reranker |
 | 5 and later | No | Unknown | J6 to J8 | Planned |
 
@@ -42,4 +42,6 @@ The contract is the 26 tests in `apps/api-py/tests/contract/` plus `docs/api-ref
 | MCP tool servers | Two (FastMCP in Python, Spring Boot in a separate service) behind a radio button; default FastMCP | One built in, inside the API at `/mcp` (ADR 0008), default `springboot`; the Python server can be added with `MCP_FASTMCP_URL`. `GET /mcp/servers` lists both | Done in J4.3 |
 | Tool results and tool arguments | Scanned for prompt injection, with an audit log | Wrapped as untrusted data, not scanned | J6 |
 | The `confirm` rule | The user's latest message decides (substring of yes, confirm, approve, go ahead, ...) | The same | Done |
+| The agent (`/agent/recommend`, `/agent/confirm`) | A LangGraph graph; a paused run saved in Postgres and resumed by `/confirm` | A LangGraph4j graph (ADR 0011); `/confirm` writes directly until J5.2 | J5.2 |
+| Prompt-injection scan in the agent (request, stored text, output, the note on confirm) | Yes, with audit events | None; `guardrail` is always unflagged | J6 |
 
