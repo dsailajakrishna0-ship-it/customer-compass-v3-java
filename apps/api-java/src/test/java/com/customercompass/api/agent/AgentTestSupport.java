@@ -66,6 +66,12 @@ final class AgentTestSupport {
       return this;
     }
 
+    RoleModel drafter(String... replies) {
+      drafter.clear();
+      drafter.addAll(List.of(replies));
+      return this;
+    }
+
     RoleModel reviewer(String... replies) {
       reviewer.clear();
       reviewer.addAll(List.of(replies));

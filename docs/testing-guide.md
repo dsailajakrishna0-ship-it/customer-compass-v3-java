@@ -8,9 +8,25 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## J5.2: the durable pause
+
+Needs the same setup as J5.1 (both keys, `just db`, `just qdrant`, `just run`, ingest). The pause is stored in Postgres, so you can restart the API between the recommendation and the confirm.
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just test` | all tests pass (198); read `AgentPauseTests` | Pause, resume, decline, restart survival, single write |
+| 2 | `just agent "Analyze Acme Fabrication and recommend a next action"`; note `proposedTask.note` | `status: completed`; no new task (`curl -s localhost:8001/api/v1/tasks`) | The run is saved, nothing written |
+| 3 | `docker exec cc-java-db psql -U customer_compass -d customer_compass -c "\dt"` | tables for the saver (checkpoint tables) next to the CRM tables | The pause lives in Postgres |
+| 4 | Stop the API (`Ctrl+C`) and start it again (`just run`) | It starts normally | A restart in the middle of a pause |
+| 5 | `curl -s -X POST localhost:8001/api/v1/agent/confirm -H 'Content-Type: application/json' -d '{"companyName":"Acme Fabrication","note":"<the note from step 2>","confirm":true}'` | `"status":"confirmed"` and the task is listed | The saved run was resumed after the restart |
+| 6 | Recommend again, then `curl -s localhost:8001/api/v1/agent/confirm` with a **different** note | A task with that edited note is written directly | With no saved run under that note, `/confirm` falls back to the J5.1 direct write |
+| 7 | Recommend again, then confirm (the original note) with `"confirm":false` | `declined`, no new task | Declining resumes the run and writes nothing |
+
+Delete the test tasks with `docker exec cc-java-db psql -U customer_compass -d customer_compass -c "delete from tasks"`.
+
 ## J5.1: the agent, `POST /api/v1/agent/recommend` and `/agent/confirm`
 
-Needs: Java 21, Docker, `just`, both keys (the agent searches documents, which embeds the query, and asks a model three times). Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run` with both keys exported and **ingest** (19 documents, 33 chunks). A run takes 15 to 60 seconds on a free model; `MODEL=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free just agent "..."` picks a steady one. This stage has no durable pause yet: a confirm writes the task directly (J5.2 resumes a paused run instead).
+Needs: Java 21, Docker, `just`, both keys (the agent searches documents, which embeds the query, and asks a model three times). Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run` with both keys exported and **ingest** (19 documents, 33 chunks). A run takes 15 to 60 seconds on a free model; `MODEL=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free just agent "..."` picks a steady one. From J5.2 a confirm resumes the paused run (see the J5.2 section).
 
 | # | Do | Expect | What it shows |
 | --- | --- | --- | --- |
@@ -28,7 +44,7 @@ Needs: Java 21, Docker, `just`, both keys (the agent searches documents, which e
 | 12 | `AGENT_MAX_STEPS=4 just run` (restart), then step 2 | `"status": "budget_exceeded"`, `step limit reached (4)`, and a trace of the steps taken | A limit stops the run with a status |
 | 13 | `just contract` | `OK`, including the `agent` checks | The shared contract |
 
-**What is not here yet:** the prompt-injection guard (J6: an "ignore all previous instructions" request is not flagged) and the durable pause (J5.2). Delete the test task with `docker exec cc-java-db psql -U customer_compass -d customer_compass -c "delete from tasks"`.
+**What is not here yet:** the prompt-injection guard (J6: an "ignore all previous instructions" request is not flagged) (the durable pause is J5.2, below). Delete the test task with `docker exec cc-java-db psql -U customer_compass -d customer_compass -c "delete from tasks"`.
 
 **Stop:** `Ctrl+C` in the `just run` terminal, then `just db-stop` and `just qdrant-stop`.
 

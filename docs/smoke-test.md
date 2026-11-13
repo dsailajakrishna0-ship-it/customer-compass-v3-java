@@ -92,7 +92,20 @@ Free models are sometimes slow or rate-limited. A 503 that names the models trie
 9. Web app: choose the mode **Tool-calling copilot (MCP)**. The **Tool server** buttons show **FastMCP (Python)** greyed with "(not configured)" and **Spring Boot (Java)** selected. Ask `What are Acme Fabrication's open deals?`: the answer shows a "Tools used" line ending "via springboot". Then `Create a follow-up task for Acme Fabrication to send the pricing breakdown.` and, as your next message, `yes, go ahead`: the second answer says the task was created, and the task is listed by step 6's `tasks` command.
 10. Clean up the test task: `docker exec cc-java-db psql -U customer_compass -d customer_compass -c "delete from tasks"`.
 
-## 7. Stop and clean up
+## 7. The agent and its durable pause (J5)
+
+Needs both keys and ingested documents (Part 2). A run takes 15 to 60 seconds on a free model.
+
+1. `just agent "Analyze Acme Fabrication and recommend a next action"`. Expect `"status": "completed"`, a recommendation citing evidence, a reviewer verdict and a `proposedTask`. Copy the proposed note.
+2. `curl -s localhost:8001/api/v1/tasks`. Expect no new task: recommending writes nothing.
+3. Stop the API (`Ctrl+C`) and start it again (`just run`). The run is saved in Postgres, so it survives.
+4. Confirm with the note from step 1:
+   `curl -s -X POST localhost:8001/api/v1/agent/confirm -H 'Content-Type: application/json' -d '{"companyName":"Acme Fabrication","note":"<note>","confirm":true}'`. Expect `"status":"confirmed"`.
+5. `curl -s localhost:8001/api/v1/tasks`. Expect exactly one new task.
+6. `just agent "Analyze Globex and recommend a next action"`. Expect `company_not_found` and no model call.
+7. `just contract`. Expect `OK`.
+
+## 8. Stop and clean up
 
 | # | Goal | Command |
 | --- | --- | --- |

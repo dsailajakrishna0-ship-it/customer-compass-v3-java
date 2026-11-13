@@ -40,12 +40,19 @@ class AgentController {
   private final AgentWorkflow workflow;
   private final ModelGateway gateway;
   private final CrmTools tools;
+  private final ApprovalGate gate;
   private final ObjectMapper json;
 
-  AgentController(AgentWorkflow workflow, ModelGateway gateway, CrmTools tools, ObjectMapper json) {
+  AgentController(
+      AgentWorkflow workflow,
+      ModelGateway gateway,
+      CrmTools tools,
+      ApprovalGate gate,
+      ObjectMapper json) {
     this.workflow = workflow;
     this.gateway = gateway;
     this.tools = tools;
+    this.gate = gate;
     this.json = json;
   }
 
@@ -89,11 +96,15 @@ class AgentController {
 
   Map<String, Object> confirm(JsonNode body) {
     AgentRequests.Confirm request = AgentRequests.confirm(body, json);
+    // A run paused by /recommend continues from where it stopped; with none saved (the API
+    // restarted without it, the note was edited) the answer is applied directly, as before.
+    Map<String, Object> resumed =
+        gate.resume(request.companyName(), request.note(), request.confirm());
+    if (resumed != null) {
+      return resumed;
+    }
     if (!request.confirm()) {
-      var declined = new LinkedHashMap<String, Object>();
-      declined.put("status", "declined");
-      declined.put("message", "No task was created.");
-      return declined;
+      return ApprovalGate.declined();
     }
     Map<String, Object> result =
         tools.createFollowupTask(request.companyName(), request.note(), true);
