@@ -8,6 +8,21 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## E3.2: the answer team and the supervisor's own search words (Java extension)
+
+Needs the same setup as E3.1 (both keys, the CRM documents ingested, `just kb-ingest agri-supply`).
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just test` | all tests pass; read the "answer team" tests in `SupervisorApiTests` | The answer path, the grounding rule, the search words |
+| 2 | `just supervise "What is Acme Fabrication's industry?"` | `status` `answered`, a `message` with citations like `[E1]`, `grounded` true, `citations` (the evidence cited), `supervisor.turns`: `crm_facts`, `researcher`, then `answerer` or a second `researcher`, `FINISH`; no `proposedTask` | A plain question runs the answer team |
+| 3 | `curl -s localhost:8001/api/v1/tasks` | No new task | The answer team never writes |
+| 4 | `just supervise "How long must workers stay out of a block after spraying?"` | An answer from the farm-supply handbook, with `[E..]` labels whose evidence source reads `document: [agri-supply] ...` | The researcher searches every knowledge base |
+| 5 | Read `supervisor.turns` for a turn with `"next": "researcher"` and a `query` | The supervisor's own search words (a model that follows the JSON format may write them) | A decision with content |
+| 6 | `just supervise "What is the weather in Chicago today?"` | Probably `grounded` false and the message `I could not find this in the CRM facts or the knowledge bases.` | The fail-closed rule: no cited evidence, no answer |
+| 7 | `just supervise "Analyze Acme Fabrication and recommend a next action"` | The E3.1 behaviour: `completed`, `proposedTask`, the approval gate | A follow-up still runs the task team |
+| 8 | `just contract` | `OK` | The shared contract is unchanged |
+
 ## E3.1: the supervisor with specialist agents (Java extension)
 
 Needs both keys, `just db`, `just qdrant`, `just run`, the CRM documents ingested (J3.2 step 6) and `just kb-ingest agri-supply` (E1.1). A run takes 20 to 90 seconds on a free model (a model that follows JSON instructions helps: `MODEL=<id> just supervise "..."`).

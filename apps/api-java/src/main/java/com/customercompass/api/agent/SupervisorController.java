@@ -6,7 +6,6 @@ import com.customercompass.api.rag.EmbeddingsUnavailableException;
 import com.customercompass.api.rag.VectorIndex;
 import com.customercompass.api.web.ApiException;
 import com.customercompass.api.web.ValidationProblems;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,8 +22,9 @@ import tools.jackson.databind.ObjectMapper;
  * POST /api/v1/agent/supervise (a Java-edition extension, E3): the same request as {@code
  * /agent/recommend}, handled by a supervisor that chooses the specialists turn by turn. The answer
  * has the recommend shape plus a {@code supervisor} object with every decision, and a completed run
- * waits at the same approval gate: {@code POST /agent/confirm} resumes it. Nothing is written
- * before the user says yes.
+ * waits at the same approval gate (a plain question is answered by an answer team instead, with no
+ * task and no gate): {@code POST /agent/confirm} resumes it. Nothing is written before the user
+ * says yes.
  */
 @RestController
 @RequestMapping("/api/v1/agent")
@@ -50,12 +50,6 @@ class SupervisorController {
   /** The route after parsing; also what the unit tests call. */
   Map<String, Object> supervise(JsonNode body) {
     AgentRequests.Recommend request = AgentRequests.recommend(body, json);
-    if (!AgentIntent.needsAgent(request.message())) {
-      var direct = new LinkedHashMap<String, Object>();
-      direct.put("route", "direct");
-      direct.put("message", AgentController.SIMPLE_QUESTION);
-      return direct;
-    }
     LlmCall llm = (role, system, messages) -> gateway.generate(system, messages, request.model());
     try {
       return workflow.run(request.message(), llm);
