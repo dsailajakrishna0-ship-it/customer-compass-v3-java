@@ -2,6 +2,8 @@
 
 One section per PR, newest first. Each says how to start, what to run, what you should see, and how to stop.
 
+For a quick, ordered walk through everything the Java edition does today, use the [smoke test](smoke-test.md); this guide has the detail for each stage.
+
 > **Scratch ports are 25432 (Postgres), 26333 and 26334 (Qdrant).** They are below 32768 on purpose: Linux uses 32768 to 60999 for temporary outgoing connections, and a program that holds one of those numbers (a VPN client did) makes `just db` fail with "address already in use". If a port is still taken, `ss -tanp | grep <port>` shows who has it.
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
