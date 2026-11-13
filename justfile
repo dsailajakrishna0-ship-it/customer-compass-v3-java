@@ -104,6 +104,10 @@ eval-multi-check:
 eval-multi-record:
     @python3 evals/knowledge-bases/compare_strategies.py --record
 
+# the supervisor with specialist agents (Java extension E3): same request as `just agent`, the answer adds the supervisor's decisions. Example: just supervise "Analyze Acme Fabrication and recommend a next action"
+supervise question:
+    @python3 contracts/http/ask.py supervise "$1"
+
 # ask the tool-calling copilot (the model calls tools through MCP; a write needs your "yes" in the next question). Example: just tools "What are Acme Fabrication's open deals?"  (MODEL=<id> picks a model)
 tools question:
     @python3 contracts/http/ask.py tools "$1"

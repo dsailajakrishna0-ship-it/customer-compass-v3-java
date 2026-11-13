@@ -44,6 +44,7 @@ final class AgentTestSupport {
     private final Deque<String> analyst = new ArrayDeque<>();
     private final Deque<String> reviewer = new ArrayDeque<>();
     private final Deque<String> drafter = new ArrayDeque<>();
+    private final Deque<String> supervisor = new ArrayDeque<>();
     volatile boolean down;
     volatile long delayMillis;
 
@@ -54,6 +55,7 @@ final class AgentTestSupport {
       analyst.clear();
       reviewer.clear();
       drafter.clear();
+      supervisor.clear();
       analyst.add(GOOD_RECOMMENDATION);
       reviewer.add(APPROVE);
       drafter.add(DRAFT);
@@ -69,6 +71,13 @@ final class AgentTestSupport {
     RoleModel drafter(String... replies) {
       drafter.clear();
       drafter.addAll(List.of(replies));
+      return this;
+    }
+
+    /** What the supervisor says each turn, in order; with no script it says nothing readable. */
+    RoleModel supervisor(String... replies) {
+      supervisor.clear();
+      supervisor.addAll(List.of(replies));
       return this;
     }
 
@@ -94,6 +103,9 @@ final class AgentTestSupport {
       if (system.startsWith("You are the Analyst")) {
         calls.add("analyst");
         queue = analyst;
+      } else if (system.startsWith("You are the Supervisor")) {
+        calls.add("supervisor");
+        queue = supervisor.isEmpty() ? new ArrayDeque<>(List.of("no idea")) : supervisor;
       } else if (system.startsWith("You are the Reviewer")) {
         calls.add("reviewer");
         queue = reviewer;
