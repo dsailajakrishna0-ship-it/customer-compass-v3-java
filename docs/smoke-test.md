@@ -41,7 +41,11 @@ Free models are sometimes slow or rate-limited. A 503 that names the models trie
 **Needs:** rows A, B, C, D.
 
 1. Ingest: `curl -s -X POST localhost:8001/api/v1/documents/ingest`. Expect `"documentsProcessed":19,"chunksCreated":33,"status":"completed"`. This ingest is also what stores the company marker that Part 4's scoped search uses.
-2. `curl -s localhost:8001/api/v1/documents | python3 -m json.tool | grep -B1 -A4 -E "pdf|xlsx|docx"`: id 3 is the PDF (2 chunks), id 9 the Excel file (2) and id 14 the Word file (1). The ids equal the Python edition's.
+2. Show the three non-Markdown documents:
+   ```bash
+   curl -s localhost:8001/api/v1/documents | python3 -c 'import sys,json; [print(d["id"], d["sourcePath"].split("/")[-1], d["chunkCount"], "chunks,", d["companyName"]) for d in json.load(sys.stdin) if not d["sourcePath"].endswith(".md")]'
+   ```
+   Expect exactly three lines: `3 acme-service-agreement.pdf 2 chunks, Acme Fabrication`, `9 northstar-rate-card.xlsx 2 chunks, Northstar Logistics` and `14 riverside-data-handling-policy.docx 1 chunks, Riverside Health Group`. The ids equal the Python edition's.
 3. Ingest again, then check row E: it still prints `33`. Nothing is duplicated.
 
 ## 3. Document questions (J3.3)
