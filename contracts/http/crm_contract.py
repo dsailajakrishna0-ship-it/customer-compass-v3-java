@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HTTP contract check for the CRM routes (J1), the model list (J2.1) POST /chat (J2.2) and POST /chat/rag (J3.3) POST /chat/crm (J3.4) and the tool routes (J4.3). Runs against any base URL, so the same file can be
+"""HTTP contract check for the CRM routes (J1), the model list (J2.1) POST /chat (J2.2) and POST /chat/rag (J3.3) POST /chat/crm (J3.4) the tool routes (J4.3) and the agent routes (J5.1). Runs against any base URL, so the same file can be
 pointed at the Python edition and at the Java edition and must pass on both.
 
     python3 contracts/http/crm_contract.py http://localhost:8001
@@ -230,6 +230,33 @@ check(
     all(list(r) == ["id", "tool_name", "arguments", "status", "result_summary", "company_id", "created_at"] and isinstance(r["arguments"], dict) for r in audit),
     str(audit[:1]),
 )
+
+# The account follow-up agent. Everything here stops before a model is asked, so it needs no key and writes nothing.
+for payload, kind in (("{}", "missing"), ('{"message":""}', "string_too_short"), (json.dumps({"message": "x" * 1001}), "string_too_long")):
+    status, body = post("/api/v1/agent/recommend", payload)
+    check(f"agent/recommend: a bad request is 422 {kind}", status == 422 and body["detail"][0]["type"] == kind, f"{status} {body}")
+status, body = post("/api/v1/agent/recommend", '{"message":"What is Acme Fabrication\'s industry?"}')
+check(
+    "agent/recommend: a simple question is sent back to the direct modes",
+    status == 200 and body == {"route": "direct", "message": "This looks like a simple question. Use the CRM copilot or document chat mode instead of the agent."},
+    f"{status} {body}",
+)
+status, body = post("/api/v1/agent/recommend", '{"message":"Analyze Globex and recommend a next action"}')
+check(
+    "agent/recommend: an unknown company stops before any agent, with a one-step trace",
+    status == 200
+    and list(body) == ["route", "status", "trace", "message"]
+    and body["status"] == "company_not_found"
+    and [(t["name"], t["status"]) for t in body["trace"]] == [("identify_company", "error")]
+    and list(body["trace"][0]) == ["index", "kind", "name", "input_summary", "output_summary", "status", "duration_ms"],
+    f"{status} {body}",
+)
+status, body = post("/api/v1/agent/confirm", '{"companyName":"Acme Fabrication","note":"TEST: contract check","confirm":false}')
+check("agent/confirm: declining says so and writes nothing", status == 200 and body == {"status": "declined", "message": "No task was created."}, f"{status} {body}")
+status, body = post("/api/v1/agent/confirm", '{"companyName":"Acme","note":"x"}')
+check("agent/confirm: confirm is required (no silent default to write)", status == 422 and body["detail"][0]["type"] == "missing" and body["detail"][0]["loc"] == ["body", "confirm"], f"{status} {body}")
+status, body = post("/api/v1/agent/confirm", '{"companyName":"Globex","note":"TEST: contract check","confirm":true}')
+check("agent/confirm: an unknown company is 404 and names it", status == 404 and "Globex" in body["error"], f"{status} {body}")
 
 _, _, headers = get("/health")
 check("every response has X-Request-ID", bool(headers.get("X-Request-ID")))

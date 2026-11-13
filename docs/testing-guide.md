@@ -8,6 +8,30 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## J5.1: the agent, `POST /api/v1/agent/recommend` and `/agent/confirm`
+
+Needs: Java 21, Docker, `just`, both keys (the agent searches documents, which embeds the query, and asks a model three times). Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run` with both keys exported and **ingest** (19 documents, 33 chunks). A run takes 15 to 60 seconds on a free model; `MODEL=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free just agent "..."` picks a steady one. This stage has no durable pause yet: a confirm writes the task directly (J5.2 resumes a paused run instead).
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just test` | all tests pass (190); read `AgentApiTests` | The Python edition's contract, ported: shapes, trace, reviewer loop, 404, 422, 503 |
+| 2 | `just agent "Analyze Acme Fabrication and recommend a next action"` | `"status": "completed"`; `evidence` E1 to E9 (CRM facts, the open deal, recent interactions, document chunks); a `recommendation` that cites some of them; a `review` that is approved; a `proposedTask`; `llmCalls` with `analyst`, `reviewer`, `task_drafter` | Three agents, code in charge of the order |
+| 3 | In that output, look at `trace` | Eight steps in order: `identify_company`, `get_company_summary`, `get_recent_interactions`, `search_documents`, `Analyst agent`, `Reviewer agent`, `Task Drafter agent`, `awaiting_user_confirmation` | The trace explains the run |
+| 4 | `curl -s localhost:8001/api/v1/tasks` | No new task | Recommending never writes |
+| 5 | `just agent "Analyze Globex and recommend a next action"` | `"status": "company_not_found"` with a one-step trace (`identify_company`, status `error`) and no model call | Stops before any agent |
+| 6 | `just agent "What is Acme Fabrication's industry?"` | `"route": "direct"` and "This looks like a simple question..." | Plain questions stay on the chat modes |
+| 7 | `curl -s -X POST localhost:8001/api/v1/agent/confirm -H 'Content-Type: application/json' -d '{"companyName":"Acme Fabrication","note":"Email Maya the pricing breakdown","confirm":false}'` | `{"status":"declined","message":"No task was created."}` and no task | Declining writes nothing |
+| 8 | The same with `"confirm":true`, then `curl -s localhost:8001/api/v1/tasks` | `"status":"confirmed"` and the task is listed | The only place a task is created |
+| 9 | The same with `"companyName":"Globex"` | 404 and `No company matching "Globex" was found.` | An unknown company writes nothing |
+| 10 | The same with no `confirm` field | 422 `missing` for `confirm` | No silent default to "write" |
+| 11 | `curl -s "localhost:8001/api/v1/tool-audit-log?limit=6" \| python3 -m json.tool` | The agent's tool calls and the confirmed task, newest first | The audit trail |
+| 12 | `AGENT_MAX_STEPS=4 just run` (restart), then step 2 | `"status": "budget_exceeded"`, `step limit reached (4)`, and a trace of the steps taken | A limit stops the run with a status |
+| 13 | `just contract` | `OK`, including the `agent` checks | The shared contract |
+
+**What is not here yet:** the prompt-injection guard (J6: an "ignore all previous instructions" request is not flagged) and the durable pause (J5.2). Delete the test task with `docker exec cc-java-db psql -U customer_compass -d customer_compass -c "delete from tasks"`.
+
+**Stop:** `Ctrl+C` in the `just run` terminal, then `just db-stop` and `just qdrant-stop`.
+
 ## J4.3: the tools chat, `POST /api/v1/chat/tools`
 
 Needs: the same as J3.4 (both keys); document search (step 5) needs Qdrant and the documents ingested, the rest needs only Postgres and the OpenRouter key. Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run` with both keys exported. Ask with `just tools "..."` (it prints the JSON answer; `MODEL=<id>` picks a model). The Part 6 of the [smoke test](smoke-test.md) is this section as one walk.

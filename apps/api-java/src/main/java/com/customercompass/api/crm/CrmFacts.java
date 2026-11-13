@@ -30,6 +30,32 @@ public class CrmFacts {
         .list();
   }
 
+  /** One logged contact with a company: an email, call, meeting or support ticket. */
+  public record Interaction(
+      int id, String interactionType, String subject, String occurredAt, String summary) {}
+
+  /**
+   * The most recent interactions with a company, newest first (the history evidence of the agent).
+   */
+  public List<Interaction> recentInteractions(int companyId, int limit) {
+    return jdbc.sql(
+            """
+            SELECT id, interaction_type, subject, occurred_at::text AS occurred_at, summary
+            FROM interactions WHERE company_id = :id
+            ORDER BY occurred_at DESC LIMIT :limit""")
+        .param("id", companyId)
+        .param("limit", limit)
+        .query(
+            (rs, rowNum) ->
+                new Interaction(
+                    rs.getInt("id"),
+                    rs.getString("interaction_type"),
+                    rs.getString("subject"),
+                    rs.getString("occurred_at"),
+                    rs.getString("summary")))
+        .list();
+  }
+
   public Optional<CompanySummary> summary(int companyId) {
     return jdbc.sql("SELECT id, name, industry, relationship_status FROM companies WHERE id = :id")
         .param("id", companyId)

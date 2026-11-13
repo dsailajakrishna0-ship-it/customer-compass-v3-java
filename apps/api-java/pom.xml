@@ -24,6 +24,7 @@
     <checkstyle.version>14.4.0</checkstyle.version>
     <spring-ai.version>2.0.2</spring-ai.version>
     <pdfbox.version>3.0.8</pdfbox.version>
+    <langgraph4j.version>1.9.9</langgraph4j.version>
     <poi.version>6.0.0</poi.version>
   </properties>
 
@@ -105,6 +106,13 @@
     <dependency>
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+    </dependency>
+
+    <!-- J5: the agent graph (LangGraph4j, the Java twin of the Python edition's LangGraph; ADR 0011). -->
+    <dependency>
+      <groupId>org.bsc.langgraph4j</groupId>
+      <artifactId>langgraph4j-core</artifactId>
+      <version>${langgraph4j.version}</version>
     </dependency>
 
     <!-- J3.2: reading PDF, Word and Excel files (Apache PDFBox and Apache POI). -->

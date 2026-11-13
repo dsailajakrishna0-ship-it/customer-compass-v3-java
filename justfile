@@ -68,6 +68,10 @@ rag question:
 crm question:
     @python3 contracts/http/ask.py crm "$1"
 
+# run the account follow-up agent (evidence, analyst, reviewer, task drafter; it proposes a task and never writes). Example: just agent "Analyze Acme Fabrication and recommend a next action"  (MODEL=<id> picks a model)
+agent question:
+    @python3 contracts/http/ask.py agent "$1"
+
 # ask the tool-calling copilot (the model calls tools through MCP; a write needs your "yes" in the next question). Example: just tools "What are Acme Fabrication's open deals?"  (MODEL=<id> picks a model)
 tools question:
     @python3 contracts/http/ask.py tools "$1"

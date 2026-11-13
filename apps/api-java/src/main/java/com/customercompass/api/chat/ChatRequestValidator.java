@@ -2,11 +2,11 @@ package com.customercompass.api.chat;
 
 import com.customercompass.api.llm.ChatMessage;
 import com.customercompass.api.web.RequestValidationException;
+import com.customercompass.api.web.ValidationProblems;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -23,43 +23,11 @@ final class ChatRequestValidator {
   private ChatRequestValidator() {}
 
   /**
-   * Turns the raw body into a JSON tree, or says why not in FastAPI's words: no body at all is a
-   * missing field, a content type that is not JSON hands the raw text to the model as a string, and
-   * text that is not valid JSON is a decode error.
+   * The raw body as JSON, or a FastAPI-style validation problem (see {@link
+   * ValidationProblems#parseBody}).
    */
   static JsonNode parse(String raw, String contentType, ObjectMapper json) {
-    if (raw == null || raw.isEmpty()) {
-      throw new RequestValidationException(
-          List.of(problem("missing", List.of("body"), "Field required", null, null, json)));
-    }
-    boolean jsonType =
-        contentType != null
-            && (contentType.toLowerCase().startsWith("application/json")
-                || contentType.toLowerCase().contains("+json"));
-    if (!jsonType) {
-      var input = json.getNodeFactory().stringNode(raw);
-      throw new RequestValidationException(List.of(notAnObject(input, json)));
-    }
-    try {
-      return json.readTree(raw);
-    } catch (JacksonException e) {
-      var detail = new LinkedHashMap<String, Object>();
-      detail.put("type", "json_invalid");
-      detail.put("loc", List.of("body"));
-      detail.put("msg", "JSON decode error");
-      detail.put("input", Map.of());
-      throw new RequestValidationException(List.of(detail));
-    }
-  }
-
-  private static Map<String, Object> notAnObject(JsonNode input, ObjectMapper json) {
-    return problem(
-        "model_attributes_type",
-        List.of("body"),
-        "Input should be a valid dictionary or object to extract fields from",
-        input,
-        null,
-        json);
+    return ValidationProblems.parseBody(raw, contentType, json);
   }
 
   static ChatRequest validate(JsonNode body, ObjectMapper json) {
@@ -242,11 +210,7 @@ final class ChatRequestValidator {
   }
 
   private static Map<String, Object> ctx(Object... pairs) {
-    var map = new LinkedHashMap<String, Object>();
-    for (int i = 0; i < pairs.length; i += 2) {
-      map.put((String) pairs[i], pairs[i + 1]);
-    }
-    return map;
+    return ValidationProblems.ctx(pairs);
   }
 
   private static Map<String, Object> problem(
@@ -256,14 +220,6 @@ final class ChatRequestValidator {
       JsonNode input,
       Map<String, Object> ctx,
       ObjectMapper json) {
-    var map = new LinkedHashMap<String, Object>();
-    map.put("type", type);
-    map.put("loc", loc);
-    map.put("msg", msg);
-    map.put("input", input == null ? null : json.convertValue(input, Object.class));
-    if (ctx != null) {
-      map.put("ctx", ctx);
-    }
-    return map;
+    return ValidationProblems.problem(type, loc, msg, input, ctx, json);
   }
 }
