@@ -8,6 +8,19 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## J4.2: tool calling in the model layer
+
+Nothing in this stage is visible in the API or the web app yet: it teaches the model layer to offer tools and to read a model's tool calls. The route that uses it, `POST /chat/tools`, is J4.3. So the checks are the automated tests, and the live exchange below if you want to see it.
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just test` | all tests pass (132) | |
+| 2 | Read `SpringAiModelClientTests`, the block "tools (J4.2)" | Six tests against a fake OpenRouter on a local port: the offered tools are sent, a tool call is read back with its id and parsed arguments, bad arguments become an `error`, a tool conversation is sent back as an assistant call plus a `tool` result, and `tool_choice: none` is sent | The exact request and reply shapes |
+| 3 | Read `ModelGatewayTests`, the block "tools and raw markup" | A tool call with no text is a valid answer; no text and no call is a failed attempt; raw markup falls back to the next model; text that only mentions the marker is kept | The gateway rules |
+| 4 | Optional live check (needs `OPENROUTER_API_KEY`): see ADR 0009, "What the first real runs showed" | A real model asked "What are Acme Fabrication's open deals?" calls `get_open_deals` with `company_name` Acme Fabrication, and after the tool result writes the answer | A real two-turn exchange. Free models are often rate-limited |
+
+**There is nothing to stop or clean up.** The first place you can type a question that uses this is J4.3 (the web app's Tool-calling copilot).
+
 ## J4.1: the MCP tool server (inside the API)
 
 Needs: Java 21, Docker, `just`, `uv` (it fetches the small `mcp` client library), and for steps 6 and 7 a Google key (document search embeds the query). Start `just db`, `just qdrant`, `QDRANT_GRPC_PORT=26334 just run` with `GOOGLE_API_KEY` exported, and ingest (J3.2 step 6). The tools are served by the API itself at `http://localhost:8001/mcp`.
