@@ -14,7 +14,7 @@ Goal: the same product and API contract as the Python edition, built with the Ja
 | J5 | The agent: graph, human approval with a durable pause, `/agent/recommend` and `/agent/confirm` | Stage 3.2 | Merged (J5.1 graph, J5.2 durable pause) |
 | J6 | Guardrails and audit: prompt guard, output guard, audit logs | V2 base | Merged (J6.1 guard and audit log, J6.2 agent guard and LLM classifier) |
 | J7 | Evals and observability: J7.1 adversarial set on the guard, J7.2 retrieval golden set, J7.3 tracing, J7.4 guard comparison with the classifier, J7.5 tool and agent golden cases ([ADR 0025](adr/0025-evals-as-shared-files-and-replayable-baselines.md)) | Stage 5 | J7.1 merged; J7.2 (retrieval golden set, harness) in review |
-| J8 | The no-framework version (plain Java) and the comparison write-up | none | Idea |
+| J8 | Approaches compared, each in its own clearly named folder (see "Stage J8" below): J8.1 plain Java version of the core flow, J8.2 tool calling three ways, J8.3 the agent graph several ways, and the comparison write-up | none (Java only) | Planned |
 | E3 | Java extension: a supervisor with specialist agents; see [java-extensions.md](java-extensions.md) | none (Java only) | E3.1 (the supervisor graph) merged; E3.2 (answer team, supervisor-written queries) merged; E3.3 (comparison) in review |
 | E1 | Java extension: multi-source RAG with routing (several knowledge bases the model searches across); see [java-extensions.md](java-extensions.md) | none (Java only) | E1.1 (second knowledge base) merged; E1.2 (routing strategies) merged; E1.3 (comparison) merged; E1.4 (per-corpus similarity floor) in review |
 
@@ -53,6 +53,18 @@ Goal: the same product and API contract as the Python edition, built with the Ja
 ## Stage J6 to J8
 
 Guardrails and audit (J6), evals and observability (J7), then a **plain Java** version of the core flow with no framework, plus a short comparison: lines of code, what the framework gave us, what it hid (J8).
+
+## Stage J8: the same flow, several approaches
+
+Each comparison builds **one small flow several ways** and puts every way in its own folder, named for the approach, so a reader can open one folder and read exactly one approach. These are comparison modules under `comparisons/`, separate from the main app (the app does not depend on them). Each compares lines of code, what the approach hides, and what it lets you control (turn limits, a guard on every tool result, failure behaviour). Any live recording needs the owner's approval first.
+
+| Slice | Question | Folders (one per approach) |
+| --- | --- | --- |
+| J8.1 | The core flow with no framework at all | `comparisons/plain-java/handWritten` (the whole flow in plain Java) next to what the app does today |
+| J8.2 | Tool calling: how does the model call tools? Flow: a CRM question that needs the CRM tools ("What open deals does Acme Fabrication have?") | `comparisons/tool-calling/handWritten` (our own tool loop, the way the app does it today), `comparisons/tool-calling/withSpringAi` (Spring AI `@Tool` and `ChatClient`), `comparisons/tool-calling/withLangchain4j` (LangChain4j `@Tool` and `@AiService`) |
+| J8.3 | The agent graph: how is a multi-step workflow with state, branches and an approval pause built? Flow: a small version of the agent (analyse, review, propose, pause for approval) | `comparisons/agent-graph/handWritten` (a plain Java state machine), `comparisons/agent-graph/withLangGraph4j` (what the app uses), plus, if their own documentation shows a fit, `withLangchain4jAgentic` (LangChain4j's agentic workflows) and `withSpringAiWorkflows` (Spring AI workflow patterns) |
+
+Notes: the folder names are fixed in advance so every slice follows them; an extra approach (for example Embabel or Google ADK) is added only if the owner asks, in its own `withEmbabel` or `withAdk` folder. Library versions are checked on each project's own page before a dependency is added, and the dependencies live in the comparison modules only. The J8.3 candidates marked "if their own documentation shows a fit" are not yet checked.
 
 ## Rules for this plan
 
