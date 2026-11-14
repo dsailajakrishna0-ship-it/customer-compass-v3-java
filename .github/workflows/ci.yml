@@ -60,6 +60,10 @@ jobs:
         run: python3 contracts/http/crm_contract.py http://localhost:8001
       - name: The retrieval eval's scoring and replay hold (a made-up recording, no keys)
         run: python3 evals/retrieval/selftest.py
+      - name: The recorded retrieval scores replay within tolerance of their baselines (no keys, no network)
+        run: |
+          python3 evals/retrieval/retrieval_eval.py --check
+          RECORDED_PATH=evals/retrieval/recorded-floor-0.45.json BASELINE_PATH=evals/retrieval/baseline-floor-0.45.json python3 evals/retrieval/retrieval_eval.py --check
       - name: API log on failure
         if: failure()
         run: tail -50 "$RUNNER_TEMP/api.log"

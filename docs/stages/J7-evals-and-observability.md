@@ -50,7 +50,15 @@ flowchart LR
 
 **What it measures.** For each answerable question the harness takes the documents the search returned, best first (one entry per document), and asks: was a relevant document in the first 1, 3, 5 (recall@k: the share of the relevant documents found), and how high was the first relevant one (MRR: 1 divided by its position, averaged). For the 6 questions the documents do not answer, a good result is *nothing retrieved* (the similarity floor stops everything), counted as the decline rate.
 
-**Where the numbers come from.** Not yet measured in the Java edition: this slice ships the harness only, proved on a made-up recording whose results are worked by hand (`just eval-retrieval-selftest`). The real recording costs about 42 embedding calls and needs `GOOGLE_API_KEY`. For reference, the Python edition's saved baseline (dense search, floor 0.45, `evals/baseline/v2.json` there) is recall@1 0.843, recall@3 0.986, recall@5 0.986, MRR 1.0 and decline rate 0.0: at the old floor the six unanswerable questions all still retrieved something. Both editions now default to a floor of 0.60 ([ADR 0024](../adr/0024-crm-similarity-floor-0-60.md)), so compare like with like: record with `MIN_SIMILARITY=0.45` to reproduce that baseline, or at the default to see what runs today.
+**Where the numbers come from.** Recorded on 2026-11-14 with `gemini-embedding-001`, dense search, the 19 CRM documents (33 chunks) ingested fresh, and 42 live embedding calls per floor. Two recordings are committed, with a baseline for each:
+
+| | recall@1 | recall@3 | recall@5 | MRR | unanswerable declined |
+| --- | --- | --- | --- | --- | --- |
+| floor 0.60 (the default today; `recorded.json`, `baseline.json`) | 0.843 | 0.972 | 0.986 | 1.000 | 0.667 (4 of 6) |
+| floor 0.45 (`recorded-floor-0.45.json`, `baseline-floor-0.45.json`) | 0.843 | 0.972 | 0.986 | 1.000 | 0.000 (0 of 6) |
+| Python edition's saved baseline (floor 0.45) | 0.843 | 0.986 | 0.986 | 1.000 | 0.000 |
+
+What it shows: at both floors the answerable questions score the same (recall@1 0.843, recall@3 0.972, recall@5 0.986, MRR 1.000); only what is declined differs. MRR 1.000 and "first relevant document is not first: none" mean every answerable question has a relevant document at rank 1; recall@1 is lower because some questions have two relevant documents. At 0.60 four of the six unanswerable questions are declined. The two that still retrieve something (`unans-05`, a hardware discount for Harbor & Pine, and `unans-06`, how many employees Acme has) are about a real customer, close to the CRM's subject, which is the case ADR 0024 says a floor cannot catch. One answerable question, `ret-22` (implementation sessions per year), has a relevant document outside the first five. Against the Python edition's saved baseline the only difference is recall@3 (0.972 against 0.986); with 42 questions and one run I did not investigate it and would read it as the same. Not measured: hybrid search or a reranker.
 
 **What to do with the result.** A baseline is a thermometer. Record, read the missed question ids, write the baseline, and from then on `just eval-retrieval-check` tells you when a change to chunking, the embedding model, hybrid search or the floor moved the score by more than 0.02. Recall on documents says the right file was among the first few; it does not say the answer was right.
 

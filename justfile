@@ -156,6 +156,10 @@ eval-retrieval:
 eval-retrieval-check:
     @python3 evals/retrieval/retrieval_eval.py --check
 
+# J7.2: the same check on the floor-0.45 recording (the counterpart of the Python edition's saved baseline)
+eval-retrieval-check-floor-045:
+    @RECORDED_PATH=evals/retrieval/recorded-floor-0.45.json BASELINE_PATH=evals/retrieval/baseline-floor-0.45.json python3 evals/retrieval/retrieval_eval.py --check
+
 # J7.2: ask the running API (the CRM documents ingested, GOOGLE_API_KEY set) for what is not recorded yet: 42 questions, about 42 embedding calls; MIN_SIMILARITY, EMBEDDING_MODEL, RETRIEVAL_MODE optional
 eval-retrieval-record:
     @python3 evals/retrieval/retrieval_eval.py --record
