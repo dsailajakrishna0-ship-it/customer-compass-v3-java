@@ -1,5 +1,6 @@
 package com.customercompass.api.llm;
 
+import com.customercompass.api.observability.Tracing;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -89,6 +90,41 @@ public class ModelGateway {
    * instead of (or besides) text; that is a valid answer. toolChoice "none" forces a text answer.
    */
   public GenerationResult generate(
+      String systemPrompt,
+      List<ChatMessage> messages,
+      String requestedModel,
+      List<ToolDefinition> tools,
+      String toolChoice) {
+    // a span per model call: which model, tokens, latency, fallback; never the prompt or the answer
+    try (var span =
+        Tracing.span(
+            "llm.generate",
+            "generation",
+            Tracing.attrs(
+                "llm.requested_model", requestedModel,
+                "llm.messages", messages.size(),
+                "llm.tools_offered", tools.size()))) {
+      try {
+        GenerationResult result =
+            generateThroughChain(systemPrompt, messages, requestedModel, tools, toolChoice);
+        span.set(
+            Tracing.attrs(
+                "llm.model", result.model(),
+                "llm.tokens_in", result.tokensIn(),
+                "llm.tokens_out", result.tokensOut(),
+                "llm.latency_ms", result.latencyMs(),
+                "llm.fallback_used", result.fallbackUsed(),
+                "llm.fallback_from", result.fallbackFromModel(),
+                "llm.tool_calls", result.toolCalls().size()));
+        return result;
+      } catch (RuntimeException e) {
+        span.fail(e);
+        throw e;
+      }
+    }
+  }
+
+  private GenerationResult generateThroughChain(
       String systemPrompt,
       List<ChatMessage> messages,
       String requestedModel,

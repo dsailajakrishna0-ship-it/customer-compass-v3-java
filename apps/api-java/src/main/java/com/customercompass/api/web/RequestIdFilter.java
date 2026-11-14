@@ -1,10 +1,12 @@
 package com.customercompass.api.web;
 
+import com.customercompass.api.observability.Tracing;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.slf4j.MDC;
@@ -32,8 +34,21 @@ public class RequestIdFilter extends OncePerRequestFilter {
     }
     response.setHeader(HEADER, id);
     MDC.put("request_id", id);
-    try {
-      chain.doFilter(request, response);
+    boolean traced = !request.getRequestURI().equals("/health");
+    try (var span =
+        traced
+            ? Tracing.requestSpan(
+                request.getMethod() + " " + request.getRequestURI(),
+                id,
+                Map.of("http.method", request.getMethod(), "http.path", request.getRequestURI()))
+            : Tracing.none()) {
+      try {
+        chain.doFilter(request, response);
+        span.set("http.status", response.getStatus());
+      } catch (ServletException | IOException | RuntimeException e) {
+        span.fail(e);
+        throw e;
+      }
     } finally {
       MDC.remove("request_id");
     }

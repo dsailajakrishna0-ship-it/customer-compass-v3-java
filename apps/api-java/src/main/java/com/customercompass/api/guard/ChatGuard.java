@@ -1,6 +1,7 @@
 package com.customercompass.api.guard;
 
 import com.customercompass.api.crm.CrmFacts;
+import com.customercompass.api.observability.Tracing;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,8 +47,24 @@ public class ChatGuard {
         // the output scan still runs without the name list
       }
     }
-    PromptGuard.Finding output = PromptGuard.scanOutput(answer, scopedCompany, names);
-    PromptGuard.Report merged = PromptGuard.add(report, output, "output");
+    // a span for the output scan: whether anything fired and how many; never the answer or a name
+    PromptGuard.Finding output;
+    PromptGuard.Report merged;
+    try (var span =
+        Tracing.span(
+            "guard.output",
+            "guardrail",
+            Tracing.attrs(
+                "guard.endpoint",
+                endpoint,
+                "guard.output_chars",
+                answer == null ? 0 : answer.length()))) {
+      output = PromptGuard.scanOutput(answer, scopedCompany, names);
+      merged = PromptGuard.add(report, output, "output");
+      span.set(
+          Tracing.attrs(
+              "guard.flagged", merged.flagged(), "guard.reasons", merged.reasons().size()));
+    }
     if (merged.flagged()) {
       log.warn("prompt_guard_flagged {}", merged.reasons());
       audit.record(endpoint, merged.events());
