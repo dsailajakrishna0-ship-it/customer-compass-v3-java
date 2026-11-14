@@ -1,0 +1,1020 @@
+{
+ "meta": {
+  "embedding_model": "gemini-embedding-001",
+  "recorded": "2026-11-14"
+ },
+ "scores": {
+  "crm": {
+   "ho-01": [
+    {
+     "doc": "harborpine-note-checkin.md",
+     "similarity": 0.7193
+    },
+    {
+     "doc": "summit-note-churn.md",
+     "similarity": 0.5894
+    },
+    {
+     "doc": "riverside-call-renewal.md",
+     "similarity": 0.5808
+    },
+    {
+     "doc": "harborpine-note-checkin.md",
+     "similarity": 0.5768
+    },
+    {
+     "doc": "acme-call-renewal.md",
+     "similarity": 0.5534
+    },
+    {
+     "doc": "acme-support-export-timeout.md",
+     "similarity": 0.5467
+    },
+    {
+     "doc": "acme-call-renewal.md",
+     "similarity": 0.542
+    },
+    {
+     "doc": "summit-note-churn.md",
+     "similarity": 0.5354
+    },
+    {
+     "doc": "northstar-support-alerting.md",
+     "similarity": 0.5348
+    },
+    {
+     "doc": "acme-service-agreement.pdf",
+     "similarity": 0.5294
+    }
+   ],
+   "ho-02": [
+    {
+     "doc": "riverside-support-compliance.md",
+     "similarity": 0.7309
+    },
+    {
+     "doc": "riverside-support-compliance.md",
+     "similarity": 0.7292
+    },
+    {
+     "doc": "riverside-data-handling-policy.docx",
+     "similarity": 0.6916
+    },
+    {
+     "doc": "riverside-call-renewal.md",
+     "similarity": 0.6308
+    },
+    {
+     "doc": "northstar-support-alerting.md",
+     "similarity": 0.5798
+    },
+    {
+     "doc": "acme-support-export-timeout.md",
+     "similarity": 0.5699
+    },
+    {
+     "doc": "summit-note-churn.md",
+     "similarity": 0.5683
+    },
+    {
+     "doc": "summit-note-churn.md",
+     "similarity": 0.5666
+    },
+    {
+     "doc": "harborpine-note-checkin.md",
+     "similarity": 0.5649
+    },
+    {
+     "doc": "riverside-email-feedback.md",
+     "similarity": 0.5626
+    }
+   ],
+   "ho-03": [
+    {
+     "doc": "vertex-call-renewal.md",
+     "similarity": 0.7523
+    },
+    {
+     "doc": "vertex-support-rate-limit.md",
+     "similarity": 0.6418
+    },
+    {
+     "doc": "product-premium-operations-plan.md",
+     "similarity": 0.5975
+    },
+    {
+     "doc": "acme-support-export-timeout.md",
+     "similarity": 0.5816
+    },
+    {
+     "doc": "northstar-rate-card.xlsx",
+     "similarity": 0.5751
+    },
+    {
+     "doc": "acme-email-discount.md",
+     "similarity": 0.5742
+    },
+    {
+     "doc": "riverside-call-renewal.md",
+     "similarity": 0.569
+    },
+    {
+     "doc": "acme-service-agreement.pdf",
+     "similarity": 0.5666
+    },
+    {
+     "doc": "goldenvalley-email-pricing.md",
+     "similarity": 0.5657
+    },
+    {
+     "doc": "summit-note-churn.md",
+     "similarity": 0.561
+    }
+   ],
+   "ho-04": [
+    {
+     "doc": "acme-support-export-timeout.md",
+     "similarity": 0.7288
+    },
+    {
+     "doc": "acme-support-export-timeout.md",
+     "similarity": 0.669
+    },
+    {
+     "doc": "vertex-support-rate-limit.md",
+     "similarity": 0.624
+    },
+    {
+     "doc": "product-premium-operations-plan.md",
+     "similarity": 0.6167
+    },
+    {
+     "doc": "acme-call-renewal.md",
+     "similarity": 0.597
+    },
+    {
+     "doc": "vertex-support-rate-limit.md",
+     "similarity": 0.5931
+    },
+    {
+     "doc": "riverside-support-compliance.md",
+     "similarity": 0.5613
+    },
+    {
+     "doc": "riverside-data-handling-policy.docx",
+     "similarity": 0.5593
+    },
+    {
+     "doc": "summit-note-churn.md",
+     "similarity": 0.5544
+    },
+    {
+     "doc": "riverside-call-renewal.md",
+     "similarity": 0.5385
+    }
+   ],
+   "ho-05": [
+    {
+     "doc": "riverside-support-compliance.md",
+     "similarity": 0.4995
+    },
+    {
+     "doc": "harborpine-note-checkin.md",
+     "similarity": 0.4989
+    },
+    {
+     "doc": "harborpine-note-checkin.md",
+     "similarity": 0.4985
+    },
+    {
+     "doc": "summit-note-churn.md",
+     "similarity": 0.4934
+    },
+    {
+     "doc": "acme-support-export-timeout.md",
+     "similarity": 0.4876
+    },
+    {
+     "doc": "riverside-data-handling-policy.docx",
+     "similarity": 0.4849
+    },
+    {
+     "doc": "acme-support-export-timeout.md",
+     "similarity": 0.4841
+    },
+    {
+     "doc": "product-premium-operations-plan.md",
+     "similarity": 0.4829
+    },
+    {
+     "doc": "goldenvalley-note-discovery.md",
+     "similarity": 0.4827
+    },
+    {
+     "doc": "product-fleet-visibility.md",
+     "similarity": 0.4812
+    }
+   ],
+   "ho-06": [
+    {
+     "doc": "summit-note-churn.md",
+     "similarity": 0.507
+    },
+    {
+     "doc": "riverside-data-handling-policy.docx",
+     "similarity": 0.4919
+    },
+    {
+     "doc": "acme-service-agreement.pdf",
+     "similarity": 0.4919
+    },
+    {
+     "doc": "harborpine-note-checkin.md",
+     "similarity": 0.4881
+    },
+    {
+     "doc": "goldenvalley-note-discovery.md",
+     "similarity": 0.4873
+    },
+    {
+     "doc": "summit-note-churn.md",
+     "similarity": 0.4745
+    },
+    {
+     "doc": "northstar-support-alerting.md",
+     "similarity": 0.4681
+    },
+    {
+     "doc": "acme-call-renewal.md",
+     "similarity": 0.4642
+    },
+    {
+     "doc": "northstar-rate-card.xlsx",
+     "similarity": 0.464
+    },
+    {
+     "doc": "goldenvalley-note-discovery.md",
+     "similarity": 0.4638
+    }
+   ],
+   "ho-07": [
+    {
+     "doc": "northstar-rate-card.xlsx",
+     "similarity": 0.4804
+    },
+    {
+     "doc": "product-fleet-visibility.md",
+     "similarity": 0.4702
+    },
+    {
+     "doc": "product-premium-operations-plan.md",
+     "similarity": 0.4684
+    },
+    {
+     "doc": "product-premium-operations-plan.md",
+     "similarity": 0.4667
+    },
+    {
+     "doc": "vertex-support-rate-limit.md",
+     "similarity": 0.4628
+    },
+    {
+     "doc": "vertex-support-rate-limit.md",
+     "similarity": 0.4608
+    },
+    {
+     "doc": "harborpine-note-checkin.md",
+     "similarity": 0.4558
+    },
+    {
+     "doc": "goldenvalley-email-pricing.md",
+     "similarity": 0.4537
+    },
+    {
+     "doc": "acme-email-discount.md",
+     "similarity": 0.452
+    },
+    {
+     "doc": "harborpine-note-checkin.md",
+     "similarity": 0.4466
+    }
+   ],
+   "ho-08": [
+    {
+     "doc": "riverside-support-compliance.md",
+     "similarity": 0.5598
+    },
+    {
+     "doc": "riverside-data-handling-policy.docx",
+     "similarity": 0.5379
+    },
+    {
+     "doc": "acme-call-renewal.md",
+     "similarity": 0.5267
+    },
+    {
+     "doc": "harborpine-note-checkin.md",
+     "similarity": 0.5238
+    },
+    {
+     "doc": "riverside-support-compliance.md",
+     "similarity": 0.5197
+    },
+    {
+     "doc": "riverside-call-renewal.md",
+     "similarity": 0.5191
+    },
+    {
+     "doc": "northstar-support-alerting.md",
+     "similarity": 0.5158
+    },
+    {
+     "doc": "summit-note-churn.md",
+     "similarity": 0.5154
+    },
+    {
+     "doc": "acme-call-renewal.md",
+     "similarity": 0.5128
+    },
+    {
+     "doc": "harborpine-note-checkin.md",
+     "similarity": 0.5113
+    }
+   ],
+   "ho-09": [
+    {
+     "doc": "northstar-rate-card.xlsx",
+     "similarity": 0.4906
+    },
+    {
+     "doc": "acme-email-discount.md",
+     "similarity": 0.4713
+    },
+    {
+     "doc": "vertex-call-renewal.md",
+     "similarity": 0.4705
+    },
+    {
+     "doc": "goldenvalley-email-pricing.md",
+     "similarity": 0.4645
+    },
+    {
+     "doc": "vertex-support-rate-limit.md",
+     "similarity": 0.4635
+    },
+    {
+     "doc": "acme-call-renewal.md",
+     "similarity": 0.4527
+    },
+    {
+     "doc": "acme-email-discount.md",
+     "similarity": 0.4515
+    },
+    {
+     "doc": "northstar-rate-card.xlsx",
+     "similarity": 0.4489
+    },
+    {
+     "doc": "acme-service-agreement.pdf",
+     "similarity": 0.4463
+    },
+    {
+     "doc": "acme-call-renewal.md",
+     "similarity": 0.4461
+    }
+   ],
+   "ho-10": [
+    {
+     "doc": "northstar-rate-card.xlsx",
+     "similarity": 0.4503
+    },
+    {
+     "doc": "riverside-support-compliance.md",
+     "similarity": 0.435
+    },
+    {
+     "doc": "harborpine-note-checkin.md",
+     "similarity": 0.4329
+    },
+    {
+     "doc": "acme-email-discount.md",
+     "similarity": 0.4317
+    },
+    {
+     "doc": "northstar-rate-card.xlsx",
+     "similarity": 0.4298
+    },
+    {
+     "doc": "vertex-call-renewal.md",
+     "similarity": 0.4288
+    },
+    {
+     "doc": "summit-note-churn.md",
+     "similarity": 0.4246
+    },
+    {
+     "doc": "riverside-data-handling-policy.docx",
+     "similarity": 0.4242
+    },
+    {
+     "doc": "acme-service-agreement.pdf",
+     "similarity": 0.4242
+    },
+    {
+     "doc": "riverside-support-compliance.md",
+     "similarity": 0.423
+    }
+   ],
+   "ho-11": [
+    {
+     "doc": "acme-service-agreement.pdf",
+     "similarity": 0.4733
+    },
+    {
+     "doc": "acme-call-renewal.md",
+     "similarity": 0.4698
+    },
+    {
+     "doc": "acme-service-agreement.pdf",
+     "similarity": 0.4545
+    },
+    {
+     "doc": "product-premium-operations-plan.md",
+     "similarity": 0.4543
+    },
+    {
+     "doc": "northstar-support-alerting.md",
+     "similarity": 0.4539
+    },
+    {
+     "doc": "harborpine-note-checkin.md",
+     "similarity": 0.4533
+    },
+    {
+     "doc": "harborpine-note-checkin.md",
+     "similarity": 0.4524
+    },
+    {
+     "doc": "vertex-call-renewal.md",
+     "similarity": 0.452
+    },
+    {
+     "doc": "riverside-call-renewal.md",
+     "similarity": 0.446
+    },
+    {
+     "doc": "northstar-rate-card.xlsx",
+     "similarity": 0.4454
+    }
+   ],
+   "ho-12": [
+    {
+     "doc": "acme-call-renewal.md",
+     "similarity": 0.4609
+    },
+    {
+     "doc": "acme-email-discount.md",
+     "similarity": 0.4325
+    },
+    {
+     "doc": "summit-note-churn.md",
+     "similarity": 0.4325
+    },
+    {
+     "doc": "acme-call-renewal.md",
+     "similarity": 0.4298
+    },
+    {
+     "doc": "harborpine-note-checkin.md",
+     "similarity": 0.4294
+    },
+    {
+     "doc": "northstar-rate-card.xlsx",
+     "similarity": 0.4268
+    },
+    {
+     "doc": "acme-service-agreement.pdf",
+     "similarity": 0.4239
+    },
+    {
+     "doc": "acme-email-discount.md",
+     "similarity": 0.4202
+    },
+    {
+     "doc": "vertex-call-renewal.md",
+     "similarity": 0.4181
+    },
+    {
+     "doc": "acme-support-export-timeout.md",
+     "similarity": 0.4142
+    }
+   ]
+  },
+  "agri-supply": {
+   "ho-01": [
+    {
+     "doc": "annual-supply-agreement-renewal.md",
+     "similarity": 0.562
+    },
+    {
+     "doc": "sprayer-calibration-support.md",
+     "similarity": 0.5216
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.5127
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.4945
+    },
+    {
+     "doc": "seed-lot-shelf-life.md",
+     "similarity": 0.4928
+    },
+    {
+     "doc": "delivery-windows-pallets.md",
+     "similarity": 0.4922
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.4908
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.4821
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.4769
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.4719
+    }
+   ],
+   "ho-02": [
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.5575
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.5342
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.5276
+    },
+    {
+     "doc": "annual-supply-agreement-renewal.md",
+     "similarity": 0.5264
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.5262
+    },
+    {
+     "doc": "sprayer-calibration-support.md",
+     "similarity": 0.524
+    },
+    {
+     "doc": "seed-lot-shelf-life.md",
+     "similarity": 0.5186
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.5122
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.5085
+    },
+    {
+     "doc": "sprayer-calibration-support.md",
+     "similarity": 0.4929
+    }
+   ],
+   "ho-03": [
+    {
+     "doc": "annual-supply-agreement-renewal.md",
+     "similarity": 0.5514
+    },
+    {
+     "doc": "sprayer-calibration-support.md",
+     "similarity": 0.5211
+    },
+    {
+     "doc": "delivery-windows-pallets.md",
+     "similarity": 0.5166
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.4956
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.4944
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.4842
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.4733
+    },
+    {
+     "doc": "sprayer-calibration-support.md",
+     "similarity": 0.4705
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.4656
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.4655
+    }
+   ],
+   "ho-04": [
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.5537
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.5469
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.5359
+    },
+    {
+     "doc": "sprayer-calibration-support.md",
+     "similarity": 0.5116
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.5081
+    },
+    {
+     "doc": "seed-lot-shelf-life.md",
+     "similarity": 0.5015
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.496
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.4953
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.4913
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.4908
+    }
+   ],
+   "ho-05": [
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.7549
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.75
+    },
+    {
+     "doc": "annual-supply-agreement-renewal.md",
+     "similarity": 0.6194
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.6024
+    },
+    {
+     "doc": "sprayer-calibration-support.md",
+     "similarity": 0.596
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.5895
+    },
+    {
+     "doc": "sprayer-calibration-support.md",
+     "similarity": 0.5536
+    },
+    {
+     "doc": "delivery-windows-pallets.md",
+     "similarity": 0.5504
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.5412
+    },
+    {
+     "doc": "seed-lot-shelf-life.md",
+     "similarity": 0.5362
+    }
+   ],
+   "ho-06": [
+    {
+     "doc": "seed-lot-shelf-life.md",
+     "similarity": 0.7531
+    },
+    {
+     "doc": "annual-supply-agreement-renewal.md",
+     "similarity": 0.5536
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.548
+    },
+    {
+     "doc": "delivery-windows-pallets.md",
+     "similarity": 0.5434
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.538
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.5287
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.5212
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.5207
+    },
+    {
+     "doc": "sprayer-calibration-support.md",
+     "similarity": 0.5039
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.4914
+    }
+   ],
+   "ho-07": [
+    {
+     "doc": "delivery-windows-pallets.md",
+     "similarity": 0.6182
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.5581
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.5366
+    },
+    {
+     "doc": "sprayer-calibration-support.md",
+     "similarity": 0.5058
+    },
+    {
+     "doc": "seed-lot-shelf-life.md",
+     "similarity": 0.4923
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.4751
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.4728
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.4663
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.4654
+    },
+    {
+     "doc": "annual-supply-agreement-renewal.md",
+     "similarity": 0.4631
+    }
+   ],
+   "ho-08": [
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.6773
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.6452
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.6328
+    },
+    {
+     "doc": "seed-lot-shelf-life.md",
+     "similarity": 0.6258
+    },
+    {
+     "doc": "sprayer-calibration-support.md",
+     "similarity": 0.6225
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.5875
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.5873
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.5862
+    },
+    {
+     "doc": "annual-supply-agreement-renewal.md",
+     "similarity": 0.5824
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.5811
+    }
+   ],
+   "ho-09": [
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.4582
+    },
+    {
+     "doc": "delivery-windows-pallets.md",
+     "similarity": 0.443
+    },
+    {
+     "doc": "seed-lot-shelf-life.md",
+     "similarity": 0.4322
+    },
+    {
+     "doc": "annual-supply-agreement-renewal.md",
+     "similarity": 0.4298
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.4202
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.4165
+    },
+    {
+     "doc": "sprayer-calibration-support.md",
+     "similarity": 0.414
+    },
+    {
+     "doc": "sprayer-calibration-support.md",
+     "similarity": 0.4087
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.4063
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.4041
+    }
+   ],
+   "ho-10": [
+    {
+     "doc": "delivery-windows-pallets.md",
+     "similarity": 0.4724
+    },
+    {
+     "doc": "seed-lot-shelf-life.md",
+     "similarity": 0.4716
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.4708
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.4691
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.4564
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.4498
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.4479
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.4457
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.443
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.4373
+    }
+   ],
+   "ho-11": [
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.5093
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.4991
+    },
+    {
+     "doc": "cold-chain-handling.md",
+     "similarity": 0.4932
+    },
+    {
+     "doc": "seed-lot-shelf-life.md",
+     "similarity": 0.4891
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.4877
+    },
+    {
+     "doc": "annual-supply-agreement-renewal.md",
+     "similarity": 0.485
+    },
+    {
+     "doc": "delivery-windows-pallets.md",
+     "similarity": 0.4844
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.4724
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.4722
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.459
+    }
+   ],
+   "ho-12": [
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.4598
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.4478
+    },
+    {
+     "doc": "annual-supply-agreement-renewal.md",
+     "similarity": 0.4443
+    },
+    {
+     "doc": "organic-certification-note.md",
+     "similarity": 0.4423
+    },
+    {
+     "doc": "pesticide-reentry-intervals.md",
+     "similarity": 0.4386
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.4304
+    },
+    {
+     "doc": "seed-lot-shelf-life.md",
+     "similarity": 0.4297
+    },
+    {
+     "doc": "delivery-windows-pallets.md",
+     "similarity": 0.4257
+    },
+    {
+     "doc": "recall-procedure.md",
+     "similarity": 0.424
+    },
+    {
+     "doc": "sprayer-calibration-support.md",
+     "similarity": 0.4225
+    }
+   ]
+  }
+ }
+}

@@ -54,6 +54,7 @@ class KnowledgeBaseController {
       row.put("description", kb.description());
       row.put("collection", kb.collection());
       row.put("builtIn", kb.builtIn());
+      row.put("similarityFloor", kb.retriever().floor());
       row.put("chunks", chunkCount(kb));
       out.add(row);
     }
@@ -97,13 +98,30 @@ class KnowledgeBaseController {
                   null,
                   json)));
     }
+    double floor = kb.retriever().floor();
+    JsonNode override = body.get("minSimilarity");
+    if (override != null && !override.isNull()) {
+      if (!override.isNumber()) {
+        throw new RequestValidationException(
+            List.of(
+                ValidationProblems.problem(
+                    "float_type",
+                    List.of("body", "minSimilarity"),
+                    "Input should be a valid number",
+                    override,
+                    null,
+                    json)));
+      }
+      floor = Math.max(0.0, Math.min(1.0, override.asDouble())); // calibration: 0 shows everything
+    }
     int topK =
         body.has("topK") && body.get("topK").isInt()
             ? body.get("topK").asInt()
             : Retriever.DEFAULT_TOP_K;
     List<RetrievedChunk> chunks;
     try {
-      chunks = kb.retriever().retrieve(query.asString(), Math.max(1, Math.min(topK, 20)));
+      chunks =
+          kb.retriever().retrieve(query.asString(), null, Math.max(1, Math.min(topK, 20)), floor);
     } catch (EmbeddingsUnavailableException e) {
       throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
     } catch (RuntimeException e) {
@@ -118,6 +136,7 @@ class KnowledgeBaseController {
     }
     var response = new LinkedHashMap<String, Object>();
     response.put("knowledgeBase", kb.id());
+    response.put("similarityFloor", floor);
     response.put("results", citations);
     return response;
   }

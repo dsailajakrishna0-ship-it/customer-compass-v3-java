@@ -23,7 +23,8 @@ public class Retriever {
   public static final int DEFAULT_TOP_K = 4;
 
   /**
-   * Chunks below this cosine similarity are not relevant enough to cite. The value is the Python
+   * The default floor: chunks below this cosine similarity are not relevant enough to cite (the CRM
+   * documents' floor; a knowledge base can set its own, ADR 0023). The value is the Python
    * edition's, tuned for gemini-embedding-001: relevant chunks score about 0.50 to 0.80 and clearly
    * unrelated questions about 0.42 to 0.44. It does not catch a plausible but uncovered question
    * (such as a refund policy); the model's "not in the sources" answer is the safety net there.
@@ -38,6 +39,10 @@ public class Retriever {
   private final KeywordIndex keywords;
   private final RetrievalProperties retrieval;
 
+  private final double floor;
+
+  /** A retriever with the global floor ({@code retrieval.min-similarity}, 0.45 by default). */
+  @org.springframework.beans.factory.annotation.Autowired
   public Retriever(
       VectorIndex index,
       RagProperties properties,
@@ -46,6 +51,28 @@ public class Retriever {
       RerankProperties rerank,
       KeywordIndex keywords,
       RetrievalProperties retrieval) {
+    this(
+        index,
+        properties,
+        jdbc,
+        reranker,
+        rerank,
+        keywords,
+        retrieval,
+        retrieval == null ? MIN_SIMILARITY : retrieval.minSimilarity());
+  }
+
+  /** A retriever with its own floor: a knowledge base's, calibrated on its corpus (ADR 0023). */
+  public Retriever(
+      VectorIndex index,
+      RagProperties properties,
+      JdbcClient jdbc,
+      Reranker reranker,
+      RerankProperties rerank,
+      KeywordIndex keywords,
+      RetrievalProperties retrieval,
+      double minSimilarity) {
+    this.floor = minSimilarity;
     this.keywords = keywords;
     this.retrieval = retrieval;
     this.index = index;
@@ -73,14 +100,28 @@ public class Retriever {
   }
 
   public List<RetrievedChunk> retrieve(String question, Integer companyId, int topK) {
+    return retrieve(question, companyId, topK, floor);
+  }
+
+  /** The floor this retriever applies: the cosine similarity a chunk needs to be cited. */
+  public double floor() {
+    return floor;
+  }
+
+  /**
+   * The same search with another floor, for calibration: with 0 every candidate comes back with its
+   * similarity, so a floor can be chosen from what relevant and unrelated questions score.
+   */
+  public List<RetrievedChunk> retrieve(
+      String question, Integer companyId, int topK, double minSimilarity) {
     checkIndexModel();
     if (retrieval.mode() == RetrievalProperties.Mode.HYBRID) {
-      return hybrid(question, companyId, topK);
+      return hybrid(question, companyId, topK, minSimilarity);
     }
     // With a reranker we keep a longer shortlist for it to choose from; without one, just topK.
     int pool = reranker.enabled() ? Math.max(rerank.candidates(), topK) : topK;
     SearchRequest.Builder request =
-        SearchRequest.builder().query(question).topK(pool).similarityThreshold(MIN_SIMILARITY);
+        SearchRequest.builder().query(question).topK(pool).similarityThreshold(minSimilarity);
     if (companyId != null) {
       var f = new FilterExpressionBuilder();
       request.filterExpression(f.or(f.eq("company_id", companyId), f.eq("company_id", 0)).build());
@@ -93,10 +134,11 @@ public class Retriever {
   /**
    * Hybrid search: the closest meanings and the chunks that share the question's exact words are
    * found separately and merged by reciprocal rank fusion. A chunk found only by keywords gets its
-   * meaning-similarity from its stored dense vector, so the same 0.45 floor applies in both modes
-   * and an unrelated question still finds nothing to cite (ADR 0016).
+   * meaning-similarity from its stored dense vector, so the same floor applies in both modes and an
+   * unrelated question still finds nothing to cite (ADR 0016).
    */
-  private List<RetrievedChunk> hybrid(String question, Integer companyId, int topK) {
+  private List<RetrievedChunk> hybrid(
+      String question, Integer companyId, int topK, double minSimilarity) {
     int limit = rerank.candidates();
     int pool = reranker.enabled() ? Math.max(limit, topK) : topK;
     SearchRequest.Builder request = SearchRequest.builder().query(question).topK(limit);
@@ -139,7 +181,7 @@ public class Retriever {
         order.size());
     List<RetrievedChunk> shortlist =
         order.stream()
-            .filter(id -> chunks.containsKey(id) && similarity.get(id) >= MIN_SIMILARITY)
+            .filter(id -> chunks.containsKey(id) && similarity.get(id) >= minSimilarity)
             .limit(pool)
             .map(chunks::get)
             .toList();
