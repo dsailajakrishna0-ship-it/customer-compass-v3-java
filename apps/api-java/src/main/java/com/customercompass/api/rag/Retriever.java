@@ -24,12 +24,14 @@ public class Retriever {
 
   /**
    * The default floor: chunks below this cosine similarity are not relevant enough to cite (the CRM
-   * documents' floor; a knowledge base can set its own, ADR 0023). The value is the Python
-   * edition's, tuned for gemini-embedding-001: relevant chunks score about 0.50 to 0.80 and clearly
-   * unrelated questions about 0.42 to 0.44. It does not catch a plausible but uncovered question
-   * (such as a refund policy); the model's "not in the sources" answer is the safety net there.
+   * documents' floor; a knowledge base can set its own, ADR 0023). Calibrated for
+   * gemini-embedding-001 (ADR 0024, the same value as the Python edition): the best chunk of each
+   * relevant CRM question scored at least 0.605 and of each unrelated one at most 0.597, so 0.60
+   * sits in that narrow gap. It was 0.45, which let 10 of 12 unrelated questions through. It does
+   * not catch a plausible but uncovered question (such as a refund policy); the model's "not in the
+   * sources" answer is the safety net there. Another embedding model needs its own calibration.
    */
-  public static final double MIN_SIMILARITY = 0.45;
+  public static final double MIN_SIMILARITY = 0.60;
 
   private final VectorIndex index;
   private final RagProperties properties;
@@ -41,7 +43,7 @@ public class Retriever {
 
   private final double floor;
 
-  /** A retriever with the global floor ({@code retrieval.min-similarity}, 0.45 by default). */
+  /** A retriever with the global floor ({@code retrieval.min-similarity}, 0.60 by default). */
   @org.springframework.beans.factory.annotation.Autowired
   public Retriever(
       VectorIndex index,

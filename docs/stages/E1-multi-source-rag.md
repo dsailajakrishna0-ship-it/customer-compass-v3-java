@@ -106,7 +106,7 @@ flowchart LR
 2. **Labels are the contract.** A question's expected corpora and relevant documents are written down first; the harness only counts.
 3. **A router is a classifier, and small models are weak classifiers.** Here the router mostly answered "everything", which is safe but gives no saving.
 4. **Letting the model look, then look again** (the agent) beat deciding once, up front, at a similar number of model calls.
-5. **A threshold belongs to its corpus.** The similarity floor of 0.45 was tuned on the CRM documents; against the farm-supply corpus unrelated questions scored 0.45 to 0.48, so nothing was filtered and the off-topic row is 0 of 4 for every strategy, on the default embedding model too.
+5. **A threshold belongs to its corpus.** The similarity floor of 0.45 (the CRM's floor until ADR 0024 made it 0.60) was tuned on the CRM documents; against the farm-supply corpus unrelated questions scored 0.45 to 0.48, so nothing was filtered and the off-topic row is 0 of 4 for every strategy, on the default embedding model too.
 6. **Replayable evidence.** Recording needs keys and takes minutes; replaying is instant and offline, so the table in the guide can be checked by anyone.
 
 ## E1.4: a similarity floor for each knowledge base

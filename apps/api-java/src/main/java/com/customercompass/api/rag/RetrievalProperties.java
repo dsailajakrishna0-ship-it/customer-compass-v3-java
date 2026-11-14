@@ -17,10 +17,10 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 public record RetrievalProperties(
     @DefaultValue("dense") Mode mode,
     @DefaultValue("60") int rrfK,
-    @DefaultValue("0.45") double minSimilarity) {
+    @DefaultValue("0.60") double minSimilarity) {
 
   /** The CRM documents' floor and the default for any knowledge base that sets none. */
-  public static final double DEFAULT_MIN_SIMILARITY = 0.45;
+  public static final double DEFAULT_MIN_SIMILARITY = 0.60;
 
   /** The canonical constructor is the one the settings bind to (the record has two). */
   @ConstructorBinding

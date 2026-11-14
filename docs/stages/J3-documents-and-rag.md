@@ -90,7 +90,7 @@ flowchart LR
 flowchart LR
   q["question"] --> check["Retriever<br/>index built with this model?"]
   check --> embed["embed the question<br/>(Spring AI, Gemini)"]
-  embed --> search["Qdrant: closest 4 chunks<br/>similarity at least 0.45"]
+  embed --> search["Qdrant: closest 4 chunks<br/>similarity at least 0.60"]
   search --> none{"any chunks?"}
   none -->|"no"| said["fixed sentence,<br/>no model call"]
   none -->|"yes"| ctx["RagContext<br/>[1] Source: title (type, page 2)"]
@@ -100,14 +100,14 @@ flowchart LR
 
 | Piece | File | Job | Python twin |
 | --- | --- | --- | --- |
-| Retrieval | `rag/Retriever.java` | search, the 0.45 floor, the index model check | `rag/retrieve.py` (dense mode) |
+| Retrieval | `rag/Retriever.java` | search, the 0.60 floor, the index model check | `rag/retrieve.py` (dense mode) |
 | Context | `rag/RagContext.java` | numbered sources, the untrusted wrapper, the citation shape | `build_context`, `_citation` |
 | Route | `chat/RagChatController.java` | `POST /api/v1/chat/rag` | `rag_chat` in `routes/chat.py` |
 
 ### Concepts
 
 1. **Retrieval before generation.** The model is only shown what retrieval found; it is told to answer from those sources and cite them as `[1]`, `[2]`.
-2. **A floor that says "I do not know".** A chunk below 0.45 similarity is not cited, so an unrelated question finds nothing and the model is never called. It cannot catch a plausible but uncovered question; the model's "the sources do not say" answer covers that.
+2. **A floor that says "I do not know".** A chunk below 0.60 similarity is not cited, so an unrelated question finds nothing and the model is never called. It cannot catch a plausible but uncovered question; the model's "the sources do not say" answer covers that.
 3. **Retrieved text is data.** The sources sit inside `<untrusted_context>` tags and the prompt says to treat them as claims to cite, never as instructions. The scan that looks for injected commands comes in J6.
 4. **A citation says where.** Each citation carries the document, its type and company, the similarity, a 200-character snippet and, for a PDF or a spreadsheet, the page or the sheet.
 5. **Refuse a mismatched index.** Vectors from two embedding models cannot be compared, so a changed model is caught and the fix (ingest again) is named.
@@ -117,7 +117,7 @@ flowchart LR
 1. Why does a question about the capital of France not call the model at all?
 2. A document was ingested with another embedding model. What does the user see, and what do they do?
 3. Which message of the conversation gets the context, and why only that one?
-4. The 0.45 floor lets a question about a refund policy through. What stops the model from inventing a policy?
+4. A question about a refund policy is close to the CRM's subject, so a floor can let it through (at the old 0.45 it did; at 0.60 it probably does not, which was not measured). If one does get through, what stops the model from inventing a policy?
 5. Why can `Clause 7.3` rank well with meaning search alone, and what kind of question would not?
 
 ### Code tour
@@ -171,7 +171,7 @@ Decisions: [ADR 0015](../adr/0015-optional-reranker.md).
 
 ```mermaid
 flowchart LR
-  q["question"] --> search["dense search<br/>RETRIEVAL_CANDIDATES chunks, floor 0.45"]
+  q["question"] --> search["dense search<br/>RETRIEVAL_CANDIDATES chunks, floor 0.60"]
   search -->|"RERANK_PROVIDER=off"| top["first top k"]
   search -->|"voyage / cohere"| rr["Reranker<br/>one HTTP call, 5 s limit"]
   rr -->|"ranking"| ordered["its order decides the top k"]
@@ -205,7 +205,7 @@ flowchart TD
   kw --> k
   d --> rrf["reciprocal rank fusion<br/>k = 60"]
   k --> rrf
-  rrf --> floor["similarity floor 0.45<br/>(cosine; computed from the stored vector for keyword-only hits)"]
+  rrf --> floor["similarity floor 0.60<br/>(cosine; computed from the stored vector for keyword-only hits)"]
   floor --> rr["optional reranker (J3.5)"]
   rr --> out["top k chunks"]
 ```

@@ -33,7 +33,7 @@ class KnowledgeBaseFloorUnitTests {
 
   @Test
   void theGlobalFloorDefaultsToTheCrmDocumentsFloor() {
-    assertThat(RetrievalProperties.dense().minSimilarity()).isEqualTo(0.45);
+    assertThat(RetrievalProperties.dense().minSimilarity()).isEqualTo(0.60);
     assertThat(new RetrievalProperties(RetrievalProperties.Mode.HYBRID, 60).minSimilarity())
         .isEqualTo(Retriever.MIN_SIMILARITY);
   }

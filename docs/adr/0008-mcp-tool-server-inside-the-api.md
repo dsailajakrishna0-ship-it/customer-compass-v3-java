@@ -24,3 +24,5 @@ The Python edition serves its four tools (`get_company_summary`, `get_open_deals
 - The MCP endpoint is open like the rest of the API; authentication is a later stage (roadmap 6.1) for both.
 - Document search through the tool inherits the retrieval limits of J3.3 (dense search, the 0.45 floor). Retrieved text is returned as it is; the chat loop wraps it as untrusted data before the model sees it (J4.3).
 - When Qdrant is down, a search tool call fails with the same clear message as the chat routes ("The vector store (Qdrant) is not reachable. Start it (just qdrant) ..."), which was added in this stage after the first live run showed an unhelpful error.
+
+> Update (ADR 0024): the default floor is now 0.60; the 0.45 above is the value at the time.

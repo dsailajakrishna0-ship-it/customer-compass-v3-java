@@ -21,3 +21,5 @@ The Python edition answers document questions in `POST /chat/rag`: embed the que
 - Same question, same documents, same embedding model: the same chunks and scores as the Python edition's dense mode (checked live: the six runbook questions cite the same sources, with scores 0.58 to 0.78).
 - A question that names an exact term (a clause number, an invoice id) relies on meaning alone. In the sample data the "Clause 7.3" question still ranks the right PDF page first (0.78), but this is the case hybrid search exists for.
 - Left out for now and listed in `docs/port-status.md`: `GET /documents/vector-search-info` (the exact versus approximate search choice by collection size; Spring AI's store does not expose search parameters), hybrid retrieval, the reranker, and the company filter that `/chat/crm` (J3.4) needs.
+
+> Update (ADR 0024): the default floor is now 0.60; the 0.45 above is the value at the time.

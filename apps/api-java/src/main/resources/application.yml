@@ -52,9 +52,10 @@ rag:
 retrieval:
   mode: ${RETRIEVAL_MODE:dense}
   rrf-k: ${RRF_K:60}
-  # the floor of the CRM documents (and of any knowledge base that sets none): the Python edition's 0.45. Calibrated on
-  # these documents, 0.60 separates relevant from unrelated questions (just kb-calibrate); changing it breaks parity
-  min-similarity: ${RETRIEVAL_MIN_SIMILARITY:0.45}
+  # the floor of the CRM documents (and of any knowledge base that sets none): 0.60, the same as the Python edition.
+  # Calibrated on these documents with gemini-embedding-001 (just kb-calibrate, ADR 0024); another embedding model
+  # needs its own calibration
+  min-similarity: ${RETRIEVAL_MIN_SIMILARITY:0.60}
 
 # The optional reranker (the Python edition's RERANK_PROVIDER etc.): off | voyage | cohere. A second model re-orders
 # the search results; any failure keeps the search order.
