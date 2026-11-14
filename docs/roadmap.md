@@ -16,7 +16,7 @@ Goal: the same product and API contract as the Python edition, built with the Ja
 | J7 | Evals and observability | Stage 5 | Planned |
 | J8 | The no-framework version (plain Java) and the comparison write-up | none | Idea |
 | E3 | Java extension: a supervisor with specialist agents; see [java-extensions.md](java-extensions.md) | none (Java only) | E3.1 (the supervisor graph) merged; E3.2 (answer team, supervisor-written queries) merged; E3.3 (comparison) in review |
-| E1 | Java extension: multi-source RAG with routing (several knowledge bases the model searches across); see [java-extensions.md](java-extensions.md) | none (Java only) | E1.1 (second knowledge base) merged; E1.2 (routing strategies) merged; E1.3 (comparison) merged |
+| E1 | Java extension: multi-source RAG with routing (several knowledge bases the model searches across); see [java-extensions.md](java-extensions.md) | none (Java only) | E1.1 (second knowledge base) merged; E1.2 (routing strategies) merged; E1.3 (comparison) merged; E1.4 (per-corpus similarity floor) in review |
 
 ## Stage J0: Foundation
 

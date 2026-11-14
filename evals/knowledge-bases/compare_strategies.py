@@ -22,8 +22,8 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 QUESTIONS = json.loads((HERE / "questions.json").read_text())
-RECORDED = HERE / "recorded.json"
-BASELINE = HERE / "baseline.json"
+RECORDED = Path(os.environ.get("RECORDED_PATH", HERE / "recorded.json"))
+BASELINE = Path(os.environ.get("BASELINE_PATH", HERE / "baseline.json"))
 STRATEGIES = ["route", "all", "agent"]
 NOT_FOUND = "I could not find any ingested documents relevant to that question."
 

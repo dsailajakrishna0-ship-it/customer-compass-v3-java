@@ -22,7 +22,14 @@ public record KnowledgeBaseProperties(@DefaultValue List<Source> extra) {
    *     search it
    * @param sourceDir the folder of documents; empty means {@code sample-data/knowledge-bases/<id>}
    *     above the working directory
+   * @param minSimilarity the cosine similarity a chunk needs to be cited in this knowledge base,
+   *     calibrated on its corpus ({@code just kb-calibrate}); empty means the global {@code
+   *     retrieval.min-similarity} (ADR 0023)
    */
   public record Source(
-      String id, String label, String description, @DefaultValue("") String sourceDir) {}
+      String id,
+      String label,
+      String description,
+      @DefaultValue("") String sourceDir,
+      Double minSimilarity) {}
 }
