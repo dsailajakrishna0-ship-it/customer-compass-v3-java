@@ -139,3 +139,15 @@ mcp-contract url="http://localhost:8001/mcp":
 # call one MCP tool by hand. Example: just mcp-call get_open_deals '{"company_name": "Acme"}'
 mcp-call tool args url="http://localhost:8001/mcp":
     @uv run --with mcp python contracts/call_tool.py {{url}} {{tool}} '{{args}}'
+
+# J7.1: the rule-based guard on the shared 30 adversarial prompts, from the saved baseline (no keys, no network, no build)
+eval-adversarial:
+    @python3 evals/adversarial/show.py
+
+# J7.1: run the guard over the prompts and fail if any result differs from the baseline or from the Python edition's rules
+eval-adversarial-check:
+    cd {{api}} && ./mvnw -B -ntp -q test -Dtest=AdversarialEvalTests
+
+# J7.1: rewrite evals/adversarial/baseline.json from the guard's current behaviour (on purpose, after a rule change)
+eval-adversarial-baseline:
+    cd {{api}} && EVAL_WRITE_BASELINE=1 ./mvnw -B -ntp -q test -Dtest=AdversarialEvalTests
