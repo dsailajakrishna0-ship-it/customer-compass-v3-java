@@ -67,21 +67,21 @@ flowchart TD
 
 ## E1.3: comparing the three strategies
 
-24 labelled questions (8 CRM, 8 farm-supply, 4 that need both, 4 that belong to neither) asked of all three strategies with one small paid model. Decision and caveats: [ADR 0019](../adr/0019-multi-source-strategy-results.md).
+24 labelled questions (8 CRM, 8 farm-supply, 4 that need both, 4 that belong to neither) asked of all three strategies with one small paid model and the default embedding model (`gemini-embedding-001`; a first recording on `gemini-embedding-2` ranked the strategies the same way). Decision and caveats: [ADR 0019](../adr/0019-multi-source-strategy-results.md).
 
 | | route | all | agent |
 | --- | --- | --- | --- |
-| answerable questions: right sources found | 19/20 | 19/20 | 19/20 |
+| answerable questions: right sources found | 20/20 | 20/20 | 19/20 |
 | of them, CRM-only questions | 8/8 | 8/8 | 8/8 |
 | of them, farm-supply-only questions | 8/8 | 8/8 | 7/8 |
-| of them, questions that need both | 3/4 | 3/4 | 4/4 |
-| searched exactly the right knowledge bases (all questions) | 8/24 | 4/24 | 20/24 |
+| of them, questions that need both | 4/4 | 4/4 | 4/4 |
+| searched exactly the right knowledge bases (all questions) | 10/24 | 4/24 | 19/24 |
 | searched at least the right ones | 24/24 | 24/24 | 23/24 |
-| citations from the wrong knowledge base | 40/96 | 48/96 | 28/136 |
-| no-corpus questions with no sources cited | 0/4 | 0/4 | 1/4 |
-| model calls per question (mean) | 2 | 1 | 2.17 |
-| median ms per question | 5057 | 2899 | 1346 |
-| p95 ms per question | 10002 | 9116 | 2254 |
+| citations from the wrong knowledge base | 31/91 | 43/91 | 22/126 |
+| no-corpus questions with no sources cited | 0/4 | 0/4 | 0/4 |
+| model calls per question (mean) | 2 | 1 | 2.29 |
+| median ms per question | 4228 | 3014 | 1388 |
+| p95 ms per question | 7756 | 6865 | 3087 |
 | failed requests | 0 | 0 | 0 |
 
 ```mermaid
@@ -106,5 +106,5 @@ flowchart LR
 2. **Labels are the contract.** A question's expected corpora and relevant documents are written down first; the harness only counts.
 3. **A router is a classifier, and small models are weak classifiers.** Here the router mostly answered "everything", which is safe but gives no saving.
 4. **Letting the model look, then look again** (the agent) beat deciding once, up front, at a similar number of model calls.
-5. **A threshold belongs to its embedding model.** Changing the model moved the floor's behaviour, which is why the "neither" row needs a re-recording on the default model.
+5. **A threshold belongs to its corpus.** The similarity floor of 0.45 was tuned on the CRM documents; against the farm-supply corpus unrelated questions scored 0.45 to 0.48, so nothing was filtered and the off-topic row is 0 of 4 for every strategy, on the default embedding model too.
 6. **Replayable evidence.** Recording needs keys and takes minutes; replaying is instant and offline, so the table in the guide can be checked by anyone.

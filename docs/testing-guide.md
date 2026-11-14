@@ -57,7 +57,8 @@ Needs both keys, `just db`, `just qdrant`, `just run`, the CRM documents ingeste
 | 2 | `just eval-multi-check` | `OK: every count matches baseline.json` | The table replays exactly |
 | 3 | Read `evals/knowledge-bases/recorded.json`, `mq-16` under `agent` | `searched` `["crm"]` and the same query twice | Why the agent missed one question |
 | 4 | Read `mq-21` under `route` | A `reason` that says neither knowledge base fits, and `searched` with both | A router that reasons one way and answers another |
-| 5 | Optional, with keys: both knowledge bases ingested, the API running (`API_URL` if not 8001), then `MODEL=<id> EMBEDDING_MODEL=gemini-embedding-001 just eval-multi-record` after moving `recorded.json` aside | A new recording (72 requests, 10 to 30 minutes), then `just eval-multi` | Re-measuring with the default embedding model or another chat model |
+| 5 | Query one off-topic question against a corpus: `just kb-search agri-supply "How do I bake a chocolate cake?"` | Chunks come back with similarity about 0.46 to 0.48, just above the 0.45 floor | Why the off-topic row is 0 of 4: the floor does not transfer to a second corpus |
+| 6 | Optional, with keys: both knowledge bases ingested, the API running (`API_URL` if not 8001), then `MODEL=<id> EMBEDDING_MODEL=gemini-embedding-001 just eval-multi-record` after moving `recorded.json` aside | A new recording (72 requests, 10 to 30 minutes), then `just eval-multi` | Re-measuring with another chat model or more questions |
 
 ## E1.2: three ways to decide where to search (Java extension)
 

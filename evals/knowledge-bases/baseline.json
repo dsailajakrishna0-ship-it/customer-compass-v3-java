@@ -1,7 +1,7 @@
 {
  "route": {
   "questions": 24,
-  "hit": 19,
+  "hit": 20,
   "answerable": 20,
   "hit_by_kind": {
    "crm": {
@@ -13,14 +13,14 @@
     "of": 8
    },
    "both": {
-    "hit": 3,
+    "hit": 4,
     "of": 4
    }
   },
-  "searched_exactly_the_right_knowledge_bases": 8,
+  "searched_exactly_the_right_knowledge_bases": 10,
   "searched_at_least_the_right_ones": 24,
-  "citations_from_the_wrong_knowledge_base": 40,
-  "citations_total": 96,
+  "citations_from_the_wrong_knowledge_base": 31,
+  "citations_total": 91,
   "neither_declined": 0,
   "neither": 4,
   "model_calls_total": 48,
@@ -28,7 +28,7 @@
  },
  "all": {
   "questions": 24,
-  "hit": 19,
+  "hit": 20,
   "answerable": 20,
   "hit_by_kind": {
    "crm": {
@@ -40,14 +40,14 @@
     "of": 8
    },
    "both": {
-    "hit": 3,
+    "hit": 4,
     "of": 4
    }
   },
   "searched_exactly_the_right_knowledge_bases": 4,
   "searched_at_least_the_right_ones": 24,
-  "citations_from_the_wrong_knowledge_base": 48,
-  "citations_total": 96,
+  "citations_from_the_wrong_knowledge_base": 43,
+  "citations_total": 91,
   "neither_declined": 0,
   "neither": 4,
   "model_calls_total": 24,
@@ -71,13 +71,13 @@
     "of": 4
    }
   },
-  "searched_exactly_the_right_knowledge_bases": 20,
+  "searched_exactly_the_right_knowledge_bases": 19,
   "searched_at_least_the_right_ones": 23,
-  "citations_from_the_wrong_knowledge_base": 28,
-  "citations_total": 136,
-  "neither_declined": 1,
+  "citations_from_the_wrong_knowledge_base": 22,
+  "citations_total": 126,
+  "neither_declined": 0,
   "neither": 4,
-  "model_calls_total": 52,
+  "model_calls_total": 55,
   "failed": 0
  }
 }
