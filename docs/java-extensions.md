@@ -37,8 +37,8 @@ A coordinator that chooses, turn by turn, which specialist works next, with its 
 | Slice | What | Status |
 | --- | --- | --- |
 | E3.1 | `POST /agent/supervise`: a LangGraph4j supervisor graph over five specialists (CRM facts, researcher over all knowledge bases, analyst, reviewer, drafter), allowed-lists enforced in code, the same approval gate. [ADR 0020](adr/0020-supervisor-with-specialist-agents.md), [guide](stages/E3-supervisor.md) | Merged |
-| E3.2 | More autonomy: a plain question runs an answer team (an answerer specialist, fail-closed on citations, no gate); the supervisor writes its own search words. Parallel specialists left out. [ADR 0021](adr/0021-answer-team-and-supervisor-queries.md) | In review |
-| E3.3 | A comparison of the supervisor and the fixed pipeline on the same cases | Planned |
+| E3.2 | More autonomy: a plain question runs an answer team (an answerer specialist, fail-closed on citations, no gate); the supervisor writes its own search words. Parallel specialists left out. [ADR 0021](adr/0021-answer-team-and-supervisor-queries.md) | Merged |
+| E3.3 | A comparison of the supervisor and the fixed pipeline on the ten golden cases, replayable without keys; `just eval-supervisor`. [ADR 0022](adr/0022-supervisor-versus-pipeline-results.md) | In review |
 
 | Route or setting | What it does |
 | --- | --- |

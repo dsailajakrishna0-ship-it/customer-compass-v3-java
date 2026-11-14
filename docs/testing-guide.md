@@ -8,6 +8,15 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## E3.3: the supervisor against the fixed pipeline (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just eval-supervisor` | A two-column table (pipeline, supervisor) with the model and embedding model it was recorded with; no keys, no network | The recorded comparison |
+| 2 | `just eval-supervisor-check` | `OK: every count matches baseline.json` | The table replays exactly |
+| 3 | Open `evals/supervisor/recorded.json`, a supervisor run, `turns` and `researcher_runs` | How many turns, how often the researcher ran, how many search queries the supervisor wrote | What the supervisor did |
+| 4 | Optional, with keys: both corpora ingested, the API running, then move `recorded.json` aside and `MODEL=<id> EMBEDDING_MODEL=gemini-embedding-001 just eval-supervisor-record` | A new recording (40 requests, 10 to 20 minutes) | Re-measuring with another model or more cases |
+
 ## E3.2: the answer team and the supervisor's own search words (Java extension)
 
 Needs the same setup as E3.1 (both keys, the CRM documents ingested, `just kb-ingest agri-supply`).

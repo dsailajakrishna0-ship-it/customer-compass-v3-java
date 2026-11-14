@@ -1,0 +1,30 @@
+{
+ "pipeline": {
+  "runs": 20,
+  "as_expected": 20,
+  "completed": 14,
+  "completed_valid_citations": 14,
+  "completed_approved": 11,
+  "tasks_written": 0,
+  "flagged": 0,
+  "farm_supply_items_in_completed": 0,
+  "model_calls_total": 50,
+  "failed": 0
+ },
+ "supervisor": {
+  "runs": 20,
+  "as_expected": 20,
+  "completed": 14,
+  "completed_valid_citations": 14,
+  "completed_approved": 13,
+  "tasks_written": 0,
+  "flagged": 0,
+  "farm_supply_items_in_completed": 24,
+  "model_calls_total": 76,
+  "failed": 0,
+  "model_decisions_total": 26,
+  "overrides_by_code": 0,
+  "runs_with_research": 11,
+  "own_search_queries": 17
+ }
+}

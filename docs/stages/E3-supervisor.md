@@ -1,6 +1,6 @@
 # Stage E3: a supervisor with specialist agents (Java extension)
 
-Not a port: the Java edition's own extension (see [java-extensions.md](../java-extensions.md)). Decisions: [ADR 0020](../adr/0020-supervisor-with-specialist-agents.md). Cut into slices: **E3.1** the supervisor graph (this page), **E3.2** an answer team and supervisor-written queries (below), E3.3 a comparison with the fixed pipeline.
+Not a port: the Java edition's own extension (see [java-extensions.md](../java-extensions.md)). Decisions: [ADR 0020](../adr/0020-supervisor-with-specialist-agents.md). Cut into slices: **E3.1** the supervisor graph (this page), **E3.2** an answer team and supervisor-written queries (below), **E3.3** a comparison with the fixed pipeline (below).
 
 ## E3.1: `POST /api/v1/agent/supervise`
 
@@ -85,4 +85,48 @@ flowchart TD
 4. **No customer is fine for a question** and not for a follow-up: the same specialist, different rules per team.
 5. **Decisions stay visible.** `supervisor.turns` records who chose each step, why, and the search words.
 6. **What was left out.** Parallel specialists need a state merge for the evidence list; with such short specialists it would only buy latency.
+
+## E3.3: the supervisor against the fixed pipeline
+
+The same ten golden cases, twice each, through `POST /agent/recommend` (the pipeline) and `POST /agent/supervise` (the supervisor), one small paid model, default embeddings. Decision and caveats: [ADR 0022](../adr/0022-supervisor-versus-pipeline-results.md).
+
+| | pipeline | supervisor |
+| --- | --- | --- |
+| runs as expected (status and company) | 20/20 | 20/20 |
+| analyses completed | 14 | 14 |
+| completed with valid citations | 14/14 | 14/14 |
+| completed and approved by the reviewer | 11/14 | 13/14 |
+| evidence items per completed run | 7.3 | 7.4 |
+| farm-supply items shown to the analyst (completed) | 0 | 24 |
+| model calls per completed run | 3.57 | 5.14 |
+| model calls in total | 50 | 76 |
+| tasks written before a confirm (must be 0) | 0 | 0 |
+| runs flagged by the guard | 0 | 0 |
+| median ms per run | 6725 | 9057 |
+| p95 ms per run | 14812 | 18727 |
+| failed requests | 0 | 0 |
+
+```mermaid
+flowchart LR
+  c["cases.json<br/>10 golden cases"] --> rec["compare_agents.py --record<br/>both arms, 2 runs each"]
+  rec --> rj[("recorded.json")]
+  rj --> rep["compare_agents.py<br/>replay: no keys, no network"]
+  rep --> t["the table"]
+  rj --> chk["--check against baseline.json"]
+```
+
+| Piece | File | Job |
+| --- | --- | --- |
+| Cases | `evals/supervisor/cases.json` | the message, and the expected status for each arm |
+| Recorder and replay | `evals/supervisor/compare_agents.py` | run both arms (resumable), check that no task was written, replay into a table, compare with the baseline |
+| Recorded runs | `evals/supervisor/recorded.json` | status, company, citations, model calls, latency and the supervisor's decisions for each of the 40 runs |
+| Baseline | `evals/supervisor/baseline.json` | the counts the check compares with |
+
+### Concepts
+
+1. **Measure the cost of flexibility.** A supervisor can only be judged against a baseline that already works; the fixed pipeline is that baseline.
+2. **Rails make a weak model usable.** Every one of the supervisor's 26 decisions was readable and allowed, because the choices were short lists and code made the rest.
+3. **A feature that is never exercised is not measured.** The cases here suit the pipeline; a supervisor's value shows on cases the pipeline cannot do.
+4. **Freedom has a footprint.** The researcher fetched farm-supply chunks for CRM-only questions: harmless to the citation check, noise for the analyst.
+5. **Cost is calls and seconds.** About 40% more model calls and a third more time for the same quality on these cases.
 
