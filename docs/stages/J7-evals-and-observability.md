@@ -123,3 +123,26 @@ flowchart TD
 | change | `guard/InputGuard.java`, `ChatGuard.java` | `guard.input` and `guard.output` spans |
 | change | `agent/Trace.java`, `AgentWorkflow.java`, `SupervisorWorkflow.java`, `ApprovalGate.java` | Every recorded step is also a span; `agent.run` and `agent.resume`; the context travels to the graph's threads |
 | new | tests: `TracingTests`, `OtlpExportTests`, `TracingLifecycleTests`, `GatewayTracingTests`, `GuardTracingTests`, `AgentTracingTests`, one in `HybridRetrievalTests` | In-memory exporter, a localhost receiver, no key, no network |
+
+## J7.4: the rule guard against the LLM classifier
+
+Same 74 prompts as the Python edition's Stage 5.3 (44 attacks, 30 benign). Decisions: [ADR 0028](../adr/0028-guard-comparison-over-a-dry-run-route.md). The rules are measured now; the classifier needs a recording the owner approves.
+
+**What is new.** `POST /api/v1/guard/check` (Java only, off unless `GUARD_CHECK_ENABLED=true`) is a dry run: one call returns the rules' verdict and the classifier's, writes nothing and returns no text. `evals/guards/guard_eval.py` calls it once per prompt and scores three strategies: the rules, the classifier, and both (flagged by either). `just eval-guards` replays, `just eval-guards-check` compares with `baseline.json`, `just eval-guards-selftest` proves the scoring on a made-up recording.
+
+**Measured without a key.** The Java rules detect 11 of the 44 attacks and flag 4 of the 30 benign prompts (benign-08, -09, -18, -21): exactly the Python baseline (`GuardCheckTests`). No Java classifier number exists yet.
+
+**The trap this harness avoids.** The in-app classifier fails open: a rate-limited or unreachable model means "carry on with the rules". Counted as SAFE, that would make the classifier look worse than it is. Here it is `unavailable`, retried, counted separately, and a baseline is refused while any prompt has no verdict or while a fallback model answered.
+
+**Record it (needs approval, a key and a little money).**
+
+```bash
+just db && just qdrant                      # scratch Postgres and Qdrant
+GUARD_CHECK_ENABLED=true GUARD_MODEL=meta-llama/llama-3.1-8b-instruct OPENROUTER_API_KEY=... just run
+just eval-guards-record                     # 74 requests, one classifier call each
+just eval-guards && just eval-guards-baseline && just eval-guards-check
+```
+
+74 short classifier calls (roughly 250 tokens each, about 18,000 tokens in all) on a small paid model: well under one cent by the Python edition's quoted price of about $0.02 per million tokens (an estimate, not measured here). No embedding quota is used.
+
+**Rule to remember.** *A fail-open guard must never be measured as if "could not check" meant "safe".*
