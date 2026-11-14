@@ -1,0 +1,633 @@
+{
+ "meta": {
+  "embedding_model": "gemini-embedding-001",
+  "retrieval_mode": "dense (the default)",
+  "floor": 0.6,
+  "fetch": 10,
+  "recorded": "2026-11-14"
+ },
+ "metrics": {
+  "cases": 42,
+  "answerable": 36,
+  "unanswerable": 6,
+  "recall_at_1": 0.8425925925925926,
+  "recall_at_3": 0.9722222222222222,
+  "recall_at_5": 0.9861111111111112,
+  "mrr": 1.0,
+  "unanswerable_decline_rate": 0.6666666666666666
+ },
+ "cases": [
+  {
+   "id": "ret-01",
+   "ranked": [
+    "acme-call-renewal.md",
+    "riverside-call-renewal.md",
+    "harborpine-note-checkin.md",
+    "acme-support-export-timeout.md",
+    "summit-note-churn.md",
+    "acme-email-discount.md",
+    "vertex-call-renewal.md",
+    "goldenvalley-email-pricing.md",
+    "product-premium-operations-plan.md"
+   ],
+   "relevant": [
+    "acme-call-renewal.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-02",
+   "ranked": [
+    "product-premium-operations-plan.md",
+    "acme-service-agreement.pdf",
+    "acme-email-discount.md",
+    "acme-call-renewal.md",
+    "riverside-call-renewal.md",
+    "goldenvalley-email-pricing.md",
+    "vertex-call-renewal.md",
+    "harborpine-note-checkin.md"
+   ],
+   "relevant": [
+    "acme-call-renewal.md",
+    "product-premium-operations-plan.md"
+   ],
+   "recall_at_1": 0.5,
+   "recall_at_3": 0.5,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-03",
+   "ranked": [
+    "acme-email-discount.md",
+    "goldenvalley-email-pricing.md",
+    "acme-call-renewal.md",
+    "vertex-call-renewal.md",
+    "northstar-rate-card.xlsx"
+   ],
+   "relevant": [
+    "acme-email-discount.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-04",
+   "ranked": [
+    "product-premium-operations-plan.md",
+    "acme-email-discount.md"
+   ],
+   "relevant": [
+    "acme-email-discount.md",
+    "product-premium-operations-plan.md"
+   ],
+   "recall_at_1": 0.5,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-05",
+   "ranked": [
+    "acme-support-export-timeout.md",
+    "vertex-support-rate-limit.md",
+    "product-premium-operations-plan.md"
+   ],
+   "relevant": [
+    "acme-support-export-timeout.md",
+    "product-premium-operations-plan.md"
+   ],
+   "recall_at_1": 0.5,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-06",
+   "ranked": [
+    "acme-support-export-timeout.md",
+    "product-premium-operations-plan.md",
+    "vertex-support-rate-limit.md",
+    "riverside-support-compliance.md"
+   ],
+   "relevant": [
+    "acme-support-export-timeout.md",
+    "product-premium-operations-plan.md"
+   ],
+   "recall_at_1": 0.5,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-07",
+   "ranked": [
+    "goldenvalley-email-pricing.md"
+   ],
+   "relevant": [
+    "goldenvalley-email-pricing.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-08",
+   "ranked": [
+    "goldenvalley-email-pricing.md",
+    "product-premium-operations-plan.md"
+   ],
+   "relevant": [
+    "goldenvalley-email-pricing.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-09",
+   "ranked": [
+    "goldenvalley-note-discovery.md",
+    "product-fleet-visibility.md",
+    "northstar-note-discovery.md",
+    "northstar-support-alerting.md",
+    "goldenvalley-email-pricing.md"
+   ],
+   "relevant": [
+    "goldenvalley-note-discovery.md",
+    "product-fleet-visibility.md"
+   ],
+   "recall_at_1": 0.5,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-10",
+   "ranked": [
+    "goldenvalley-note-discovery.md",
+    "product-fleet-visibility.md",
+    "northstar-note-discovery.md",
+    "goldenvalley-email-pricing.md",
+    "northstar-support-alerting.md"
+   ],
+   "relevant": [
+    "goldenvalley-note-discovery.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-11",
+   "ranked": [
+    "harborpine-note-checkin.md",
+    "summit-note-churn.md"
+   ],
+   "relevant": [
+    "harborpine-note-checkin.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-12",
+   "ranked": [
+    "harborpine-note-checkin.md",
+    "acme-service-agreement.pdf"
+   ],
+   "relevant": [
+    "harborpine-note-checkin.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-13",
+   "ranked": [
+    "harborpine-note-checkin.md"
+   ],
+   "relevant": [
+    "harborpine-note-checkin.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-14",
+   "ranked": [
+    "northstar-note-discovery.md",
+    "northstar-support-alerting.md",
+    "product-fleet-visibility.md",
+    "goldenvalley-note-discovery.md"
+   ],
+   "relevant": [
+    "northstar-note-discovery.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-15",
+   "ranked": [
+    "northstar-note-discovery.md",
+    "northstar-support-alerting.md",
+    "goldenvalley-note-discovery.md",
+    "product-fleet-visibility.md"
+   ],
+   "relevant": [
+    "northstar-note-discovery.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-16",
+   "ranked": [
+    "northstar-support-alerting.md",
+    "product-fleet-visibility.md",
+    "northstar-note-discovery.md",
+    "goldenvalley-note-discovery.md",
+    "goldenvalley-email-pricing.md",
+    "vertex-support-rate-limit.md",
+    "northstar-rate-card.xlsx"
+   ],
+   "relevant": [
+    "northstar-support-alerting.md",
+    "product-fleet-visibility.md"
+   ],
+   "recall_at_1": 0.5,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-17",
+   "ranked": [
+    "northstar-support-alerting.md",
+    "northstar-note-discovery.md",
+    "goldenvalley-note-discovery.md",
+    "product-fleet-visibility.md",
+    "goldenvalley-email-pricing.md"
+   ],
+   "relevant": [
+    "northstar-support-alerting.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-18",
+   "ranked": [
+    "product-fleet-visibility.md",
+    "northstar-note-discovery.md",
+    "northstar-support-alerting.md",
+    "goldenvalley-note-discovery.md",
+    "goldenvalley-email-pricing.md",
+    "northstar-rate-card.xlsx"
+   ],
+   "relevant": [
+    "northstar-support-alerting.md",
+    "product-fleet-visibility.md"
+   ],
+   "recall_at_1": 0.5,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-19",
+   "ranked": [
+    "product-fleet-visibility.md",
+    "northstar-note-discovery.md",
+    "goldenvalley-note-discovery.md",
+    "goldenvalley-email-pricing.md",
+    "northstar-support-alerting.md",
+    "acme-email-discount.md"
+   ],
+   "relevant": [
+    "product-fleet-visibility.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-20",
+   "ranked": [
+    "product-fleet-visibility.md",
+    "northstar-support-alerting.md",
+    "northstar-note-discovery.md",
+    "goldenvalley-email-pricing.md",
+    "goldenvalley-note-discovery.md",
+    "northstar-rate-card.xlsx",
+    "product-premium-operations-plan.md"
+   ],
+   "relevant": [
+    "product-fleet-visibility.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-21",
+   "ranked": [
+    "product-premium-operations-plan.md",
+    "riverside-call-renewal.md",
+    "acme-email-discount.md",
+    "acme-call-renewal.md",
+    "acme-service-agreement.pdf",
+    "northstar-rate-card.xlsx",
+    "goldenvalley-email-pricing.md"
+   ],
+   "relevant": [
+    "product-premium-operations-plan.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-22",
+   "ranked": [
+    "product-premium-operations-plan.md",
+    "acme-service-agreement.pdf",
+    "acme-email-discount.md",
+    "northstar-support-alerting.md",
+    "riverside-call-renewal.md",
+    "harborpine-note-checkin.md"
+   ],
+   "relevant": [
+    "acme-call-renewal.md",
+    "product-premium-operations-plan.md"
+   ],
+   "recall_at_1": 0.5,
+   "recall_at_3": 0.5,
+   "recall_at_5": 0.5,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-23",
+   "ranked": [
+    "riverside-call-renewal.md",
+    "riverside-email-feedback.md"
+   ],
+   "relevant": [
+    "riverside-call-renewal.md",
+    "riverside-email-feedback.md"
+   ],
+   "recall_at_1": 0.5,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-24",
+   "ranked": [
+    "riverside-call-renewal.md",
+    "acme-email-discount.md"
+   ],
+   "relevant": [
+    "riverside-call-renewal.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-25",
+   "ranked": [
+    "riverside-email-feedback.md",
+    "riverside-support-compliance.md",
+    "riverside-call-renewal.md",
+    "northstar-rate-card.xlsx",
+    "harborpine-note-checkin.md"
+   ],
+   "relevant": [
+    "riverside-email-feedback.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-26",
+   "ranked": [
+    "riverside-support-compliance.md",
+    "riverside-data-handling-policy.docx"
+   ],
+   "relevant": [
+    "riverside-support-compliance.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-27",
+   "ranked": [
+    "riverside-support-compliance.md"
+   ],
+   "relevant": [
+    "riverside-support-compliance.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-28",
+   "ranked": [
+    "summit-note-churn.md"
+   ],
+   "relevant": [
+    "summit-note-churn.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-29",
+   "ranked": [
+    "summit-note-churn.md"
+   ],
+   "relevant": [
+    "summit-note-churn.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-30",
+   "ranked": [
+    "vertex-call-renewal.md"
+   ],
+   "relevant": [
+    "vertex-call-renewal.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-31",
+   "ranked": [
+    "vertex-call-renewal.md",
+    "product-premium-operations-plan.md"
+   ],
+   "relevant": [
+    "vertex-call-renewal.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-32",
+   "ranked": [
+    "vertex-support-rate-limit.md"
+   ],
+   "relevant": [
+    "vertex-support-rate-limit.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-33",
+   "ranked": [
+    "vertex-support-rate-limit.md",
+    "vertex-call-renewal.md"
+   ],
+   "relevant": [
+    "vertex-support-rate-limit.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-34",
+   "ranked": [
+    "acme-support-export-timeout.md",
+    "product-premium-operations-plan.md"
+   ],
+   "relevant": [
+    "acme-support-export-timeout.md",
+    "product-premium-operations-plan.md"
+   ],
+   "recall_at_1": 0.5,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-35",
+   "ranked": [
+    "northstar-support-alerting.md",
+    "product-fleet-visibility.md",
+    "northstar-note-discovery.md"
+   ],
+   "relevant": [
+    "northstar-note-discovery.md",
+    "northstar-support-alerting.md",
+    "product-fleet-visibility.md"
+   ],
+   "recall_at_1": 0.3333333333333333,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "ret-36",
+   "ranked": [
+    "riverside-support-compliance.md"
+   ],
+   "relevant": [
+    "riverside-support-compliance.md"
+   ],
+   "recall_at_1": 1.0,
+   "recall_at_3": 1.0,
+   "recall_at_5": 1.0,
+   "reciprocal_rank": 1.0
+  },
+  {
+   "id": "unans-01",
+   "ranked": [],
+   "relevant": [],
+   "declined": true
+  },
+  {
+   "id": "unans-02",
+   "ranked": [],
+   "relevant": [],
+   "declined": true
+  },
+  {
+   "id": "unans-03",
+   "ranked": [],
+   "relevant": [],
+   "declined": true
+  },
+  {
+   "id": "unans-04",
+   "ranked": [],
+   "relevant": [],
+   "declined": true
+  },
+  {
+   "id": "unans-05",
+   "ranked": [
+    "harborpine-note-checkin.md",
+    "acme-email-discount.md"
+   ],
+   "relevant": [],
+   "declined": false
+  },
+  {
+   "id": "unans-06",
+   "ranked": [
+    "acme-service-agreement.pdf"
+   ],
+   "relevant": [],
+   "declined": false
+  }
+ ]
+}
