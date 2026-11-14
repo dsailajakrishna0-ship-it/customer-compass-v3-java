@@ -26,6 +26,7 @@ Several knowledge bases (for example the CRM documents and a farm-supply handboo
 | `knowledge-bases.extra[]` (`application.yml`) | `id`, `label`, `description`, `source-dir` of each extra knowledge base |
 | `KB_AGRI_SUPPLY_DIR` | Folder of the sample farm-supply handbook (default: `sample-data/knowledge-bases/agri-supply`) |
 | `knowledge-bases.extra[].min-similarity`, `retrieval.min-similarity` (`RETRIEVAL_MIN_SIMILARITY`) | The similarity floor of a knowledge base, and the global default (0.60) |
+| `POST /api/v1/guard/check` and `GUARD_CHECK_ENABLED` (J7.4) | A dry run of the guard on one text for the guard comparison: `{"text": ...}` returns the rules' verdict and the classifier's (safe, unsafe or unavailable); off by default (404), never writes the audit log |
 | `company` in the knowledge-base search body (J7.2) | A company name: scopes the search to that company's documents and the company-agnostic ones; unknown name 404, non-string 422 |
 | `similarityFloor` in `GET /knowledge-bases` and the search; `minSimilarity` in the search body | The floor in force; an override for calibration (0 shows every candidate) |
 | `modelCalls` in `routing` | How many model calls the answer cost (router, tool rounds, answer) |

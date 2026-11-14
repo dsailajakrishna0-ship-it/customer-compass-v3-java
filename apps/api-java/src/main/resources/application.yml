@@ -95,6 +95,8 @@ guard:
   # rules (default, no model call) | llm (classifier only) | both; GUARD_MODEL picks the classifier model
   mode: ${GUARD_MODE:rules}
   model: ${GUARD_MODEL:}
+  # POST /api/v1/guard/check (Java only): a dry run of the guard for the J7.4 comparison; off because each call can cost a model call
+  check-enabled: ${GUARD_CHECK_ENABLED:false}
 
 # MCP tool servers the tools chat can use (the Python edition's MCP_* settings). The Java server is this
 # application itself (an empty URL means "http://localhost:<this port>/mcp"); the FastMCP (Python)

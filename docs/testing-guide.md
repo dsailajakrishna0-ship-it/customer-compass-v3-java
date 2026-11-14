@@ -20,6 +20,16 @@ Off by default. These steps use no key unless you choose to look at the spans in
 | 4 | Optional, with Langfuse running (the Python edition's `docker compose --profile observability up -d`, UI on `127.0.0.1:3000`; create a project and API keys in its settings): `TRACING_ENABLED=true LANGFUSE_PUBLIC_KEY=... LANGFUSE_SECRET_KEY=... just run`, then `just agent "Analyze Acme Fabrication and recommend a next action"` (needs `OPENROUTER_API_KEY` and `GOOGLE_API_KEY`) | In Langfuse, a trace whose id is the request's `X-Request-ID`: the request, `agent.run`, one span per step, `llm.generate` with model and tokens, `retrieval` with result counts | What one agent run did, step by step. **Not tested against a real Langfuse by me**: if the trace does not appear, check the keys and the endpoint first |
 | 5 | In that trace, open any span | Numbers, model names and counts; no question, answer, prompt or document text | The privacy rule: counts, never content |
 
+## J7.4: the rule guard against the LLM classifier
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just eval-guards-selftest` | `Ran 8 tests ... OK`; no keys, no network, no API | The scoring, the retry of an unavailable verdict, the baseline rules and the replay are right (worked by hand) |
+| 2 | `just eval-guards` | `Nothing recorded yet ...` and exit code 2 | No recording is committed yet: no Java classifier number exists |
+| 3 | `just test` | all tests pass; read `GuardCheckTests` | The Java rules match the Python baseline on all 74 prompts (11 of 44 attacks, 4 benign flagged); an unreachable model is `unavailable`, not safe; the route is off by default |
+| 4 | With a key, after approval: the commands in the J7 guide (`GUARD_CHECK_ENABLED=true`, `just eval-guards-record`) | A table of rules, classifier and both: attacks detected, false positives, how many had no verdict | The classifier measured on the Java code path |
+| 5 | After step 4: `just eval-guards-baseline`, then `just eval-guards-check` | `OK: every count matches baseline.json`; the baseline is refused if any prompt has no verdict | A baseline is deliberate and clean |
+
 ## J7.2: the retrieval golden set (harness)
 
 | # | Do | Expect | What it shows |

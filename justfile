@@ -148,6 +148,26 @@ eval-adversarial:
 eval-adversarial-check:
     cd {{api}} && ./mvnw -B -ntp -q test -Dtest=AdversarialEvalTests
 
+# J7.4: the rule guard against the LLM classifier on the 74 comparison prompts, replayed from the recording (no keys, no network)
+eval-guards:
+    @python3 evals/guards/guard_eval.py
+
+# J7.4: replay and fail if a count differs from evals/guards/baseline.json
+eval-guards-check:
+    @python3 evals/guards/guard_eval.py --check
+
+# J7.4: ask the running API (GUARD_CHECK_ENABLED=true, OPENROUTER_API_KEY, GUARD_MODEL) for what is not recorded yet: 74 prompts, 74 classifier calls
+eval-guards-record:
+    @python3 evals/guards/guard_eval.py --record
+
+# J7.4: save the replayed counts as the baseline (on purpose, after a complete recording with no unavailable verdicts)
+eval-guards-baseline:
+    @python3 evals/guards/guard_eval.py --write-baseline
+
+# J7.4: the scoring, the replay and the recording step proved on a made-up recording (no keys, no network, no API)
+eval-guards-selftest:
+    @python3 evals/guards/selftest.py
+
 # J7.2: the CRM retrieval score on the shared 42 golden questions, replayed from the recording (no keys, no network)
 eval-retrieval:
     @python3 evals/retrieval/retrieval_eval.py
