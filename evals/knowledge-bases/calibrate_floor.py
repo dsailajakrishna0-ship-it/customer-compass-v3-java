@@ -99,7 +99,9 @@ def recommend(relevant: list[float], unrelated: list[float]) -> tuple[float, str
     """The midpoint of the gap when there is one, else the threshold that separates best."""
     low, high = min(relevant), max(unrelated)
     if low > high:
-        return round((low + high) / 2, 2), "clean gap"
+        margin = low - high
+        label = "a clear gap" if margin >= 0.05 else "a narrow gap"
+        return round((low + high) / 2, 2), f"{label}: the lowest relevant score is {margin:.3f} above the highest unrelated one"
     best, best_score = 0.45, -1.0
     for t in [x / 100 for x in range(30, 91)]:
         kept = sum(r >= t for r in relevant) / len(relevant)
