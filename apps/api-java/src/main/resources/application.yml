@@ -52,6 +52,9 @@ rag:
 retrieval:
   mode: ${RETRIEVAL_MODE:dense}
   rrf-k: ${RRF_K:60}
+  # the floor of the CRM documents (and of any knowledge base that sets none): the Python edition's 0.45. Calibrated on
+  # these documents, 0.60 separates relevant from unrelated questions (just kb-calibrate); changing it breaks parity
+  min-similarity: ${RETRIEVAL_MIN_SIMILARITY:0.45}
 
 # The optional reranker (the Python edition's RERANK_PROVIDER etc.): off | voyage | cohere. A second model re-orders
 # the search results; any failure keeps the search order.
@@ -75,6 +78,9 @@ knowledge-bases:
         cold chain for seedlings and biologicals, seed lot shelf life, sprayer calibration, delivery windows and
         pallet rules, organic certification, supply agreement renewals and the recall procedure.
       source-dir: ${KB_AGRI_SUPPLY_DIR:}
+      # calibrated on this corpus (just kb-calibrate): on 36 questions relevant ones score 0.62 or more (all but one 0.65 or
+      # more) and unrelated ones 0.62 or less; one relevant and one unrelated question overlap at 0.62, no floor separates them
+      min-similarity: ${KB_AGRI_SUPPLY_MIN_SIMILARITY:0.64}
 
 # The account follow-up agent's hard limits (the Python edition's AGENT_* settings)
 agent:

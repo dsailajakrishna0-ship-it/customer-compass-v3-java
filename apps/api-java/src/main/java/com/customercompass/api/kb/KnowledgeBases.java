@@ -101,7 +101,13 @@ public class KnowledgeBases {
               rag.sampleDataDir());
       VectorIndex index = indexFactory.apply(own);
       var keywords = new KeywordIndex(index, own);
-      var retriever = new Retriever(index, own, jdbc, reranker, rerank, keywords, retrieval);
+      double floor =
+          source.minSimilarity() != null ? source.minSimilarity() : retrieval.minSimilarity();
+      if (floor < 0 || floor > 1) {
+        throw new IllegalArgumentException(
+            "Knowledge base \"" + source.id() + "\": min-similarity must be between 0 and 1.");
+      }
+      var retriever = new Retriever(index, own, jdbc, reranker, rerank, keywords, retrieval, floor);
       bases.put(
           source.id(),
           new KnowledgeBase(

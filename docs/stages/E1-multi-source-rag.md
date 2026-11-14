@@ -1,6 +1,6 @@
 # Stage E1: multi-source RAG with routing (Java extension)
 
-Not a port: the Java edition's own extension (see [java-extensions.md](../java-extensions.md)). Decisions: [ADR 0017](../adr/0017-knowledge-bases.md). Cut into slices: **E1.1** knowledge bases, **E1.2** routing strategies, **E1.3** a comparison (below). Decisions for E1.2: [ADR 0018](../adr/0018-multi-source-routing-strategies.md).
+Not a port: the Java edition's own extension (see [java-extensions.md](../java-extensions.md)). Decisions: [ADR 0017](../adr/0017-knowledge-bases.md). Cut into slices: **E1.1** knowledge bases, **E1.2** routing strategies, **E1.3** a comparison, **E1.4** a similarity floor for each knowledge base (below). Decisions for E1.2: [ADR 0018](../adr/0018-multi-source-routing-strategies.md).
 
 ## E1.1: a second knowledge base
 
@@ -108,3 +108,35 @@ flowchart LR
 4. **Letting the model look, then look again** (the agent) beat deciding once, up front, at a similar number of model calls.
 5. **A threshold belongs to its corpus.** The similarity floor of 0.45 was tuned on the CRM documents; against the farm-supply corpus unrelated questions scored 0.45 to 0.48, so nothing was filtered and the off-topic row is 0 of 4 for every strategy, on the default embedding model too.
 6. **Replayable evidence.** Recording needs keys and takes minutes; replaying is instant and offline, so the table in the guide can be checked by anyone.
+
+## E1.4: a similarity floor for each knowledge base
+
+Decisions and numbers: [ADR 0023](../adr/0023-per-corpus-similarity-floor.md). E1.3 found that the global 0.45 floor, tuned on the CRM documents, lets unrelated questions through the farm-supply handbook (they score 0.45 to 0.48). Each knowledge base can now set its own floor, calibrated on its corpus.
+
+```mermaid
+flowchart LR
+  q["labelled questions<br/>relevant / unrelated per corpus"] --> rec["calibrate_floor.py --record<br/>search with the floor switched off<br/>(minSimilarity: 0)"]
+  rec --> sc[("calibration.json<br/>best score per question")]
+  sc --> show["calibrate_floor.py<br/>relevant min vs unrelated max,<br/>what each floor keeps and lets through"]
+  show --> cfg["knowledge-bases.extra[].min-similarity"]
+  cfg --> r["Retriever floor per knowledge base"]
+  held["heldout.json<br/>12 new questions"] --> show
+```
+
+| Piece | File | Job |
+| --- | --- | --- |
+| The floor | `rag/Retriever.java` (`floor`, `retrieve(..., minSimilarity)`) | one floor per retriever; the global one when none is set |
+| Settings | `rag/RetrievalProperties.java`, `kb/KnowledgeBaseProperties.java`, `application.yml` | `retrieval.min-similarity`, `knowledge-bases.extra[].min-similarity` |
+| Registry | `kb/KnowledgeBases.java` | gives each knowledge base's retriever its floor; refuses a value outside 0 to 1 |
+| Routes | `kb/KnowledgeBaseController.java` | `similarityFloor` in the list and the search; `minSimilarity` override for calibration |
+| Calibration | `evals/knowledge-bases/calibrate_floor.py`, `calibration.json`, `heldout.json`, `calibration-heldout.json` | record the scores, show the gap, check on new questions |
+
+### Concepts
+
+1. **A threshold belongs to a corpus (and an embedding model).** The same number means different things against different documents, and it has to be calibrated, not inherited.
+2. **Calibrate from both sides.** A floor is a gap between the best relevant score and the best unrelated one; the tool shows both, and what each candidate floor keeps and lets through.
+3. **In-sample is not evidence.** Floors tuned on the questions they are scored on look perfect; twelve held-out questions showed one relevant question lost.
+4. **Scores can genuinely overlap.** Here one relevant and one unrelated question both score about 0.62; no floor separates them, and the choice is a trade between recall and noise.
+5. **A floor cannot repair a routing mistake.** The two questions lost with calibrated floors were routing choices (the wrong single corpus, or one corpus when both were needed); a stricter floor removes noise, not routing errors.
+6. **Fewer weak sources, fewer model calls.** With nothing retrieved the answering model is not called.
+

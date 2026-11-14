@@ -1,0 +1,134 @@
+[
+ {
+  "id": "ho-01",
+  "kind": "crm",
+  "question": "What did Elena Torres say about the retail support package renewal?",
+  "expected_kbs": [
+   "crm"
+  ],
+  "relevant": {
+   "crm": [
+    "harborpine-note-checkin.md"
+   ]
+  }
+ },
+ {
+  "id": "ho-02",
+  "kind": "crm",
+  "question": "What data retention window did Riverside ask about?",
+  "expected_kbs": [
+   "crm"
+  ],
+  "relevant": {
+   "crm": [
+    "riverside-support-compliance.md"
+   ]
+  }
+ },
+ {
+  "id": "ho-03",
+  "kind": "crm",
+  "question": "Can the Analytics Pro upgrade for Vertex be billed in the middle of a cycle?",
+  "expected_kbs": [
+   "crm"
+  ],
+  "relevant": {
+   "crm": [
+    "vertex-call-renewal.md"
+   ]
+  }
+ },
+ {
+  "id": "ho-04",
+  "kind": "crm",
+  "question": "What is the workaround when the history export times out?",
+  "expected_kbs": [
+   "crm"
+  ],
+  "relevant": {
+   "crm": [
+    "acme-support-export-timeout.md"
+   ]
+  }
+ },
+ {
+  "id": "ho-05",
+  "kind": "agri",
+  "question": "What is the pre-harvest interval for stone fruit?",
+  "expected_kbs": [
+   "agri-supply"
+  ],
+  "relevant": {
+   "agri-supply": [
+    "pesticide-reentry-intervals.md"
+   ]
+  }
+ },
+ {
+  "id": "ho-06",
+  "kind": "agri",
+  "question": "How long does a sealed seed pack keep?",
+  "expected_kbs": [
+   "agri-supply"
+  ],
+  "relevant": {
+   "agri-supply": [
+    "seed-lot-shelf-life.md"
+   ]
+  }
+ },
+ {
+  "id": "ho-07",
+  "kind": "agri",
+  "question": "What is the weight limit of a pallet?",
+  "expected_kbs": [
+   "agri-supply"
+  ],
+  "relevant": {
+   "agri-supply": [
+    "delivery-windows-pallets.md"
+   ]
+  }
+ },
+ {
+  "id": "ho-08",
+  "kind": "agri",
+  "question": "Who has to keep spray records for five years?",
+  "expected_kbs": [
+   "agri-supply"
+  ],
+  "relevant": {
+   "agri-supply": [
+    "organic-certification-note.md"
+   ]
+  }
+ },
+ {
+  "id": "ho-09",
+  "kind": "neither",
+  "question": "How tall is Mount Everest?",
+  "expected_kbs": [],
+  "relevant": {}
+ },
+ {
+  "id": "ho-10",
+  "kind": "neither",
+  "question": "What is a good recipe for pancakes?",
+  "expected_kbs": [],
+  "relevant": {}
+ },
+ {
+  "id": "ho-11",
+  "kind": "neither",
+  "question": "Explain how photosynthesis works.",
+  "expected_kbs": [],
+  "relevant": {}
+ },
+ {
+  "id": "ho-12",
+  "kind": "neither",
+  "question": "Who wrote Hamlet?",
+  "expected_kbs": [],
+  "relevant": {}
+ }
+]

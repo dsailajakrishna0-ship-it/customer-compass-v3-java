@@ -120,6 +120,14 @@ eval-supervisor-check:
 eval-supervisor-record:
     @python3 evals/supervisor/compare_agents.py --record
 
+# E1.4: the similarity floor of each knowledge base, from the recorded scores of relevant and unrelated questions (no keys, no network)
+kb-calibrate:
+    @python3 evals/knowledge-bases/calibrate_floor.py
+
+# E1.4: ask the running API (both knowledge bases ingested, keys set) for the scores with the floor switched off
+kb-calibrate-record:
+    @python3 evals/knowledge-bases/calibrate_floor.py --record
+
 # ask the tool-calling copilot (the model calls tools through MCP; a write needs your "yes" in the next question). Example: just tools "What are Acme Fabrication's open deals?"  (MODEL=<id> picks a model)
 tools question:
     @python3 contracts/http/ask.py tools "$1"
