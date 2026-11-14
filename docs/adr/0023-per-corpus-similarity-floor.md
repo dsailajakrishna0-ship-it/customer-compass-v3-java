@@ -9,7 +9,7 @@ A chunk is cited only if its cosine similarity to the question reaches a floor. 
 ## Decision
 
 - **Each knowledge base can set `min-similarity`** (`knowledge-bases.extra[].min-similarity`); one that sets none uses the global `retrieval.min-similarity` (`RETRIEVAL_MIN_SIMILARITY`, default 0.45). A value outside 0 to 1 is refused at startup, naming the knowledge base. Hybrid search applies the same floor, and the reranker works after it, as before.
-- **The CRM floor stays 0.45** (parity: both editions answer the same question over the same documents the same way). It is configurable, and the calibration below says 0.60 would separate relevant from unrelated questions better; changing it should be done in both editions together, so it is left as a decision for the owner.
+- **The CRM floor stays 0.45 in this ADR; ADR 0024 raised it to 0.60 in both editions.** (Original reasoning: parity: both editions answer the same question over the same documents the same way). It is configurable, and the calibration below says 0.60 would separate relevant from unrelated questions better; changing it should be done in both editions together, so it is left as a decision for the owner.
 - **The farm-supply floor is 0.64**, from calibration (below).
 - **Calibration is a tool, not a guess:** `just kb-calibrate` replays recorded scores; `just kb-calibrate-record` asks the running API for them with the floor switched off. The search route takes an optional `minSimilarity` in the body (clamped to 0 to 1, a non-number is a 422) so calibration can see every candidate's score; the list shows each knowledge base's `similarityFloor`. The calibration labels are the same 24 questions the strategy comparison uses: for a knowledge base, "relevant" is its own questions plus the ones that need both, scored by the best chunk from a relevant document; "unrelated" is the other corpus's questions plus the four that belong to neither, scored by their best chunk.
 
@@ -61,4 +61,4 @@ What it shows:
 - Off-topic questions get the fixed "could not find" answer instead of a confident answer from weak sources.
 - A floor is a trade: stricter loses a relevant but weakly matched chunk (about one in sixteen here for farm-supply), looser lets noise through. Each corpus now has its own dial and a way to read it.
 - Twelve held-out questions are still small. A larger labelled set, and recalibrating whenever a corpus or the embedding model changes, is the real practice.
-- The CRM floor is the open decision: 0.60 is better supported by the calibration, and 0.45 matches Python; apply it to both editions or neither.
+- The CRM floor was the open decision; the owner chose 0.60 for both editions (ADR 0024).

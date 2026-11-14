@@ -56,10 +56,10 @@ Needs both keys, `just db`, `just qdrant`, `just run`, the CRM documents ingeste
 | 1 | `just test` | all tests pass; read `KnowledgeBaseFloorUnitTests` and `KnowledgeBaseFloorTests` | Each knowledge base applies its own floor; the override; validation |
 | 2 | `just kb-calibrate` | Per knowledge base: the best relevant score against the best unrelated score, a recommended floor, and what each candidate floor keeps and lets through | The calibration, replayed from the recorded scores |
 | 3 | `QUESTIONS_PATH=evals/knowledge-bases/heldout.json RECORDED_PATH=evals/knowledge-bases/calibration-heldout.json python3 evals/knowledge-bases/calibrate_floor.py` | "At the floor in use": CRM 4/4 relevant kept, 0/8 unrelated through; farm-supply 3/4 kept, 0/8 through | The check on twelve questions the floors were not calibrated on |
-| 4 | With the API up and both corpora ingested: `just kb-list` | `similarityFloor`: `crm` 0.45, `agri-supply` 0.64 | Each corpus has its own floor |
+| 4 | With the API up and both corpora ingested: `just kb-list` | `similarityFloor`: `crm` 0.60, `agri-supply` 0.64 | Each corpus has its own floor |
 | 5 | `just kb-search agri-supply "How do I bake a chocolate cake?"` | No results (before E1.4 it returned chunks at 0.46 to 0.48) | The off-topic question is stopped |
 | 6 | `curl -s -X POST localhost:8001/api/v1/knowledge-bases/agri-supply/search -H 'Content-Type: application/json' -d '{"query":"How do I bake a chocolate cake?","minSimilarity":0}'` | The candidates with their similarities, around 0.46 to 0.48 | The calibration override shows what the floor hides |
-| 7 | `RETRIEVAL_MIN_SIMILARITY=0.60 just run`, then `just kb-search crm "What is the weather in Chicago today?"` | No results (at the default 0.45 the CRM returns two chunks at 0.46) | The CRM floor is a setting; 0.60 is the calibrated value |
+| 7 | `just run`, then `just kb-search crm "What is the weather in Chicago today?"` | No results (at the old 0.45 floor the CRM returned two chunks at 0.46); `RETRIEVAL_MIN_SIMILARITY=0.45 just run` brings that back | The CRM floor is 0.60 since ADR 0024, and still a setting |
 | 8 | `RECORDED_PATH=evals/knowledge-bases/recorded-calibrated-floors.json BASELINE_PATH=evals/knowledge-bases/baseline-calibrated-floors.json python3 evals/knowledge-bases/compare_strategies.py --check` | `OK`, and the table with zero wrong-corpus citations | The strategy comparison with calibrated floors |
 
 ## E1.3: the strategy comparison (Java extension)
@@ -70,7 +70,7 @@ Needs both keys, `just db`, `just qdrant`, `just run`, the CRM documents ingeste
 | 2 | `just eval-multi-check` | `OK: every count matches baseline.json` | The table replays exactly |
 | 3 | Read `evals/knowledge-bases/recorded.json`, `mq-16` under `agent` | `searched` `["crm"]` and the same query twice | Why the agent missed one question |
 | 4 | Read `mq-21` under `route` | A `reason` that says neither knowledge base fits, and `searched` with both | A router that reasons one way and answers another |
-| 5 | Query one off-topic question against a corpus: `just kb-search agri-supply "How do I bake a chocolate cake?"` | Chunks come back with similarity about 0.46 to 0.48, just above the 0.45 floor | Why the off-topic row is 0 of 4: the floor does not transfer to a second corpus |
+| 5 | Query one off-topic question against a corpus: `just kb-search agri-supply "How do I bake a chocolate cake?"` | Chunks come back with similarity about 0.46 to 0.48, just above the old global 0.45 floor | Why the off-topic row is 0 of 4: the floor does not transfer to a second corpus |
 | 6 | Optional, with keys: both knowledge bases ingested, the API running (`API_URL` if not 8001), then `MODEL=<id> EMBEDDING_MODEL=gemini-embedding-001 just eval-multi-record` after moving `recorded.json` aside | A new recording (72 requests, 10 to 30 minutes), then `just eval-multi` | Re-measuring with another chat model or more questions |
 
 ## E1.2: three ways to decide where to search (Java extension)
@@ -294,7 +294,7 @@ Needs: the same as J3.1 and J3.2, **and** an OpenRouter key (`OPENROUTER_API_KEY
 | 1 | `just test` | all tests pass (92); read `RagChatTests` | The flow, with a scripted model that records what it is shown |
 | 2 | Before ingesting (`just db-stop`, `just db`, restart the API) run `just rag "What is in the documents?"` | `"message": "I could not find any ingested documents relevant to that question."`, `"citations": []`, no `usage` | Nothing found means no model call |
 | 3 | `just rag "What did Maya Chen ask about the renewal of the Premium Operations Plan?"` | A cited answer; `citations` lists up to 4 sources (the Renewal planning call with Maya Chen first), similarity 0.6 to 0.8 | Retrieval and citations |
-| 4 | `just rag "What is the capital of France?"` | The "could not find" sentence, `citations: []` | The 0.45 floor and no model call |
+| 4 | `just rag "What is the capital of France?"` | The "could not find" sentence, `citations: []` | The 0.60 floor and no model call |
 | 5 | `just rag "What does Clause 7.3 say about the renewal notice period?"` | 60 days' notice; the first citation is the service agreement with `"page": 2` | A PDF page in a citation |
 | 6 | `just rag "Which plan costs 3400 USD a month and how many vehicles does it track?"` | Fleet Plus, 250 vehicles; the first citation has `"sheet": "Rate card"` | An Excel sheet in a citation |
 | 7 | `just rag "How often are accounts with access to clinical data reviewed?"` | Every quarter; the first citation is the Riverside data handling policy with no `page` or `sheet` | A Word file in a citation |
