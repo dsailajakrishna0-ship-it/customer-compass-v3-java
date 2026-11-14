@@ -58,6 +58,8 @@ jobs:
           curl --fail --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors http://localhost:8001/health
       - name: The CRM contract holds
         run: python3 contracts/http/crm_contract.py http://localhost:8001
+      - name: The retrieval eval's scoring and replay hold (a made-up recording, no keys)
+        run: python3 evals/retrieval/selftest.py
       - name: API log on failure
         if: failure()
         run: tail -50 "$RUNNER_TEMP/api.log"

@@ -148,6 +148,26 @@ eval-adversarial:
 eval-adversarial-check:
     cd {{api}} && ./mvnw -B -ntp -q test -Dtest=AdversarialEvalTests
 
+# J7.2: the CRM retrieval score on the shared 42 golden questions, replayed from the recording (no keys, no network)
+eval-retrieval:
+    @python3 evals/retrieval/retrieval_eval.py
+
+# J7.2: replay and fail if a metric moved more than 0.02 from evals/retrieval/baseline.json
+eval-retrieval-check:
+    @python3 evals/retrieval/retrieval_eval.py --check
+
+# J7.2: ask the running API (the CRM documents ingested, GOOGLE_API_KEY set) for what is not recorded yet: 42 questions, about 42 embedding calls; MIN_SIMILARITY, EMBEDDING_MODEL, RETRIEVAL_MODE optional
+eval-retrieval-record:
+    @python3 evals/retrieval/retrieval_eval.py --record
+
+# J7.2: save the replayed metrics as the baseline (on purpose, after a recording)
+eval-retrieval-baseline:
+    @python3 evals/retrieval/retrieval_eval.py --write-baseline
+
+# J7.2: the scoring, the replay and the recording step proved on a made-up recording (no keys, no network, no API)
+eval-retrieval-selftest:
+    @python3 evals/retrieval/selftest.py
+
 # J7.1: rewrite evals/adversarial/baseline.json from the guard's current behaviour (on purpose, after a rule change)
 eval-adversarial-baseline:
     cd {{api}} && EVAL_WRITE_BASELINE=1 ./mvnw -B -ntp -q test -Dtest=AdversarialEvalTests

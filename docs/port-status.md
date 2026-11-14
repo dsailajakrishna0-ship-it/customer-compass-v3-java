@@ -11,7 +11,7 @@ Last checked against `customer-compass-v3` `main` at commit `99c59d8` (Stage 4.2
 | 2 Tools and MCP | 2.1, 2.2a, 2.2b | `/chat/tools`, `/mcp/servers`, `contracts/mcp-tools.json` | J4 | J4 merged (MCP server inside the API, `/chat/tools`, `/mcp/servers`, `/tool-audit-log`) |
 | 3 LangGraph port | 3.1, 3.2a, 3.2b | No (26 contract tests unchanged) | J5 | J5 merged (the graph, both routes, the durable pause) |
 | 4 Retrieval upgrade | 4.1a, 4.1b, 4.2, 4.3 | 4.2 adds optional `page` and `sheet` to `/chat/rag` citations | J3 (RAG) | J3.1 to J3.5 merged; J3.6 (hybrid search) in review. J3 is then complete |
-| 5 and later (Python Stage 8 guard is ported as J6; tracing, evals and comparisons are Stage 5) | No | Unknown | J6 to J8 | J6 (guard and audit) merged; J7.1 (adversarial eval) in review, the rest of J7 (evals and observability) and J8 (plain-Java comparison) planned |
+| 5 and later (Python Stage 8 guard is ported as J6; tracing, evals and comparisons are Stage 5) | No | Unknown | J6 to J8 | J6 (guard and audit) merged; J7.1 (adversarial eval) merged, J7.2 (retrieval golden set harness; recording pending) in review, the rest of J7 (evals and observability) and J8 (plain-Java comparison) planned |
 
 ## Contract gaps
 
