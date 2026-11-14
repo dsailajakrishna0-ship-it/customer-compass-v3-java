@@ -1,5 +1,6 @@
 package com.customercompass.api.agent;
 
+import com.customercompass.api.observability.Tracing;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,6 +17,9 @@ public final class Trace {
 
   private final List<Map<String, Object>> steps = new ArrayList<>();
 
+  /** The span this run's steps hang under (null with tracing off), taken where the run starts. */
+  private final Object parentSpan = Tracing.current();
+
   /** {@code startedNanos} is a System.nanoTime() value taken before the step ran. */
   public synchronized void record(
       String kind, String name, String input, String output, long startedNanos, String status) {
@@ -28,6 +32,25 @@ public final class Trace {
     step.put("status", status);
     step.put("duration_ms", (int) ((System.nanoTime() - startedNanos) / 1_000_000));
     steps.add(step);
+    emitSpan(kind, name, input, output, status, (int) step.get("duration_ms"), steps.size());
+  }
+
+  /**
+   * The same step as a span, so the screen and the trace cannot disagree. Counts and sizes only:
+   * the summaries the screen shows are never sent.
+   */
+  private void emitSpan(
+      String kind, String name, String input, String output, String status, int ms, int index) {
+    var attributes = new LinkedHashMap<String, Object>();
+    attributes.put("step.index", index);
+    attributes.put("step.kind", kind);
+    attributes.put("step.name", name);
+    attributes.put("step.status", status);
+    attributes.put("step.input_chars", input == null ? 0 : input.length());
+    attributes.put("step.output_chars", output == null ? 0 : output.length());
+    attributes.put("ok", "ok".equals(status));
+    String type = kind.equals("tool") ? "tool" : kind.equals("agent") ? "agent" : "span";
+    Tracing.finishedSpan(parentSpan, kind + "." + name, type, ms, attributes);
   }
 
   public void record(String kind, String name, String input, String output, long startedNanos) {

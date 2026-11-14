@@ -12,6 +12,7 @@ import com.customercompass.api.kb.KnowledgeBases;
 import com.customercompass.api.kb.MultiSourceSearch;
 import com.customercompass.api.llm.ChatMessage;
 import com.customercompass.api.llm.GenerationResult;
+import com.customercompass.api.observability.Tracing;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -133,6 +134,19 @@ public class SupervisorWorkflow {
    * and {@code POST /agent/confirm} resumes it.
    */
   public Map<String, Object> run(String message, LlmCall llm) {
+    try (var span = Tracing.span("agent.run", "agent", Map.of("agent.kind", "supervisor"))) {
+      try {
+        Map<String, Object> body = runTeam(message, llm);
+        span.set(AgentWorkflow.runAttributes(body));
+        return body;
+      } catch (RuntimeException e) {
+        span.fail(e);
+        throw e;
+      }
+    }
+  }
+
+  private Map<String, Object> runTeam(String message, LlmCall llm) {
     // the step budget counts the specialists' steps; the turn limit counts the supervisor's turns
     var budgetLimits =
         new AgentProperties(
@@ -144,11 +158,14 @@ public class SupervisorWorkflow {
       CompletableFuture<FlowState> run =
           CompletableFuture.supplyAsync(
               () ->
-                  graph
-                      .invoke(
-                          Map.<String, Object>of("message", message, "mode", modeOf(message)),
-                          RunnableConfig.builder().recursionLimit(100).build())
-                      .orElseThrow(),
+                  ctx.within(
+                      () ->
+                          graph
+                              .invoke(
+                                  Map.<String, Object>of(
+                                      "message", message, "mode", modeOf(message)),
+                                  RunnableConfig.builder().recursionLimit(100).build())
+                              .orElseThrow()),
               RUNS);
       try {
         finalState = run.get((long) (limits.timeoutSeconds() * 1000), TimeUnit.MILLISECONDS);
@@ -212,13 +229,13 @@ public class SupervisorWorkflow {
    */
   CompiledGraph<FlowState> build(RunContext ctx) throws GraphStateException {
     var graph = new StateGraph<>(FlowState::new);
-    graph.addNode("supervisor", node_async(state -> supervisor(state, ctx)));
-    graph.addNode("crm_facts", node_async(state -> crmFacts(state, ctx)));
-    graph.addNode("researcher", node_async(state -> researcher(state, ctx)));
-    graph.addNode("analyst", node_async(state -> analyst(state, ctx)));
-    graph.addNode("reviewer", node_async(state -> reviewer(state, ctx)));
-    graph.addNode("drafter", node_async(state -> drafter(state, ctx)));
-    graph.addNode("answerer", node_async(state -> answerer(state, ctx)));
+    graph.addNode("supervisor", node_async(state -> ctx.within(() -> supervisor(state, ctx))));
+    graph.addNode("crm_facts", node_async(state -> ctx.within(() -> crmFacts(state, ctx))));
+    graph.addNode("researcher", node_async(state -> ctx.within(() -> researcher(state, ctx))));
+    graph.addNode("analyst", node_async(state -> ctx.within(() -> analyst(state, ctx))));
+    graph.addNode("reviewer", node_async(state -> ctx.within(() -> reviewer(state, ctx))));
+    graph.addNode("drafter", node_async(state -> ctx.within(() -> drafter(state, ctx))));
+    graph.addNode("answerer", node_async(state -> ctx.within(() -> answerer(state, ctx))));
 
     graph.addEdge(StateGraph.START, "supervisor");
     var routes = new LinkedHashMap<String, String>();

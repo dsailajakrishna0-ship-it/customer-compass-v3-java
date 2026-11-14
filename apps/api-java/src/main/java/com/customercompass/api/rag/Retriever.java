@@ -1,5 +1,6 @@
 package com.customercompass.api.rag;
 
+import com.customercompass.api.observability.Tracing;
 import java.util.List;
 import java.util.Map;
 import org.springframework.ai.document.Document;
@@ -115,6 +116,45 @@ public class Retriever {
    * similarity, so a floor can be chosen from what relevant and unrelated questions score.
    */
   public List<RetrievedChunk> retrieve(
+      String question, Integer companyId, int topK, double minSimilarity) {
+    // a span per search: mode, sizes and similarities; never the question or the chunk text
+    try (var span =
+        Tracing.span(
+            "retrieval",
+            "retriever",
+            Tracing.attrs(
+                "retrieval.mode",
+                retrieval.mode().name().toLowerCase(java.util.Locale.ROOT),
+                "retrieval.top_k",
+                topK,
+                "retrieval.floor",
+                minSimilarity,
+                "retrieval.scoped_to_company",
+                companyId != null,
+                "retrieval.reranker",
+                reranker.enabled(),
+                "retrieval.question_chars",
+                question == null ? 0 : question.length()))) {
+      try {
+        List<RetrievedChunk> found = search(question, companyId, topK, minSimilarity);
+        span.set("retrieval.results", found.size());
+        if (!found.isEmpty()) {
+          span.set(
+              Tracing.attrs(
+                  "retrieval.best_similarity",
+                  found.stream().mapToDouble(RetrievedChunk::similarity).max().orElse(0),
+                  "retrieval.weakest_similarity",
+                  found.stream().mapToDouble(RetrievedChunk::similarity).min().orElse(0)));
+        }
+        return found;
+      } catch (RuntimeException e) {
+        span.fail(e);
+        throw e;
+      }
+    }
+  }
+
+  private List<RetrievedChunk> search(
       String question, Integer companyId, int topK, double minSimilarity) {
     checkIndexModel();
     if (retrieval.mode() == RetrievalProperties.Mode.HYBRID) {

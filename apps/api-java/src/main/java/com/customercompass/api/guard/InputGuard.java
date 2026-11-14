@@ -2,6 +2,7 @@ package com.customercompass.api.guard;
 
 import com.customercompass.api.llm.ChatMessage;
 import com.customercompass.api.llm.ModelGateway;
+import com.customercompass.api.observability.Tracing;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,27 @@ public class InputGuard {
   }
 
   public PromptGuard.Finding guard(String text) {
+    // a span for the input guard: the mode and how many rules fired; never the text or the rule
+    // names
+    try (var span =
+        Tracing.span(
+            "guard.input",
+            "guardrail",
+            Tracing.attrs(
+                "guard.mode",
+                properties.mode().name().toLowerCase(java.util.Locale.ROOT),
+                "guard.input_chars",
+                text == null ? 0 : text.length()))) {
+      PromptGuard.Finding finding = guardText(text);
+      span.set(
+          Tracing.attrs(
+              "guard.flagged", !finding.matchedPatterns().isEmpty(),
+              "guard.matches", finding.matchedPatterns().size()));
+      return finding;
+    }
+  }
+
+  private PromptGuard.Finding guardText(String text) {
     GuardProperties.Mode mode = properties.mode();
     PromptGuard.Finding finding =
         mode == GuardProperties.Mode.LLM ? PromptGuard.Finding.clean(text) : PromptGuard.scan(text);

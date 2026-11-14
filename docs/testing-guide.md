@@ -8,6 +8,18 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## J7.3: tracing (Java extension)
+
+Off by default. These steps use no key unless you choose to look at the spans in Langfuse.
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just test` | all tests pass; read `TracingTests`, `AgentTracingTests`, `GatewayTracingTests`, `GuardTracingTests`, `OtlpExportTests` | Nesting, the request id as trace id, no content in any span, a dead receiver harmless, the wire format to Langfuse's endpoint |
+| 2 | `just db`, `just qdrant`, `just run`, then `curl -s -i localhost:8001/api/v1/companies \| head -5` | A normal response with an `X-Request-ID` header, and nothing in the log about tracing | Tracing is off by default: no exporter, no thread, no network |
+| 3 | Stop the API; run `TRACING_ENABLED=true TRACING_ENDPOINT=http://127.0.0.1:9/api/public/otel just run`, call the same URL | The same normal response; the log says `tracing_enabled endpoint=...` once and the request still answers | A receiver that is not there never breaks a request |
+| 4 | Optional, with Langfuse running (the Python edition's `docker compose --profile observability up -d`, UI on `127.0.0.1:3000`; create a project and API keys in its settings): `TRACING_ENABLED=true LANGFUSE_PUBLIC_KEY=... LANGFUSE_SECRET_KEY=... just run`, then `just agent "Analyze Acme Fabrication and recommend a next action"` (needs `OPENROUTER_API_KEY` and `GOOGLE_API_KEY`) | In Langfuse, a trace whose id is the request's `X-Request-ID`: the request, `agent.run`, one span per step, `llm.generate` with model and tokens, `retrieval` with result counts | What one agent run did, step by step. **Not tested against a real Langfuse by me**: if the trace does not appear, check the keys and the endpoint first |
+| 5 | In that trace, open any span | Numbers, model names and counts; no question, answer, prompt or document text | The privacy rule: counts, never content |
+
 ## J7.2: the retrieval golden set (harness)
 
 | # | Do | Expect | What it shows |

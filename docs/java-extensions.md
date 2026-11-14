@@ -30,6 +30,17 @@ Several knowledge bases (for example the CRM documents and a farm-supply handboo
 | `similarityFloor` in `GET /knowledge-bases` and the search; `minSimilarity` in the search body | The floor in force; an override for calibration (0 shows every candidate) |
 | `modelCalls` in `routing` | How many model calls the answer cost (router, tool rounds, answer) |
 
+## J7.3: tracing (Java extension)
+
+Spans for the request, model calls, searches, tool calls, guard scans and agent steps, off by default, never content. [ADR 0027](adr/0027-tracing-with-opentelemetry.md)
+
+| Setting | What it does |
+| --- | --- |
+| `TRACING_ENABLED` (default `false`) | `true` sends spans to the endpoint below; off means no exporter, thread or network |
+| `TRACING_ENDPOINT` | OTLP/HTTP base URL; default `http://localhost:3000/api/public/otel` (Langfuse) |
+| `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` | Basic-auth keys of a Langfuse project; never printed; no header when empty |
+| `TRACING_SERVICE_NAME`, `TRACING_EXPORT_TIMEOUT_SECONDS` | Service name (default `customer-compass-java`) and the export timeout (default 5) |
+
 ## E2 (reserved)
 
 A second vector database for multi-source RAG (Qdrant first, Weaviate second) and a store comparison. Parked by the owner; not started.

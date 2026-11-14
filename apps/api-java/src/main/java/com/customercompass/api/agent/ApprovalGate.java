@@ -5,6 +5,7 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 import com.customercompass.api.agent.AgentWorkflow.FlowState;
 import com.customercompass.api.mcp.CrmTools;
+import com.customercompass.api.observability.Tracing;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -80,6 +81,19 @@ public class ApprovalGate {
    * pause existed.
    */
   public Map<String, Object> resume(String companyName, String note, boolean confirm) {
+    try (var span = Tracing.span("agent.resume", "agent", Map.of("confirm", confirm))) {
+      try {
+        Map<String, Object> result = resumeRun(companyName, note, confirm);
+        span.set("paused_run_found", result != null);
+        return result;
+      } catch (RuntimeException e) {
+        span.fail(e);
+        throw e;
+      }
+    }
+  }
+
+  private Map<String, Object> resumeRun(String companyName, String note, boolean confirm) {
     RunnableConfig config = config(threadId(companyName, note));
     if (!isPaused(config)) {
       return null;

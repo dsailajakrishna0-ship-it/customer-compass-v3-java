@@ -107,3 +107,14 @@ mcp:
 # Origin of the web app's dev server (the Python edition allows the same one)
 app:
   cors-allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
+
+# J7.3: tracing (ADR 0027). Off by default: with TRACING_ENABLED unset there is no exporter, no thread and no
+# network. Spans carry counts, model names, ids and durations, never questions, answers or document text.
+# The names are the Python edition's.
+tracing:
+  enabled: ${TRACING_ENABLED:false}
+  endpoint: ${TRACING_ENDPOINT:http://localhost:3000/api/public/otel}
+  service-name: ${TRACING_SERVICE_NAME:customer-compass-java}
+  export-timeout-seconds: ${TRACING_EXPORT_TIMEOUT_SECONDS:5}
+  langfuse-public-key: ${LANGFUSE_PUBLIC_KEY:}
+  langfuse-secret-key: ${LANGFUSE_SECRET_KEY:}
