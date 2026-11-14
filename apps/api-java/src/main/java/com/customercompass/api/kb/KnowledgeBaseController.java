@@ -15,6 +15,7 @@ import java.util.Map;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,12 +37,14 @@ class KnowledgeBaseController {
   private final KnowledgeBases bases;
   private final KnowledgeBaseIngestion ingestion;
   private final ObjectMapper json;
+  private final JdbcClient jdbc;
 
   KnowledgeBaseController(
-      KnowledgeBases bases, KnowledgeBaseIngestion ingestion, ObjectMapper json) {
+      KnowledgeBases bases, KnowledgeBaseIngestion ingestion, ObjectMapper json, JdbcClient jdbc) {
     this.bases = bases;
     this.ingestion = ingestion;
     this.json = json;
+    this.jdbc = jdbc;
   }
 
   @GetMapping
@@ -118,10 +121,12 @@ class KnowledgeBaseController {
         body.has("topK") && body.get("topK").isInt()
             ? body.get("topK").asInt()
             : Retriever.DEFAULT_TOP_K;
+    Integer companyId = companyId(body.get("company"));
     List<RetrievedChunk> chunks;
     try {
       chunks =
-          kb.retriever().retrieve(query.asString(), null, Math.max(1, Math.min(topK, 20)), floor);
+          kb.retriever()
+              .retrieve(query.asString(), companyId, Math.max(1, Math.min(topK, 20)), floor);
     } catch (EmbeddingsUnavailableException e) {
       throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
     } catch (RuntimeException e) {
@@ -139,6 +144,36 @@ class KnowledgeBaseController {
     response.put("similarityFloor", floor);
     response.put("results", citations);
     return response;
+  }
+
+  /**
+   * The optional {@code company} (a company's name) scopes the search the way a company question is
+   * scoped everywhere else: that company's documents and the company-agnostic ones only. Absent or
+   * null: no scoping. An unknown name is a 404 rather than an unscoped search.
+   */
+  private Integer companyId(JsonNode company) {
+    if (company == null || company.isNull()) {
+      return null;
+    }
+    if (!company.isString()) {
+      throw new RequestValidationException(
+          List.of(
+              ValidationProblems.problem(
+                  "string_type",
+                  List.of("body", "company"),
+                  "Input should be a valid string",
+                  company,
+                  null,
+                  json)));
+    }
+    return jdbc.sql("SELECT id FROM companies WHERE name = :name")
+        .param("name", company.asString())
+        .query(Integer.class)
+        .optional()
+        .orElseThrow(
+            () ->
+                new ApiException(
+                    HttpStatus.NOT_FOUND, "No company named \"" + company.asString() + "\"."));
   }
 
   private KnowledgeBase known(String id) {

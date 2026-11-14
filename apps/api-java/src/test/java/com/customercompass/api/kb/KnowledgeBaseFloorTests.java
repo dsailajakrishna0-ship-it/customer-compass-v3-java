@@ -199,4 +199,46 @@ class KnowledgeBaseFloorTests {
     assertThat(problem).containsEntry("type", "float_type");
     assertThat(problem.get("loc")).isEqualTo(List.of("body", "minSimilarity"));
   }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void aCompanyNameScopesTheSearchToThatCompanyAndTheSharedDocuments() {
+    String question = "\"query\":\"renewal\",\"minSimilarity\":0,\"topK\":20";
+    var all = companies(search("crm", "{" + question + "}").getBody());
+    var scoped =
+        companies(search("crm", "{" + question + ",\"company\":\"Acme Fabrication\"}").getBody());
+
+    assertThat(all)
+        .as("without a company other customers' documents are found too")
+        .anyMatch(c -> c != null && !c.equals("Acme Fabrication"));
+    assertThat(scoped).isNotEmpty();
+    assertThat(scoped)
+        .as("only Acme's documents and the company-agnostic ones")
+        .allMatch(c -> c == null || c.equals("Acme Fabrication"));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static List<String> companies(Map<?, ?> body) {
+    return results(body).stream()
+        .map(r -> (String) ((Map<String, Object>) r).get("companyName"))
+        .toList();
+  }
+
+  @Test
+  void anUnknownCompanyIs404NotAnUnscopedSearch() {
+    var reply = search("crm", "{\"query\":\"renewal\",\"company\":\"No Such Co\"}");
+
+    assertThat(reply.getStatusCode().value()).isEqualTo(404);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void aCompanyThatIsNotAStringIs422() {
+    var reply = search("crm", "{\"query\":\"renewal\",\"company\":7}");
+
+    assertThat(reply.getStatusCode().value()).isEqualTo(422);
+    var problem = ((List<Map<String, Object>>) reply.getBody().get("detail")).get(0);
+    assertThat(problem).containsEntry("type", "string_type");
+    assertThat(problem.get("loc")).isEqualTo(List.of("body", "company"));
+  }
 }
