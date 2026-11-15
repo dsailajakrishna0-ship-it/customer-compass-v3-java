@@ -2,6 +2,8 @@ import type { ChatMode, McpServers, ModelCatalog } from "../../types";
 import { MODE_COPY } from "../../context/ChatSessionContext";
 import { ModelPicker } from "./ModelPicker";
 import { McpServerPicker } from "./McpServerPicker";
+import { ApproachPicker } from "./ApproachPicker";
+import { APPROACHES, isMainApproach, type Approach } from "../../api/approaches";
 
 type ChatModeSelectorProps = {
   chatMode: ChatMode;
@@ -12,6 +14,10 @@ type ChatModeSelectorProps = {
   mcpServers: McpServers | null;
   mcpServer: string;
   onChangeMcpServer: (id: string) => void;
+  approach?: string;
+  onChangeApproach?: (id: string) => void;
+  approachStatus?: Record<string, boolean>;
+  approaches?: Approach[];
   isIngesting: boolean;
   onIngest: () => void;
 };
@@ -26,6 +32,10 @@ export function ChatModeSelector({
   mcpServers,
   mcpServer,
   onChangeMcpServer,
+  approach = "",
+  onChangeApproach,
+  approachStatus = {},
+  approaches = APPROACHES,
   isIngesting,
   onIngest,
 }: ChatModeSelectorProps) {
@@ -53,7 +63,10 @@ export function ChatModeSelector({
           cloudModels={cloudModels}
         />
       </div>
-      {chatMode === "tools" && mcpServers && (
+      {chatMode === "tools" && onChangeApproach && (
+        <ApproachPicker approaches={approaches} value={approach} status={approachStatus} onChange={onChangeApproach} />
+      )}
+      {chatMode === "tools" && mcpServers && isMainApproach(approach) && (
         <McpServerPicker
           servers={mcpServers.servers}
           defaultId={mcpServers.default}

@@ -8,6 +8,19 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## J8.1a: tool calling by hand, and the Approach buttons (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; 28 tests, 1 skipped (the live one) | The shared parts and the handWritten loop, against scripted stand-ins; no keys, no network |
+| 2 | `just db`, `just run` (the application on 8001), then in another terminal `just comparisons-test-live` | `BUILD SUCCESS`; 28 tests, 0 skipped | The tools read the real CRM routes and answer the contract's cases |
+| 3 | `just test-web` | lint, types and 24 tests pass (8 are new) | The Approach buttons and the address switch |
+| 4 | With the application up: `OPENROUTER_API_KEY=... just comparisons-hand-written` (`MODEL=<id>` to pick another model, for example a `:free` one), then `curl -s localhost:18101/health` | `{"status":"ok","approach":"handWritten"}` | The backend is running |
+| 5 | `curl -s -X POST localhost:18101/api/v1/chat/tools -H 'Content-Type: application/json' -d '{"messages":[{"role":"user","content":"What open deals does Acme Fabrication have?"}]}'` | An answer that names the Premium Operations Plan renewal, `toolsUsed` with `get_open_deals` or `get_company_summary`, `"mcpServer":"handWritten"`. Without a key: HTTP 503 "OPENROUTER_API_KEY is not set". | The loop: the model asked for a tool, the tool read the CRM, the model answered |
+| 6 | The same call with `{"messages":[]}` | HTTP 422 `{"detail":"messages must hold 1 to 12 items."}` | The request is checked before anything runs |
+| 7 | `npm run dev -w @customer-compass/web`, open the app, choose **Tool-calling copilot (MCP)** | **Approach** buttons: "The application" selected; handWritten greyed "(not running)" until step 4 is running, then selectable; withSpringAi and withLangchain4j stay "(not running)" (not built yet) | The chooser and its health check |
+| 8 | Choose handWritten and ask *What open deals does Acme Fabrication have?* | The answer, the tool trail and "via handWritten" | The web app talks to the other backend |
+
 ## J7.3: tracing (Java extension)
 
 Off by default. These steps use no key unless you choose to look at the spans in Langfuse.
