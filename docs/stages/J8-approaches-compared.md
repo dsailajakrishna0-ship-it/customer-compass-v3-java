@@ -90,6 +90,42 @@ The same backend, the same HTTP face, the same two tools, with LangChain4j doing
 
 **Rule to remember.** *Every framework has a limit that throws and a default that trusts. Read the defaults before the features.*
 
+## J8.1d: the three side by side
+
+The same backend, the same two tools and the same HTTP contract, written three ways. Everything here comes from the code and the tests in this repository. **Not measured:** a real model's answers, speed or cost (every test uses a scripted model), so nothing below says which approach answers better.
+
+**Size.** Counted as lines of Java that are not blank, not comments, not `import` or `package` lines, in each approach's folder only (the shared `comparisons/common` module is used by all three and is not counted).
+
+| | handWritten | withSpringAi | withLangchain4j |
+| --- | --- | --- | --- |
+| Main files | 2 | 7 | 8 |
+| Main code lines | 191 | 276 | 295 |
+| Test code lines | 263 | 518 | 681 |
+| Direct libraries besides Jackson | none | `spring-ai-openai`, `spring-ai-client-chat` | `langchain4j`, `langchain4j-open-ai` |
+
+**Read this table carefully.** The hand-written approach is the **shortest**. The two frameworks remove the loop, the model's HTTP call and the argument parsing, but then need extra code for the rules `handWritten` already had (the four-round limit, the cap per reply, wrapping results as untrusted data, turning errors and unknown tools into text the model reads). The tests grew more, because each framework needed a class that measures what the library does on its own (`SpringAiLibraryBehaviourTests`, `LangChain4jLibraryBehaviourTests`). A framework did not make this backend smaller. It moved where the code is, and added behaviour you have to learn.
+
+**What each one hides, and what each one controls.** The framework columns show what the library does **on its own** (measured by the `*LibraryBehaviourTests` classes); each backend then adds code to enforce the same rules as `handWritten`.
+
+| | handWritten | withSpringAi | withLangchain4j |
+| --- | --- | --- | --- |
+| The loop (ask, run tools, ask again) | You write it | Hidden in `ToolCallingAdvisor`; you subclass it to add the round limit | Hidden in `AiServices`; you stop it by throwing from a tool |
+| The model's HTTP call and reply parsing | You write it (reads only `choices[0].message`) | The OpenAI SDK; strict about the reply envelope | The library's client; accepts a reply without `id` |
+| Writing the tool's JSON Schema | In `CrmTools`, by hand | From `@Tool` and the method | From `@Tool` and the method |
+| Parsing the model's arguments | You write it; extra or wrong-typed arguments are refused | Library; extras ignored, `5` becomes "5" | Library; the same |
+| A round limit | Yours: 4 | None built in; a cap of 40 calls per tool | Built in (100) but **throws** when passed |
+| Unknown tool, bad JSON | Error text to the model | Throws (unknown tool); parser's own message (bad JSON) | Throws for both |
+| Tokens reported | The last call | The sum over the loop | The sum over the loop |
+| Conversation order | System message first | System message first | System message **after** the earlier turns |
+
+**When to pick which** (a judgement from this exercise, not a measurement):
+- **Hand-written** when the loop's rules matter more than convenience, when you have one or two tools, or when you want one place to read every rule. The cost is that you maintain the HTTP call and the parsing.
+- **Spring AI** when the application already uses Spring AI for models, retrieval or memory. The tool loop then comes from the same family, and the extension points (advisors, resolvers, converters) are documented.
+- **LangChain4j** when you want a framework-independent library with its own memory and tool model, and are ready to handle its exceptions: it throws at limits and on bad input by default.
+- In all three cases, **write down the rules first** (rounds, caps, untrusted results, errors as data) and then check each one against the library with a test, as the `*LibraryBehaviourTests` classes do.
+
+**Rule to remember.** *A framework changes where the code lives, not whether the rules exist. Count the rules, not the lines.*
+
 ## Code tour
 
 | | Where | What |
