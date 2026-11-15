@@ -100,6 +100,38 @@ class HybridRetrievalTests {
   }
 
   @Test
+  void aSearchIsOneRetrieverSpanWithCountsAndSimilaritiesButNeverTheQuestionOrTheText() {
+    var exporter = io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter.create();
+    com.customercompass.api.observability.Tracing.install(exporter, "test", false);
+    try {
+      List<RetrievedChunk> result =
+          retriever(Mode.HYBRID).retrieve("Clause 7.3 renewal notice period zebra-7731", 4);
+
+      var span =
+          exporter.getFinishedSpanItems().stream()
+              .filter(s -> s.getName().equals("retrieval"))
+              .findFirst()
+              .orElseThrow();
+      var attributes = span.getAttributes();
+      assertThat(
+              attributes.get(io.opentelemetry.api.common.AttributeKey.stringKey("retrieval.mode")))
+          .isEqualTo("hybrid");
+      assertThat(
+              attributes.get(io.opentelemetry.api.common.AttributeKey.longKey("retrieval.results")))
+          .isEqualTo((long) result.size());
+      assertThat(
+              attributes.get(
+                  io.opentelemetry.api.common.AttributeKey.doubleKey("retrieval.best_similarity")))
+          .isGreaterThanOrEqualTo(Retriever.MIN_SIMILARITY);
+      var everything = new java.util.ArrayList<String>();
+      attributes.forEach((k, v) -> everything.add(k.getKey() + "=" + v));
+      assertThat(String.join("\n", everything)).doesNotContain("zebra-7731", "Clause");
+    } finally {
+      com.customercompass.api.observability.Tracing.shutdown();
+    }
+  }
+
+  @Test
   void anExactTermFindsItsChunk() {
     List<RetrievedChunk> result =
         retriever(Mode.HYBRID).retrieve("Clause 7.3 renewal notice period", 4);

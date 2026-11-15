@@ -1,6 +1,6 @@
 # Stage J7: evals and observability
 
-Ports the Python edition's Stage 5 (and the 0.7 baseline). Decisions: [ADR 0025](../adr/0025-evals-as-shared-files-and-replayable-baselines.md). Cut into slices, one PR each: **J7.1** the adversarial set on the guard, **J7.2** the retrieval golden set (the harness; the recording is a separate step the owner approves), then J7.3 tracing, J7.4 guard comparison with the classifier, J7.5 tool and agent golden cases.
+Ports the Python edition's Stage 5 (and the 0.7 baseline). Decisions: [ADR 0025](../adr/0025-evals-as-shared-files-and-replayable-baselines.md). Cut into slices, one PR each: **J7.1** the adversarial set on the guard, **J7.2** the retrieval golden set (the harness; the recording is a separate step the owner approves), **J7.3** tracing (spans for the request, model calls, searches, tool calls, guard scans and agent steps), J7.4 guard comparison with the classifier, J7.5 tool and agent golden cases.
 
 ## In one minute
 
@@ -73,3 +73,76 @@ What it shows: at both floors the answerable questions score the same (recall@1 
 | change | `kb/KnowledgeBaseController.java` | Optional `company` in the search body |
 | change | `kb/KnowledgeBaseFloorTests.java` | Three tests for it |
 | new | `justfile` | `eval-retrieval`, `eval-retrieval-check`, `eval-retrieval-record`, `eval-retrieval-baseline`, `eval-retrieval-selftest` |
+
+## J7.3: seeing what a request did (tracing)
+
+Until now the only record of a request was one log line and the audit tables. They say *what* was done and *whether it was allowed*. They do not say why a run was slow, which model really answered after a fallback, how many tokens a call used or which agent step failed. A **trace** answers those.
+
+| Shop idea | Project idea | In the code |
+| --- | --- | --- |
+| A receipt for one customer visit, listing every counter they stopped at | **A trace**: everything one request did | one trace per HTTP request, `RequestIdFilter` |
+| One line on the receipt (counter, minutes, what was bought) | **A span**: one timed step | `Tracing.span(...)` in `observability/Tracing.java` |
+| Counters are nested: "checkout" contains "scan item" | **Parent and child spans** | `agent.run` contains one span per step |
+| A standard receipt format every till can print | **OpenTelemetry** over OTLP | Langfuse reads it; so could any other viewer |
+
+```mermaid
+flowchart TD
+  req["POST /api/v1/agent/recommend<br/>trace id = the X-Request-ID"] --> guardin["guard.input"]
+  req --> run["agent.run"]
+  run --> step["one span per step<br/>(Analyst agent, Reviewer agent, ...)"]
+  run --> llm["llm.generate<br/>model, tokens, latency, fallback"]
+  run --> ret["retrieval<br/>mode, results, similarities"]
+  run --> tool["tool.&lt;name&gt;<br/>argument names, outcome"]
+  req --> guardout["guard.output"]
+```
+
+**Off by default.** With `TRACING_ENABLED` unset there is no exporter, no thread and no network, and the traced code runs as before. Turn it on and spans go, in a background thread, to `TRACING_ENDPOINT` (Langfuse's OpenTelemetry endpoint by default). A broken or unreachable receiver costs the request nothing, and a failure to set tracing up is logged and the API starts without it.
+
+**A trace is a receipt, not a copy of the conversation.** Spans carry counts, names, ids, sizes and durations: tokens, milliseconds, how many results, which tool and the *names* of its arguments, how many guard rules fired. They never carry what the user typed, a prompt, an answer, document text, a tool argument's value or the name of a rule. Unlike the Python edition there is no setting to switch content on. A test sends a question and a scripted answer through the real application and checks that no span holds either.
+
+**The request id is the trace id.** Every response already carries `X-Request-ID`. When it is 32 hex characters (the generated ones are) the trace uses it, so one id finds the log lines, the response header and the trace.
+
+**Across threads.** The agent graph runs on other threads and OpenTelemetry's context belongs to a thread, so the run's context is handed to the graph's threads explicitly. Without that, the model calls and searches inside a run would each start a trace of their own. A test removes the hand-over and fails.
+
+**The audit tables stay.** Traces are for understanding and may be deleted; audit rows are the record.
+
+**What was measured, and what was not.** Measured: the behaviour above, by tests with an in-memory exporter; the wire format (path `/api/public/otel/v1/traces`, Basic auth, `x-langfuse-ingestion-version: 4`, protobuf body) against a stand-in receiver on localhost; and the cost of one span in a warmed-up loop on this laptop, one run: about 1 microsecond with tracing off, about 7 microseconds on with a no-op exporter behind the batch processor (no network), against model calls that take seconds. Not measured: an export to a real Langfuse, request latency end to end with tracing on, and memory.
+
+**Rule to remember.** *Record how long and how many; never what was said; and never let the recording break the thing being recorded.*
+
+### Code tour: J7.3
+
+| | Where | What |
+| --- | --- | --- |
+| new | `observability/Tracing.java` | The only class that knows OpenTelemetry: `span`, `requestSpan`, `finishedSpan`, `current`/`within`, attribute cleaning, never raises |
+| new | `observability/TracingProperties.java`, `TracingLifecycle.java`, `OtlpExporters.java` | The settings, start and stop, and the exporter for Langfuse's endpoint |
+| change | `web/RequestIdFilter.java` | The request span (not `/health`) with the request id as trace id |
+| change | `llm/ModelGateway.java` | An `llm.generate` span per call |
+| change | `rag/Retriever.java` | A `retrieval` span per search |
+| change | `mcp/ToolCallRunner.java` | A `tool.<name>` span per tool call |
+| change | `guard/InputGuard.java`, `ChatGuard.java` | `guard.input` and `guard.output` spans |
+| change | `agent/Trace.java`, `AgentWorkflow.java`, `SupervisorWorkflow.java`, `ApprovalGate.java` | Every recorded step is also a span; `agent.run` and `agent.resume`; the context travels to the graph's threads |
+| new | tests: `TracingTests`, `OtlpExportTests`, `TracingLifecycleTests`, `GatewayTracingTests`, `GuardTracingTests`, `AgentTracingTests`, one in `HybridRetrievalTests` | In-memory exporter, a localhost receiver, no key, no network |
+
+## J7.4: the rule guard against the LLM classifier
+
+Same 74 prompts as the Python edition's Stage 5.3 (44 attacks, 30 benign). Decisions: [ADR 0028](../adr/0028-guard-comparison-over-a-dry-run-route.md). The rules are measured now; the classifier needs a recording the owner approves.
+
+**What is new.** `POST /api/v1/guard/check` (Java only, off unless `GUARD_CHECK_ENABLED=true`) is a dry run: one call returns the rules' verdict and the classifier's, writes nothing and returns no text. `evals/guards/guard_eval.py` calls it once per prompt and scores three strategies: the rules, the classifier, and both (flagged by either). `just eval-guards` replays, `just eval-guards-check` compares with `baseline.json`, `just eval-guards-selftest` proves the scoring on a made-up recording.
+
+**Measured without a key.** The Java rules detect 11 of the 44 attacks and flag 4 of the 30 benign prompts (benign-08, -09, -18, -21): exactly the Python baseline (`GuardCheckTests`). No Java classifier number exists yet.
+
+**The trap this harness avoids.** The in-app classifier fails open: a rate-limited or unreachable model means "carry on with the rules". Counted as SAFE, that would make the classifier look worse than it is. Here it is `unavailable`, retried, counted separately, and a baseline is refused while any prompt has no verdict or while a fallback model answered.
+
+**Record it (needs approval, a key and a little money).**
+
+```bash
+just db && just qdrant                      # scratch Postgres and Qdrant
+GUARD_CHECK_ENABLED=true GUARD_MODEL=meta-llama/llama-3.1-8b-instruct OPENROUTER_API_KEY=... just run
+just eval-guards-record                     # 74 requests, one classifier call each
+just eval-guards && just eval-guards-baseline && just eval-guards-check
+```
+
+74 short classifier calls (roughly 250 tokens each, about 18,000 tokens in all) on a small paid model: well under one cent by the Python edition's quoted price of about $0.02 per million tokens (an estimate, not measured here). No embedding quota is used.
+
+**Rule to remember.** *A fail-open guard must never be measured as if "could not check" meant "safe".*

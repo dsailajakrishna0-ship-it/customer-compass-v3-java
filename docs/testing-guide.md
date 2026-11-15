@@ -8,6 +8,28 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## J7.3: tracing (Java extension)
+
+Off by default. These steps use no key unless you choose to look at the spans in Langfuse.
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just test` | all tests pass; read `TracingTests`, `AgentTracingTests`, `GatewayTracingTests`, `GuardTracingTests`, `OtlpExportTests` | Nesting, the request id as trace id, no content in any span, a dead receiver harmless, the wire format to Langfuse's endpoint |
+| 2 | `just db`, `just qdrant`, `just run`, then `curl -s -i localhost:8001/api/v1/companies \| head -5` | A normal response with an `X-Request-ID` header, and nothing in the log about tracing | Tracing is off by default: no exporter, no thread, no network |
+| 3 | Stop the API; run `TRACING_ENABLED=true TRACING_ENDPOINT=http://127.0.0.1:9/api/public/otel just run`, call the same URL | The same normal response; the log says `tracing_enabled endpoint=...` once and the request still answers | A receiver that is not there never breaks a request |
+| 4 | Optional, with Langfuse running (the Python edition's `docker compose --profile observability up -d`, UI on `127.0.0.1:3000`; create a project and API keys in its settings): `TRACING_ENABLED=true LANGFUSE_PUBLIC_KEY=... LANGFUSE_SECRET_KEY=... just run`, then `just agent "Analyze Acme Fabrication and recommend a next action"` (needs `OPENROUTER_API_KEY` and `GOOGLE_API_KEY`) | In Langfuse, a trace whose id is the request's `X-Request-ID`: the request, `agent.run`, one span per step, `llm.generate` with model and tokens, `retrieval` with result counts | What one agent run did, step by step. **Not tested against a real Langfuse by me**: if the trace does not appear, check the keys and the endpoint first |
+| 5 | In that trace, open any span | Numbers, model names and counts; no question, answer, prompt or document text | The privacy rule: counts, never content |
+
+## J7.4: the rule guard against the LLM classifier
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just eval-guards-selftest` | `Ran 8 tests ... OK`; no keys, no network, no API | The scoring, the retry of an unavailable verdict, the baseline rules and the replay are right (worked by hand) |
+| 2 | `just eval-guards` | `Nothing recorded yet ...` and exit code 2 | No recording is committed yet: no Java classifier number exists |
+| 3 | `just test` | all tests pass; read `GuardCheckTests` | The Java rules match the Python baseline on all 74 prompts (11 of 44 attacks, 4 benign flagged); an unreachable model is `unavailable`, not safe; the route is off by default |
+| 4 | With a key, after approval: the commands in the J7 guide (`GUARD_CHECK_ENABLED=true`, `just eval-guards-record`) | A table of rules, classifier and both: attacks detected, false positives, how many had no verdict | The classifier measured on the Java code path |
+| 5 | After step 4: `just eval-guards-baseline`, then `just eval-guards-check` | `OK: every count matches baseline.json`; the baseline is refused if any prompt has no verdict | A baseline is deliberate and clean |
+
 ## J7.2: the retrieval golden set (harness)
 
 | # | Do | Expect | What it shows |

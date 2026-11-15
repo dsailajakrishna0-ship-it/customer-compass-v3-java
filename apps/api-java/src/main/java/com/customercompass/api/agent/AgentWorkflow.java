@@ -11,6 +11,7 @@ import com.customercompass.api.guard.InputGuard;
 import com.customercompass.api.guard.PromptGuard;
 import com.customercompass.api.guard.SecurityAudit;
 import com.customercompass.api.mcp.CrmTools;
+import com.customercompass.api.observability.Tracing;
 import com.customercompass.api.rag.EmbeddingsUnavailableException;
 import java.time.Clock;
 import java.util.ArrayList;
@@ -73,6 +74,10 @@ public class AgentWorkflow {
     final AgentProperties limits;
     final RunBudget budget;
     final Trace trace = new Trace();
+
+    /** The tracing context of the run (null with tracing off), so its steps nest on any thread. */
+    final Object tracing = com.customercompass.api.observability.Tracing.current();
+
     final List<Map<String, Object>> llmCalls = new ArrayList<>();
     volatile boolean cancelled;
 
@@ -80,6 +85,10 @@ public class AgentWorkflow {
       this.llm = llm;
       this.limits = limits;
       this.budget = budget;
+    }
+
+    <T> T within(java.util.function.Supplier<T> work) {
+      return com.customercompass.api.observability.Tracing.within(tracing, work);
     }
 
     /** Counts a step; a run that timed out in the meantime stops at its next step. */
@@ -138,13 +147,39 @@ public class AgentWorkflow {
    * the caller can say what to fix.
    */
   public Map<String, Object> recommend(String message, LlmCall llm) {
+    try (var span = Tracing.span("agent.run", "agent", Map.of("agent.kind", "account_review"))) {
+      try {
+        Map<String, Object> body = recommendRun(message, llm);
+        span.set(runAttributes(body));
+        return body;
+      } catch (RuntimeException e) {
+        span.fail(e);
+        throw e;
+      }
+    }
+  }
+
+  /** What a finished run says about itself: its status and how many steps it took, no content. */
+  static Map<String, Object> runAttributes(Map<String, Object> body) {
+    var attributes = new LinkedHashMap<String, Object>();
+    attributes.put("agent.status", String.valueOf(body.get("status")));
+    if (body.get("trace") instanceof List<?> steps) {
+      attributes.put("agent.steps", steps.size());
+    }
+    return attributes;
+  }
+
+  private Map<String, Object> recommendRun(String message, LlmCall llm) {
     var ctx = new RunContext(llm, limits, new RunBudget(limits, clock));
     FlowState finalState;
     try {
       CompiledGraph<FlowState> graph = build(ctx);
       CompletableFuture<FlowState> run =
           CompletableFuture.supplyAsync(
-              () -> graph.invoke(Map.<String, Object>of("message", message)).orElseThrow(), RUNS);
+              () ->
+                  ctx.within(
+                      () -> graph.invoke(Map.<String, Object>of("message", message)).orElseThrow()),
+              RUNS);
       try {
         finalState = run.get((long) (limits.timeoutSeconds() * 1000), TimeUnit.MILLISECONDS);
       } catch (TimeoutException e) {
@@ -183,13 +218,13 @@ public class AgentWorkflow {
   /** Wires the nodes. Compiled per run because the nodes close over that run's context. */
   CompiledGraph<FlowState> build(RunContext ctx) throws GraphStateException {
     var graph = new StateGraph<>(FlowState::new);
-    graph.addNode("classify", node_async(state -> classify(state, ctx)));
-    graph.addNode("evidence", node_async(state -> evidence(state, ctx)));
-    graph.addNode("documents", node_async(state -> documents(state, ctx)));
-    graph.addNode("analyze", node_async(state -> analyze(state, ctx)));
-    graph.addNode("review", node_async(state -> review(state, ctx)));
+    graph.addNode("classify", node_async(state -> ctx.within(() -> classify(state, ctx))));
+    graph.addNode("evidence", node_async(state -> ctx.within(() -> evidence(state, ctx))));
+    graph.addNode("documents", node_async(state -> ctx.within(() -> documents(state, ctx))));
+    graph.addNode("analyze", node_async(state -> ctx.within(() -> analyze(state, ctx))));
+    graph.addNode("review", node_async(state -> ctx.within(() -> review(state, ctx))));
     graph.addNode("prepare_revision", node_async(this::prepareRevision));
-    graph.addNode("draft", node_async(state -> draft(state, ctx)));
+    graph.addNode("draft", node_async(state -> ctx.within(() -> draft(state, ctx))));
 
     graph.addEdge(StateGraph.START, "classify");
     graph.addConditionalEdges(

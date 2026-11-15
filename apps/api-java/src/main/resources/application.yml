@@ -95,6 +95,8 @@ guard:
   # rules (default, no model call) | llm (classifier only) | both; GUARD_MODEL picks the classifier model
   mode: ${GUARD_MODE:rules}
   model: ${GUARD_MODEL:}
+  # POST /api/v1/guard/check (Java only): a dry run of the guard for the J7.4 comparison; off because each call can cost a model call
+  check-enabled: ${GUARD_CHECK_ENABLED:false}
 
 # MCP tool servers the tools chat can use (the Python edition's MCP_* settings). The Java server is this
 # application itself (an empty URL means "http://localhost:<this port>/mcp"); the FastMCP (Python)
@@ -107,3 +109,14 @@ mcp:
 # Origin of the web app's dev server (the Python edition allows the same one)
 app:
   cors-allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
+
+# J7.3: tracing (ADR 0027). Off by default: with TRACING_ENABLED unset there is no exporter, no thread and no
+# network. Spans carry counts, model names, ids and durations, never questions, answers or document text.
+# The names are the Python edition's.
+tracing:
+  enabled: ${TRACING_ENABLED:false}
+  endpoint: ${TRACING_ENDPOINT:http://localhost:3000/api/public/otel}
+  service-name: ${TRACING_SERVICE_NAME:customer-compass-java}
+  export-timeout-seconds: ${TRACING_EXPORT_TIMEOUT_SECONDS:5}
+  langfuse-public-key: ${LANGFUSE_PUBLIC_KEY:}
+  langfuse-secret-key: ${LANGFUSE_SECRET_KEY:}

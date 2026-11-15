@@ -26,9 +26,21 @@ Several knowledge bases (for example the CRM documents and a farm-supply handboo
 | `knowledge-bases.extra[]` (`application.yml`) | `id`, `label`, `description`, `source-dir` of each extra knowledge base |
 | `KB_AGRI_SUPPLY_DIR` | Folder of the sample farm-supply handbook (default: `sample-data/knowledge-bases/agri-supply`) |
 | `knowledge-bases.extra[].min-similarity`, `retrieval.min-similarity` (`RETRIEVAL_MIN_SIMILARITY`) | The similarity floor of a knowledge base, and the global default (0.60) |
+| `POST /api/v1/guard/check` and `GUARD_CHECK_ENABLED` (J7.4) | A dry run of the guard on one text for the guard comparison: `{"text": ...}` returns the rules' verdict and the classifier's (safe, unsafe or unavailable); off by default (404), never writes the audit log |
 | `company` in the knowledge-base search body (J7.2) | A company name: scopes the search to that company's documents and the company-agnostic ones; unknown name 404, non-string 422 |
 | `similarityFloor` in `GET /knowledge-bases` and the search; `minSimilarity` in the search body | The floor in force; an override for calibration (0 shows every candidate) |
 | `modelCalls` in `routing` | How many model calls the answer cost (router, tool rounds, answer) |
+
+## J7.3: tracing (Java extension)
+
+Spans for the request, model calls, searches, tool calls, guard scans and agent steps, off by default, never content. [ADR 0027](adr/0027-tracing-with-opentelemetry.md)
+
+| Setting | What it does |
+| --- | --- |
+| `TRACING_ENABLED` (default `false`) | `true` sends spans to the endpoint below; off means no exporter, thread or network |
+| `TRACING_ENDPOINT` | OTLP/HTTP base URL; default `http://localhost:3000/api/public/otel` (Langfuse) |
+| `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` | Basic-auth keys of a Langfuse project; never printed; no header when empty |
+| `TRACING_SERVICE_NAME`, `TRACING_EXPORT_TIMEOUT_SECONDS` | Service name (default `customer-compass-java`) and the export timeout (default 5) |
 
 ## E2 (reserved)
 

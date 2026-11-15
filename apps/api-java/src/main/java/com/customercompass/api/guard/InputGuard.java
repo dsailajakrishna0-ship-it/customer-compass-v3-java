@@ -1,7 +1,9 @@
 package com.customercompass.api.guard;
 
 import com.customercompass.api.llm.ChatMessage;
+import com.customercompass.api.llm.GenerationResult;
 import com.customercompass.api.llm.ModelGateway;
+import com.customercompass.api.observability.Tracing;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,26 +46,113 @@ public class InputGuard {
   }
 
   public PromptGuard.Finding guard(String text) {
+    // a span for the input guard: the mode and how many rules fired; never the text or the rule
+    // names
+    try (var span =
+        Tracing.span(
+            "guard.input",
+            "guardrail",
+            Tracing.attrs(
+                "guard.mode",
+                properties.mode().name().toLowerCase(java.util.Locale.ROOT),
+                "guard.input_chars",
+                text == null ? 0 : text.length()))) {
+      PromptGuard.Finding finding = guardText(text);
+      span.set(
+          Tracing.attrs(
+              "guard.flagged", !finding.matchedPatterns().isEmpty(),
+              "guard.matches", finding.matchedPatterns().size()));
+      return finding;
+    }
+  }
+
+  private PromptGuard.Finding guardText(String text) {
     GuardProperties.Mode mode = properties.mode();
     PromptGuard.Finding finding =
         mode == GuardProperties.Mode.LLM ? PromptGuard.Finding.clean(text) : PromptGuard.scan(text);
     if (mode == GuardProperties.Mode.RULES) {
       return finding;
     }
-    try {
-      String model =
-          properties.model() == null || properties.model().isBlank() ? null : properties.model();
-      String reply =
-          gateway
-              .generate(CLASSIFIER_SYSTEM_PROMPT, List.of(new ChatMessage("user", text)), model)
-              .content();
-      if (parseVerdict(reply)) {
-        finding.matchedPatterns().add("llm_classifier");
-        finding.matchedSnippets().add(text.length() <= 120 ? text : text.substring(0, 120));
-      }
-    } catch (RuntimeException e) {
-      log.warn("llm guard unavailable, using rules only: {}", e.getMessage());
+    Classified classified = classify(text);
+    if (classified.outcome() == Outcome.UNSAFE) {
+      finding.matchedPatterns().add("llm_classifier");
+      finding.matchedSnippets().add(text.length() <= 120 ? text : text.substring(0, 120));
     }
     return finding;
+  }
+
+  /** How the classifier answered for one text. */
+  public enum Outcome {
+    SAFE,
+    UNSAFE,
+    /** The model could not be reached: no verdict, which is not the same as SAFE. */
+    UNAVAILABLE
+  }
+
+  /**
+   * One classifier call: the verdict, the first word of the reply (so an unclear reply is visible),
+   * the model that answered and whether it was a fallback, or why there was no answer.
+   */
+  record Classified(
+      Outcome outcome, String word, String model, boolean fallbackUsed, String failure) {}
+
+  /**
+   * A dry run for measurement (J7.4): what the rules say and what the classifier says about one
+   * text, without rewriting it, without the audit log and without caring about {@code GUARD_MODE}.
+   * The in-app classifier fails open, so an unreachable model is {@link Outcome#UNAVAILABLE} here
+   * and a comparison must not count it as SAFE.
+   */
+  public record Check(
+      boolean rulesFlagged,
+      List<String> rulePatterns,
+      Outcome classifier,
+      String word,
+      String model,
+      boolean fallbackUsed,
+      String failure) {}
+
+  public Check check(String text) {
+    PromptGuard.Finding rules = PromptGuard.scan(text);
+    Classified c = classify(text);
+    return new Check(
+        rules.flagged(),
+        List.copyOf(rules.matchedPatterns()),
+        c.outcome(),
+        c.word(),
+        c.model(),
+        c.fallbackUsed(),
+        c.failure());
+  }
+
+  /** The model that is asked: {@code GUARD_MODEL}, or the default chat model when it is empty. */
+  public String configuredModel() {
+    return properties.model() == null || properties.model().isBlank() ? "" : properties.model();
+  }
+
+  private Classified classify(String text) {
+    try {
+      String model = configuredModel().isEmpty() ? null : configuredModel();
+      GenerationResult result =
+          gateway.generate(CLASSIFIER_SYSTEM_PROMPT, List.of(new ChatMessage("user", text)), model);
+      String reply = result.content();
+      return new Classified(
+          parseVerdict(reply) ? Outcome.UNSAFE : Outcome.SAFE,
+          firstWord(reply),
+          result.model(),
+          result.fallbackUsed(),
+          null);
+    } catch (RuntimeException e) {
+      log.warn("llm guard unavailable, using rules only: {}", e.getMessage());
+      return new Classified(Outcome.UNAVAILABLE, null, null, false, e.getClass().getSimpleName());
+    }
+  }
+
+  /** The reply's first word as the verdict parser reads it, cut to 20 characters. */
+  static String firstWord(String reply) {
+    if (reply == null || reply.isBlank()) {
+      return "";
+    }
+    String first = reply.strip().split("\\s+")[0].replaceAll("^[.,:;!*`\"']+|[.,:;!*`\"']+$", "");
+    return first.length() <= 20 ? first : first.substring(0, 20);
   }
 }

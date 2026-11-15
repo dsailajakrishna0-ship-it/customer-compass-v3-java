@@ -121,6 +121,38 @@
       <version>${langgraph4j.version}</version>
     </dependency>
 
+    <!-- J7.3: tracing. OpenTelemetry API and SDK, and the OTLP exporter that sends spans to Langfuse (or
+         any OTLP receiver). Versions come from Spring Boot's own BOM (ADR 0027). Off by default. -->
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-sdk</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-exporter-otlp</artifactId>
+      <exclusions>
+        <!-- the JDK's own HTTP client sends the spans, so OkHttp and Kotlin stay off the classpath -->
+        <exclusion>
+          <groupId>io.opentelemetry</groupId>
+          <artifactId>opentelemetry-exporter-sender-okhttp</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-exporter-sender-jdk</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-sdk-testing</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <!-- J3.2: reading PDF, Word and Excel files (Apache PDFBox and Apache POI). -->
     <dependency>
       <groupId>org.apache.pdfbox</groupId>
