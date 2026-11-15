@@ -19,6 +19,8 @@ import com.customercompass.api.rag.retrieval.RetrievedChunk;
 import com.customercompass.api.web.ApiException;
 import com.customercompass.api.web.RequestValidationException;
 import com.customercompass.api.web.ValidationProblems;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,6 +55,9 @@ import tools.jackson.databind.ObjectMapper;
  * The answer, citations (each says which knowledge base it came from), guard and usage footer are
  * those of the RAG route; {@code routing} says what was searched and why.
  */
+@Tag(
+    name = "Chat",
+    description = "Question answering over the conversation, with and without sources.")
 @RestController
 @RequestMapping("/api/v1/chat/multi")
 class MultiSourceChatController {
@@ -103,6 +108,19 @@ class MultiSourceChatController {
     this.json = json;
   }
 
+  @Operation(
+      summary = "Chat over several knowledge bases",
+      description =
+          "Strategy route, all or agent decides where to look. Add \"strategy\" to the body.",
+      requestBody =
+          @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              content =
+                  @io.swagger.v3.oas.annotations.media.Content(
+                      mediaType = "application/json",
+                      examples =
+                          @io.swagger.v3.oas.annotations.media.ExampleObject(
+                              value =
+                                  "{\"messages\":[{\"role\":\"user\",\"content\":\"How do we price fabrication jobs?\"}],\"strategy\":\"route\"}"))))
   @PostMapping(consumes = MediaType.ALL_VALUE)
   Map<String, Object> chat(
       @RequestBody(required = false) String raw,

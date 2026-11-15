@@ -2,6 +2,8 @@ package com.customercompass.api.rag.ingestion;
 
 import com.customercompass.api.rag.VectorIndex;
 import com.customercompass.api.web.ApiException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Document ingestion and inspection: POST /ingest, GET /documents, GET /ingestion-runs. */
+@Tag(name = "Documents", description = "Ingestion of the CRM documents.")
 @RestController
 @RequestMapping("/api/v1/documents")
 class DocumentController {
@@ -42,6 +45,10 @@ class DocumentController {
    * Runs the whole pipeline. A failed run comes back as the summary itself (status "failed" and a
    * plain-text error, HTTP 502), not as an error object, so the web app can show it.
    */
+  @Operation(
+      summary = "Ingest the CRM documents",
+      description =
+          "Runs the whole pipeline; a failed run comes back as the summary with status failed (502).")
   @PostMapping("/ingest")
   ResponseEntity<Map<String, Object>> ingest() {
     DocumentIngestionService.Summary summary;
@@ -65,6 +72,7 @@ class DocumentController {
   }
 
   /** The ingested documents with their chunk counts, for debugging retrieval. */
+  @Operation(summary = "List documents", description = "The ingested documents.")
   @GetMapping
   List<Map<String, Object>> list() {
     return jdbc.sql(
@@ -88,6 +96,7 @@ class DocumentController {
   }
 
   /** The ten most recent runs, newest first. */
+  @Operation(summary = "List ingestion runs", description = "Past runs with status and times.")
   @GetMapping("/ingestion-runs")
   List<Map<String, Object>> runs() {
     return jdbc.sql(

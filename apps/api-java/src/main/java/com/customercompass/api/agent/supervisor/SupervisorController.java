@@ -8,6 +8,8 @@ import com.customercompass.api.rag.EmbeddingsUnavailableException;
 import com.customercompass.api.rag.VectorIndex;
 import com.customercompass.api.web.ApiException;
 import com.customercompass.api.web.ValidationProblems;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -28,6 +30,7 @@ import tools.jackson.databind.ObjectMapper;
  * task and no gate): {@code POST /agent/confirm} resumes it. Nothing is written before the user
  * says yes.
  */
+@Tag(name = "Agent", description = "The account-review agent with its approval pause.")
 @RestController
 @RequestMapping("/api/v1/agent")
 class SupervisorController {
@@ -42,6 +45,18 @@ class SupervisorController {
     this.json = json;
   }
 
+  @Operation(
+      summary = "Run the supervisor",
+      description = "A supervisor routes work between specialists within turn limits.",
+      requestBody =
+          @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              content =
+                  @io.swagger.v3.oas.annotations.media.Content(
+                      mediaType = "application/json",
+                      examples =
+                          @io.swagger.v3.oas.annotations.media.ExampleObject(
+                              value =
+                                  "{\"message\":\"Analyze Acme Fabrication and recommend a next action\"}"))))
   @PostMapping(path = "/supervise", consumes = MediaType.ALL_VALUE)
   Map<String, Object> supervise(
       @RequestBody(required = false) String raw,

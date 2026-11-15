@@ -2,6 +2,8 @@ package com.customercompass.api.guard;
 
 import com.customercompass.api.web.RequestValidationException;
 import com.customercompass.api.web.ValidationProblems;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,6 +21,7 @@ import tools.jackson.databind.ObjectMapper;
  * route), with its query rules: {@code limit} 1 to 500 (default 50), {@code event_type} one of
  * input, document, tool, output, and an exact {@code pattern} name. Bad values are FastAPI's 422.
  */
+@Tag(name = "Guards", description = "Prompt-injection checks and audit records.")
 @RestController
 @RequestMapping("/api/v1")
 class SecurityAuditController {
@@ -34,6 +37,9 @@ class SecurityAuditController {
     this.json = json;
   }
 
+  @Operation(
+      summary = "Security audit log",
+      description = "Recorded injection detections (no content, counts and kinds).")
   @GetMapping("/security-audit-log")
   List<Map<String, Object>> list(
       @RequestParam(name = "limit", required = false) String limitText,

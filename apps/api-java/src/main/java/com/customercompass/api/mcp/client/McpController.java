@@ -1,5 +1,7 @@
 package com.customercompass.api.mcp.client;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
  * GET /api/v1/mcp/servers: which tool servers exist, which are configured, which answer (for the
  * web app).
  */
+@Tag(name = "Tools (MCP)", description = "Tool servers and what the model called.")
 @RestController
 @RequestMapping("/api/v1/mcp")
 class McpController {
@@ -27,6 +30,9 @@ class McpController {
     this.client = client;
   }
 
+  @Operation(
+      summary = "List tool servers",
+      description = "The configured MCP servers and whether they are reachable.")
   @GetMapping("/servers")
   Map<String, Object> servers() {
     List<McpServers.Backend> known = servers.list();

@@ -15,6 +15,8 @@ import com.customercompass.api.rag.VectorIndex;
 import com.customercompass.api.rag.retrieval.RetrievedChunk;
 import com.customercompass.api.rag.retrieval.Retriever;
 import com.customercompass.api.web.ApiException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,6 +42,9 @@ import tools.jackson.databind.ObjectMapper;
  * "already correct, do not cite" and the documents as numbered, citable sources. The
  * prompt-injection and cross-customer scans of the answer arrive in J6.
  */
+@Tag(
+    name = "Chat",
+    description = "Question answering over the conversation, with and without sources.")
 @RestController
 @RequestMapping("/api/v1/chat/crm")
 class CrmChatController {
@@ -87,6 +92,18 @@ class CrmChatController {
     this.json = json;
   }
 
+  @Operation(
+      summary = "Chat over CRM facts",
+      description = "Answers from the CRM data, with the facts used.",
+      requestBody =
+          @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              content =
+                  @io.swagger.v3.oas.annotations.media.Content(
+                      mediaType = "application/json",
+                      examples =
+                          @io.swagger.v3.oas.annotations.media.ExampleObject(
+                              value =
+                                  "{\"messages\":[{\"role\":\"user\",\"content\":\"What open deals does Acme Fabrication have?\"}],\"model\":\"optional model id\"}"))))
   @PostMapping(consumes = MediaType.ALL_VALUE)
   Map<String, Object> chat(
       @RequestBody(required = false) String raw,
