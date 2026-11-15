@@ -30,6 +30,10 @@ comparisons-test-live:
 comparisons-hand-written:
     ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl tool-calling/handWritten -am compile exec:java
 
+# J8.1b: start the withSpringAi tool-calling backend on port 18102 (needs OPENROUTER_API_KEY to answer; CRM_BASE_URL, LLM_BASE_URL, MODEL, PORT optional)
+comparisons-with-spring-ai:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl tool-calling/withSpringAi -am compile exec:java
+
 # web app: lint, types, tests, production build (copied from the Python edition)
 test-web:
     npm run lint
