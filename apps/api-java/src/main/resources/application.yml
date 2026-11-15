@@ -120,3 +120,13 @@ tracing:
   export-timeout-seconds: ${TRACING_EXPORT_TIMEOUT_SECONDS:5}
   langfuse-public-key: ${LANGFUSE_PUBLIC_KEY:}
   langfuse-secret-key: ${LANGFUSE_SECRET_KEY:}
+
+# API description (Swagger UI at /swagger-ui.html, JSON at /v3/api-docs). OPENAPI_ENABLED=false switches both off.
+springdoc:
+  api-docs:
+    enabled: ${OPENAPI_ENABLED:true}
+  swagger-ui:
+    enabled: ${OPENAPI_ENABLED:true}
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha

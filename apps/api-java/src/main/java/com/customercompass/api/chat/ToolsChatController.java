@@ -15,6 +15,8 @@ import com.customercompass.api.mcp.client.ToolCallRunner;
 import com.customercompass.api.rag.EmbeddingsUnavailableException;
 import com.customercompass.api.rag.RagContext;
 import com.customercompass.api.web.ApiException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,6 +45,9 @@ import tools.jackson.databind.ObjectMapper;
  * model: the tool schema does not even offer a {@code confirm} argument. Tool results are data, so
  * each is wrapped in untrusted-context tags and scanned for injected commands (J6.1).
  */
+@Tag(
+    name = "Chat",
+    description = "Question answering over the conversation, with and without sources.")
 @RestController
 @RequestMapping("/api/v1/chat/tools")
 class ToolsChatController {
@@ -102,6 +107,18 @@ class ToolsChatController {
     this.json = json;
   }
 
+  @Operation(
+      summary = "Chat with tools (MCP)",
+      description = "The model may call CRM tools; \"mcpServer\" picks the tool server.",
+      requestBody =
+          @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              content =
+                  @io.swagger.v3.oas.annotations.media.Content(
+                      mediaType = "application/json",
+                      examples =
+                          @io.swagger.v3.oas.annotations.media.ExampleObject(
+                              value =
+                                  "{\"messages\":[{\"role\":\"user\",\"content\":\"What open deals does Acme Fabrication have?\"}],\"mcpServer\":\"optional server id\"}"))))
   @PostMapping(consumes = MediaType.ALL_VALUE)
   Map<String, Object> chat(
       @RequestBody(required = false) String raw,

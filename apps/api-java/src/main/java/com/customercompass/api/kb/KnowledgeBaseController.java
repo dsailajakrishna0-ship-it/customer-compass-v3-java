@@ -8,6 +8,8 @@ import com.customercompass.api.rag.retrieval.Retriever;
 import com.customercompass.api.web.ApiException;
 import com.customercompass.api.web.RequestValidationException;
 import com.customercompass.api.web.ValidationProblems;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,6 +32,7 @@ import tools.jackson.databind.ObjectMapper;
  * Java-edition extension routes for knowledge bases (not part of the API contract shared with the
  * Python edition; see docs/java-extensions.md): list them, ingest an extra one, search one.
  */
+@Tag(name = "Knowledge bases", description = "The document collections that can be searched.")
 @RestController
 @RequestMapping("/api/v1/knowledge-bases")
 class KnowledgeBaseController {
@@ -47,6 +50,9 @@ class KnowledgeBaseController {
     this.jdbc = jdbc;
   }
 
+  @Operation(
+      summary = "List knowledge bases",
+      description = "Each knowledge base with its description, collection and chunk count.")
   @GetMapping
   List<Map<String, Object>> list() {
     var out = new ArrayList<Map<String, Object>>();
@@ -64,6 +70,10 @@ class KnowledgeBaseController {
     return out;
   }
 
+  @Operation(
+      summary = "Ingest a knowledge base",
+      description =
+          "Reads, splits, embeds and stores the files of one knowledge base. Uses embedding quota.")
   @PostMapping("/{id}/ingest")
   Map<String, Object> ingest(@PathVariable String id) {
     KnowledgeBase kb = known(id);
@@ -82,6 +92,18 @@ class KnowledgeBaseController {
     return body;
   }
 
+  @Operation(
+      summary = "Search a knowledge base",
+      description =
+          "Returns the matching chunks with scores. Optional topK, minSimilarity and company.",
+      requestBody =
+          @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              content =
+                  @io.swagger.v3.oas.annotations.media.Content(
+                      mediaType = "application/json",
+                      examples =
+                          @io.swagger.v3.oas.annotations.media.ExampleObject(
+                              value = "{\"query\":\"pricing for fabrication jobs\",\"topK\":4}"))))
   @PostMapping(path = "/{id}/search", consumes = MediaType.ALL_VALUE)
   Map<String, Object> search(
       @PathVariable String id,

@@ -1,5 +1,7 @@
 package com.customercompass.api.mcp.audit;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +16,7 @@ import tools.jackson.databind.json.JsonMapper;
  * GET /api/v1/tool-audit-log: the audit trail of tool calls, newest first (the Python edition's
  * route).
  */
+@Tag(name = "Tools (MCP)", description = "Tool servers and what the model called.")
 @RestController
 @RequestMapping("/api/v1")
 class ToolAuditController {
@@ -26,6 +29,7 @@ class ToolAuditController {
     this.jdbc = jdbc;
   }
 
+  @Operation(summary = "Tool audit log", description = "Every tool call the model made.")
   @GetMapping("/tool-audit-log")
   @SuppressWarnings("unchecked")
   List<Map<String, Object>> list(@RequestParam(name = "limit", defaultValue = "50") int limit) {

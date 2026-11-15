@@ -7,6 +7,8 @@ import com.customercompass.api.llm.GenerationResult;
 import com.customercompass.api.llm.gateway.LlmUnavailableException;
 import com.customercompass.api.llm.gateway.ModelGateway;
 import com.customercompass.api.web.ApiException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +31,9 @@ import tools.jackson.databind.ObjectMapper;
  * scans the question (a matched phrase is redacted, the request still runs) and the answer, and
  * writes every detection to the security audit log (J6.1).
  */
+@Tag(
+    name = "Chat",
+    description = "Question answering over the conversation, with and without sources.")
 @RestController
 @RequestMapping("/api/v1/chat")
 class ChatController {
@@ -56,6 +61,19 @@ class ChatController {
    * Takes the raw body, not a parsed one, so every kind of bad input gets FastAPI's 422 (an empty
    * body, text that is not JSON, a non-JSON content type) instead of a framework error.
    */
+  @Operation(
+      summary = "General chat",
+      description =
+          "Answers from the model alone, no documents. 1 to 12 messages; the last one is the question. 422 for an invalid body, 503 if no model is reachable.",
+      requestBody =
+          @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              content =
+                  @io.swagger.v3.oas.annotations.media.Content(
+                      mediaType = "application/json",
+                      examples =
+                          @io.swagger.v3.oas.annotations.media.ExampleObject(
+                              value =
+                                  "{\"messages\":[{\"role\":\"user\",\"content\":\"What open deals does Acme Fabrication have?\"}],\"model\":\"optional model id\"}"))))
   @PostMapping(consumes = MediaType.ALL_VALUE)
   Map<String, Object> chat(
       @RequestBody(required = false) String raw,

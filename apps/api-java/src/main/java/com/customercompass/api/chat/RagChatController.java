@@ -12,6 +12,8 @@ import com.customercompass.api.rag.VectorIndex;
 import com.customercompass.api.rag.retrieval.RetrievedChunk;
 import com.customercompass.api.rag.retrieval.Retriever;
 import com.customercompass.api.web.ApiException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,6 +38,9 @@ import tools.jackson.databind.ObjectMapper;
  * the retrieved text for prompt injection arrives in J6; the context is already wrapped in
  * untrusted-context tags.
  */
+@Tag(
+    name = "Chat",
+    description = "Question answering over the conversation, with and without sources.")
 @RestController
 @RequestMapping("/api/v1/chat/rag")
 class RagChatController {
@@ -68,6 +73,19 @@ class RagChatController {
     this.json = json;
   }
 
+  @Operation(
+      summary = "Chat over documents (RAG)",
+      description =
+          "Retrieves chunks above the similarity floor and answers with citations. 503 if embeddings or the vector store are unavailable.",
+      requestBody =
+          @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              content =
+                  @io.swagger.v3.oas.annotations.media.Content(
+                      mediaType = "application/json",
+                      examples =
+                          @io.swagger.v3.oas.annotations.media.ExampleObject(
+                              value =
+                                  "{\"messages\":[{\"role\":\"user\",\"content\":\"What open deals does Acme Fabrication have?\"}],\"model\":\"optional model id\"}"))))
   @PostMapping(consumes = MediaType.ALL_VALUE)
   Map<String, Object> chat(
       @RequestBody(required = false) String raw,

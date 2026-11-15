@@ -10,6 +10,8 @@ import com.customercompass.api.rag.EmbeddingsUnavailableException;
 import com.customercompass.api.rag.VectorIndex;
 import com.customercompass.api.web.ApiException;
 import com.customercompass.api.web.ValidationProblems;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -31,6 +33,7 @@ import tools.jackson.databind.ObjectMapper;
  * writes. POST /agent/confirm is the only place a task can be created, and only when the user
  * explicitly sends confirm=true (declining writes nothing).
  */
+@Tag(name = "Agent", description = "The account-review agent with its approval pause.")
 @RestController
 @RequestMapping("/api/v1/agent")
 class AgentController {
@@ -62,6 +65,19 @@ class AgentController {
     this.json = json;
   }
 
+  @Operation(
+      summary = "Recommend a next action",
+      description =
+          "Runs the agent; for a write it pauses and asks for approval. Simple questions are answered directly.",
+      requestBody =
+          @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              content =
+                  @io.swagger.v3.oas.annotations.media.Content(
+                      mediaType = "application/json",
+                      examples =
+                          @io.swagger.v3.oas.annotations.media.ExampleObject(
+                              value =
+                                  "{\"message\":\"Analyze Acme Fabrication and recommend a next action\"}"))))
   @PostMapping(path = "/recommend", consumes = MediaType.ALL_VALUE)
   Map<String, Object> recommend(
       @RequestBody(required = false) String raw,
@@ -93,6 +109,19 @@ class AgentController {
     }
   }
 
+  @Operation(
+      summary = "Confirm or decline the paused action",
+      description =
+          "Resumes the paused run with the person's answer; 404 if the company is not found.",
+      requestBody =
+          @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              content =
+                  @io.swagger.v3.oas.annotations.media.Content(
+                      mediaType = "application/json",
+                      examples =
+                          @io.swagger.v3.oas.annotations.media.ExampleObject(
+                              value =
+                                  "{\"companyName\":\"Acme Fabrication\",\"note\":\"Send the pricing breakdown to Acme\",\"confirm\":true}"))))
   @PostMapping(path = "/confirm", consumes = MediaType.ALL_VALUE)
   Map<String, Object> confirm(
       @RequestBody(required = false) String raw,

@@ -1,6 +1,8 @@
 package com.customercompass.api.llm.catalog;
 
 import com.customercompass.api.llm.catalog.ModelCatalog.Model;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Clock;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
  * cached five minutes), plus two paid examples shown disabled. If OpenRouter cannot be reached the
  * saved list from models.yaml is served and the response says {@code "source": "fallback"}.
  */
+@Tag(name = "Models", description = "The model catalog the chat screens choose from.")
 @RestController
 @RequestMapping("/api/v1/llm")
 public class LlmController {
@@ -39,6 +42,9 @@ public class LlmController {
     this.clock = clock;
   }
 
+  @Operation(
+      summary = "List models",
+      description = "The catalog of models, with which are free and which is the default.")
   @GetMapping("/models")
   public synchronized Map<String, Object> models() {
     if (cached != null && clock.millis() - cachedAt < CACHE_MILLIS) {
