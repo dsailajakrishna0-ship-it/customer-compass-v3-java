@@ -1,6 +1,6 @@
 package com.customercompass.api.kb;
 
-import com.customercompass.api.rag.RetrievedChunk;
+import com.customercompass.api.rag.retrieval.RetrievedChunk;
 
 /** A retrieved chunk and the knowledge base it came from. */
 public record KbChunk(String knowledgeBase, RetrievedChunk chunk) {

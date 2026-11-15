@@ -5,12 +5,16 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 import com.customercompass.api.agent.Agents.Recommendation;
 import com.customercompass.api.agent.Agents.Review;
+import com.customercompass.api.agent.control.AgentProperties;
+import com.customercompass.api.agent.control.ApprovalGate;
+import com.customercompass.api.agent.control.BudgetExceededException;
+import com.customercompass.api.agent.control.RunBudget;
 import com.customercompass.api.crm.CompanySummary.CompanyRef;
 import com.customercompass.api.crm.CrmFacts;
 import com.customercompass.api.guard.InputGuard;
 import com.customercompass.api.guard.PromptGuard;
 import com.customercompass.api.guard.SecurityAudit;
-import com.customercompass.api.mcp.CrmTools;
+import com.customercompass.api.mcp.server.CrmTools;
 import com.customercompass.api.observability.Tracing;
 import com.customercompass.api.rag.EmbeddingsUnavailableException;
 import java.time.Clock;
@@ -69,37 +73,37 @@ public class AgentWorkflow {
   }
 
   /** Process-local helpers for one run. Not part of the state: none of them can be saved. */
-  static final class RunContext {
-    final LlmCall llm;
-    final AgentProperties limits;
-    final RunBudget budget;
-    final Trace trace = new Trace();
+  public static final class RunContext {
+    public final LlmCall llm;
+    public final AgentProperties limits;
+    public final RunBudget budget;
+    public final Trace trace = new Trace();
 
     /** The tracing context of the run (null with tracing off), so its steps nest on any thread. */
-    final Object tracing = com.customercompass.api.observability.Tracing.current();
+    public final Object tracing = com.customercompass.api.observability.Tracing.current();
 
-    final List<Map<String, Object>> llmCalls = new ArrayList<>();
-    volatile boolean cancelled;
+    public final List<Map<String, Object>> llmCalls = new ArrayList<>();
+    public volatile boolean cancelled;
 
-    RunContext(LlmCall llm, AgentProperties limits, RunBudget budget) {
+    public RunContext(LlmCall llm, AgentProperties limits, RunBudget budget) {
       this.llm = llm;
       this.limits = limits;
       this.budget = budget;
     }
 
-    <T> T within(java.util.function.Supplier<T> work) {
+    public <T> T within(java.util.function.Supplier<T> work) {
       return com.customercompass.api.observability.Tracing.within(tracing, work);
     }
 
     /** Counts a step; a run that timed out in the meantime stops at its next step. */
-    void spend() {
+    public void spend() {
       if (cancelled) {
         throw new BudgetExceededException("run cancelled after its time limit");
       }
       budget.spend();
     }
 
-    void noteCall(String agent, com.customercompass.api.llm.GenerationResult result) {
+    public void noteCall(String agent, com.customercompass.api.llm.GenerationResult result) {
       var call = new LinkedHashMap<String, Object>();
       call.put("agent", agent);
       call.put("model", result.model());
@@ -160,7 +164,7 @@ public class AgentWorkflow {
   }
 
   /** What a finished run says about itself: its status and how many steps it took, no content. */
-  static Map<String, Object> runAttributes(Map<String, Object> body) {
+  public static Map<String, Object> runAttributes(Map<String, Object> body) {
     var attributes = new LinkedHashMap<String, Object>();
     attributes.put("agent.status", String.valueOf(body.get("status")));
     if (body.get("trace") instanceof List<?> steps) {
@@ -246,7 +250,7 @@ public class AgentWorkflow {
   // ------------------------------------------------------------------------------ nodes
 
   /** Find which CRM company the request is about. */
-  Map<String, Object> classify(FlowState state, RunContext ctx) {
+  public Map<String, Object> classify(FlowState state, RunContext ctx) {
     long started = System.nanoTime();
     String message = state.<String>value("message").orElseThrow();
     // The request is guarded first; the company is found in the cleaned text.
@@ -276,7 +280,7 @@ public class AgentWorkflow {
 
   /** Evidence steps 1 and 2: CRM facts and deals (a tool), then recent interactions (code). */
   @SuppressWarnings("unchecked")
-  Map<String, Object> evidence(FlowState state, RunContext ctx) {
+  public Map<String, Object> evidence(FlowState state, RunContext ctx) {
     Map<String, Object> company = state.<Map<String, Object>>value("company").orElseThrow();
     String name = (String) company.get("name");
     int companyId = (Integer) company.get("id");
@@ -364,7 +368,7 @@ public class AgentWorkflow {
   }
 
   /** The analyst proposes a next action (again, with the reviewer's reasons, on a revision). */
-  Map<String, Object> analyze(FlowState state, RunContext ctx) {
+  public Map<String, Object> analyze(FlowState state, RunContext ctx) {
     int revisions = state.<Integer>value("revisions").orElse(0);
     List<Map<String, Object>> evidence =
         state.<List<Map<String, Object>>>value("evidence").orElseThrow();
@@ -384,7 +388,7 @@ public class AgentWorkflow {
   }
 
   /** The reviewer checks the proposal. Code adds two rules no model can waive. */
-  Map<String, Object> review(FlowState state, RunContext ctx) {
+  public Map<String, Object> review(FlowState state, RunContext ctx) {
     Recommendation recommendation =
         asRecommendation(state.<Map<String, Object>>value("recommendation").orElseThrow());
     List<Map<String, Object>> evidence =
@@ -431,7 +435,7 @@ public class AgentWorkflow {
   }
 
   @SuppressWarnings("unchecked")
-  Map<String, Object> prepareRevision(FlowState state) {
+  public Map<String, Object> prepareRevision(FlowState state) {
     var reasons =
         (List<String>) state.<Map<String, Object>>value("review").orElseThrow().get("reasons");
     return Map.of(
@@ -439,7 +443,7 @@ public class AgentWorkflow {
   }
 
   /** The task drafter writes the follow-up note the user will be asked to confirm. */
-  Map<String, Object> draft(FlowState state, RunContext ctx) {
+  public Map<String, Object> draft(FlowState state, RunContext ctx) {
     Recommendation recommendation =
         asRecommendation(state.<Map<String, Object>>value("recommendation").orElseThrow());
     ctx.spend();
@@ -493,7 +497,7 @@ public class AgentWorkflow {
    * The response of a completed run. The gate step is last: nothing was written, the user is asked.
    */
   @SuppressWarnings("unchecked")
-  Map<String, Object> completed(FlowState state, RunContext ctx) {
+  public Map<String, Object> completed(FlowState state, RunContext ctx) {
     var company = state.<Map<String, Object>>value("company").orElseThrow();
     var recommendation = state.<Map<String, Object>>value("recommendation").orElseThrow();
     var review = state.<Map<String, Object>>value("review").orElseThrow();
@@ -541,7 +545,7 @@ public class AgentWorkflow {
   }
 
   /** route, status and trace first, then the extras in the order given. */
-  static Map<String, Object> response(String status, Trace trace, Object... extras) {
+  public static Map<String, Object> response(String status, Trace trace, Object... extras) {
     var body = new LinkedHashMap<String, Object>();
     body.put("route", "agent");
     body.put("status", status);
@@ -555,7 +559,7 @@ public class AgentWorkflow {
   // ------------------------------------------------------------------------------ helpers
 
   /** One audit event per match, as plain data so the run's state can be saved. */
-  static List<Map<String, Object>> eventsOf(PromptGuard.Finding finding, String location) {
+  public static List<Map<String, Object>> eventsOf(PromptGuard.Finding finding, String location) {
     var out = new ArrayList<Map<String, Object>>();
     for (int i = 0; i < finding.matchedPatterns().size(); i++) {
       var event = new LinkedHashMap<String, Object>();
@@ -571,7 +575,7 @@ public class AgentWorkflow {
   }
 
   /** Stored text (an interaction, a document) is scanned and cleaned before any agent reads it. */
-  static void addScanned(
+  public static void addScanned(
       List<Map<String, Object>> items,
       List<Map<String, Object>> events,
       String source,
@@ -594,7 +598,7 @@ public class AgentWorkflow {
    * The evidence as the agents read it: the "this is data" instruction, then the wrapped labelled
    * lines.
    */
-  static String evidenceText(List<Map<String, Object>> items) {
+  public static String evidenceText(List<Map<String, Object>> items) {
     return UNTRUSTED_CONTEXT_INSTRUCTION
         + "\n<untrusted_context>\n"
         + evidenceLabels(items)
@@ -639,7 +643,7 @@ public class AgentWorkflow {
     return value == null ? "None" : String.valueOf(value);
   }
 
-  static <T extends Throwable> T find(Throwable error, Class<T> type) {
+  public static <T extends Throwable> T find(Throwable error, Class<T> type) {
     for (Throwable cause = error; cause != null; cause = cause.getCause()) {
       if (type.isInstance(cause)) {
         return type.cast(cause);
@@ -652,9 +656,9 @@ public class AgentWorkflow {
    * The failure the caller should see: a model or embeddings problem as it is, anything else
    * wrapped.
    */
-  static RuntimeException unwrap(ExecutionException error) {
+  public static RuntimeException unwrap(ExecutionException error) {
     for (Throwable cause = error; cause != null; cause = cause.getCause()) {
-      if (cause instanceof com.customercompass.api.llm.LlmUnavailableException llm) {
+      if (cause instanceof com.customercompass.api.llm.gateway.LlmUnavailableException llm) {
         return llm;
       }
       if (cause instanceof EmbeddingsUnavailableException embeddings) {

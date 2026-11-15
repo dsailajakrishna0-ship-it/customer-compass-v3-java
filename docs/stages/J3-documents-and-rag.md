@@ -15,11 +15,11 @@ flowchart LR
 
 | Piece | File | Job | Python twin |
 | --- | --- | --- | --- |
-| Chunking | `rag/Chunker.java` | overlapping windows of characters | `rag/chunking.py` |
-| Reading | `rag/MarkdownParser.java` | front matter (title, type, company) and body | `rag/parse.py` |
+| Chunking | `rag/ingestion/Chunker.java` | overlapping windows of characters | `rag/chunking.py` |
+| Reading | `rag/reader/MarkdownParser.java` | front matter (title, type, company) and body | `rag/parse.py` |
 | Index | `rag/VectorIndex.java` | Gemini embeddings plus the Qdrant collection, built on first use | `rag/embeddings.py`, `rag/qdrant_store.py` |
-| Pipeline | `rag/DocumentIngestionService.java` | read, chunk, embed, store, record the run | `rag/ingest.py` |
-| Routes | `rag/DocumentController.java` | `POST /documents/ingest`, `GET /documents`, `GET /documents/ingestion-runs` | `routes/documents.py` |
+| Pipeline | `rag/ingestion/DocumentIngestionService.java` | read, chunk, embed, store, record the run | `rag/ingest.py` |
+| Routes | `rag/ingestion/DocumentController.java` | `POST /documents/ingest`, `GET /documents`, `GET /documents/ingestion-runs` | `routes/documents.py` |
 
 ### Concepts
 
@@ -59,11 +59,11 @@ flowchart LR
 
 | Piece | File | Job | Python twin |
 | --- | --- | --- | --- |
-| Dispatch | `rag/DocumentReader.java` | picks the reader, skips `.meta.yaml` sidecars | `parse_file`, `is_document` |
-| Sidecar | `rag/DocumentMetadata.java` | title, type, company for the non-Markdown formats | `read_sidecar`, `_check` |
-| PDF | `rag/PdfReader.java` | one segment per page with text | `parse_pdf_pages` |
-| Word | `rag/WordReader.java` | one segment of Markdown-like text | `parse_word` |
-| Excel | `rag/ExcelReader.java`, `rag/MarkdownTable.java` | one segment per sheet, the table laid out as Python lays it out | `parse_sheets` |
+| Dispatch | `rag/reader/DocumentReader.java` | picks the reader, skips `.meta.yaml` sidecars | `parse_file`, `is_document` |
+| Sidecar | `rag/reader/DocumentMetadata.java` | title, type, company for the non-Markdown formats | `read_sidecar`, `_check` |
+| PDF | `rag/reader/PdfReader.java` | one segment per page with text | `parse_pdf_pages` |
+| Word | `rag/reader/WordReader.java` | one segment of Markdown-like text | `parse_word` |
+| Excel | `rag/reader/ExcelReader.java`, `rag/reader/MarkdownTable.java` | one segment per sheet, the table laid out as Python lays it out | `parse_sheets` |
 
 ### Concepts
 
@@ -100,7 +100,7 @@ flowchart LR
 
 | Piece | File | Job | Python twin |
 | --- | --- | --- | --- |
-| Retrieval | `rag/Retriever.java` | search, the 0.60 floor, the index model check | `rag/retrieve.py` (dense mode) |
+| Retrieval | `rag/retrieval/Retriever.java` | search, the 0.60 floor, the index model check | `rag/retrieve.py` (dense mode) |
 | Context | `rag/RagContext.java` | numbered sources, the untrusted wrapper, the citation shape | `build_context`, `_citation` |
 | Route | `chat/RagChatController.java` | `POST /api/v1/chat/rag` | `rag_chat` in `routes/chat.py` |
 
@@ -142,7 +142,7 @@ flowchart LR
 | --- | --- | --- | --- |
 | Router | `chat/QueryRouter.java` | keywords and the named company | `chat/router.py` |
 | Facts | `crm/CrmFacts.java` | company list, summary with open deals and counts | `crm/queries.py` |
-| Scope | `rag/Retriever.java` | `company_id = X or 0` filter | `_company_filter` |
+| Scope | `rag/retrieval/Retriever.java` | `company_id = X or 0` filter | `_company_filter` |
 | Route | `chat/CrmChatController.java` | combine, prompt, respond | `crm_chat` in `routes/chat.py` |
 
 ### Concepts
@@ -180,9 +180,9 @@ flowchart LR
 
 | Piece | File | Job | Python twin |
 | --- | --- | --- | --- |
-| The call | `rag/Reranker.java` | request per provider, parse and sort the reply, never throw | `rag/rerank.py` |
-| Settings | `rag/RerankProperties.java` | provider, candidates, model, timeout, keys | `config.py` |
-| Where it plugs in | `rag/Retriever.java` | longer shortlist, then rerank | `rag/retrieve.py` (`_rerank`) |
+| The call | `rag/retrieval/Reranker.java` | request per provider, parse and sort the reply, never throw | `rag/rerank.py` |
+| Settings | `rag/retrieval/RerankProperties.java` | provider, candidates, model, timeout, keys | `config.py` |
+| Where it plugs in | `rag/retrieval/Retriever.java` | longer shortlist, then rerank | `rag/retrieve.py` (`_rerank`) |
 
 ### Concepts
 
@@ -212,10 +212,10 @@ flowchart TD
 
 | Piece | File | Job | Python twin |
 | --- | --- | --- | --- |
-| Keyword vectors | `rag/Sparse.java` | tokenize, hash, BM25 weights | `rag/sparse.py` |
-| Keyword collection | `rag/KeywordIndex.java`, `VectorIndex.recreate` | create with the IDF modifier, store, search, fetch | `rag/qdrant_store.py` |
-| Fusion and mode | `rag/Retriever.java` (`hybrid`, `rrfFuse`, `cosine`) | the two searches, merge, floor | `rag/retrieve.py` |
-| Settings | `rag/RetrievalProperties.java` | `RETRIEVAL_MODE`, `RRF_K` | `config.py` |
+| Keyword vectors | `rag/retrieval/Sparse.java` | tokenize, hash, BM25 weights | `rag/sparse.py` |
+| Keyword collection | `rag/retrieval/KeywordIndex.java`, `VectorIndex.recreate` | create with the IDF modifier, store, search, fetch | `rag/qdrant_store.py` |
+| Fusion and mode | `rag/retrieval/Retriever.java` (`hybrid`, `rrfFuse`, `cosine`) | the two searches, merge, floor | `rag/retrieve.py` |
+| Settings | `rag/retrieval/RetrievalProperties.java` | `RETRIEVAL_MODE`, `RRF_K` | `config.py` |
 
 ### Concepts
 

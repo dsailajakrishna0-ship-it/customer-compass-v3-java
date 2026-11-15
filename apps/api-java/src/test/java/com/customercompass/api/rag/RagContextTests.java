@@ -2,6 +2,7 @@ package com.customercompass.api.rag;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.customercompass.api.rag.retrieval.RetrievedChunk;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;

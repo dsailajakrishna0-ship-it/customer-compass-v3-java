@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.customercompass.api.rag.RagProperties;
 import com.customercompass.api.rag.RagTestSupport;
-import com.customercompass.api.rag.RetrievalProperties;
-import com.customercompass.api.rag.Retriever;
+import com.customercompass.api.rag.retrieval.RetrievalProperties;
+import com.customercompass.api.rag.retrieval.Retriever;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

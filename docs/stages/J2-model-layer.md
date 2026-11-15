@@ -21,11 +21,11 @@ flowchart LR
 
 | Piece | File | Job | Python twin |
 | --- | --- | --- | --- |
-| Catalogue | `llm/ModelCatalogLoader.java`, `models.yaml` | default model, fallback chain, saved dropdown list (same file) | `app/config.py`, `models.yaml` |
+| Catalogue | `llm/catalog/ModelCatalogLoader.java`, `models.yaml` | default model, fallback chain, saved dropdown list (same file) | `app/config.py`, `models.yaml` |
 | Settings | `llm/LlmProperties.java`, `application.yml` | timeout, retries, wait, cool-down, key | `app/config.py` |
-| Gateway | `llm/ModelGateway.java` | the whole policy, in one loop | `app/llm/gateway.py` |
-| One call | `llm/ModelClient.java` | the seam; the real client comes in J2.2 | LiteLLM `acompletion` |
-| Model list | `llm/LlmController.java` | `GET /api/v1/llm/models`: live list, five-minute cache, saved list on failure | `app/routes/llm.py` |
+| Gateway | `llm/gateway/ModelGateway.java` | the whole policy, in one loop | `app/llm/gateway.py` |
+| One call | `llm/gateway/ModelClient.java` | the seam; the real client comes in J2.2 | LiteLLM `acompletion` |
+| Model list | `llm/catalog/LlmController.java` | `GET /api/v1/llm/models`: live list, five-minute cache, saved list on failure | `app/routes/llm.py` |
 
 ### Concepts
 
@@ -62,8 +62,8 @@ flowchart LR
 
 | Piece | File | Job | Python twin |
 | --- | --- | --- | --- |
-| Client | `llm/SpringAiModelClient.java` | one Spring AI call, failures sorted into kinds | LiteLLM `acompletion` |
-| Wiring | `llm/LlmBeans.java` | the client bean (replaces the J2.1 placeholder) | n/a |
+| Client | `llm/gateway/SpringAiModelClient.java` | one Spring AI call, failures sorted into kinds | LiteLLM `acompletion` |
+| Wiring | `llm/gateway/LlmBeans.java` | the client bean (replaces the J2.1 placeholder) | n/a |
 | Route | `chat/ChatController.java` | `POST /api/v1/chat`: validate, call the gateway, add the usage footer | `general_chat` in `routes/chat.py` |
 | Validation | `chat/ChatRequestValidator.java` | 1 to 12 messages, role, 4,000 characters, FastAPI's 422 bodies | `ChatRequest` (Pydantic) |
 

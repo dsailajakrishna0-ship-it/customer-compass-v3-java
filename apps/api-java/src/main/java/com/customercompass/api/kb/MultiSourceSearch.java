@@ -1,11 +1,11 @@
 package com.customercompass.api.kb;
 
 import com.customercompass.api.llm.ChatMessage;
-import com.customercompass.api.llm.ModelGateway;
-import com.customercompass.api.rag.Reranker;
-import com.customercompass.api.rag.RetrievalProperties;
-import com.customercompass.api.rag.RetrievedChunk;
-import com.customercompass.api.rag.Retriever;
+import com.customercompass.api.llm.gateway.ModelGateway;
+import com.customercompass.api.rag.retrieval.Reranker;
+import com.customercompass.api.rag.retrieval.RetrievalProperties;
+import com.customercompass.api.rag.retrieval.RetrievedChunk;
+import com.customercompass.api.rag.retrieval.Retriever;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

@@ -23,7 +23,7 @@ flowchart TD
 | --- | --- | --- | --- |
 | Graph and nodes | `agent/AgentWorkflow.java` | the nodes, the edges, the limits, the response | `agent/workflow.py` |
 | Agents | `agent/Agents.java` | three prompts, three safe JSON parsers, the grounding check | `agent/agents.py` |
-| Limits | `agent/RunBudget.java`, `AgentProperties.java` | steps, time, revisions | `agent/policies.py` |
+| Limits | `agent/control/RunBudget.java`, `AgentProperties.java` | steps, time, revisions | `agent/policies.py` |
 | Routing | `agent/AgentIntent.java` | does a message need the agent at all | `needs_agent` |
 | Trace | `agent/Trace.java` | an ordered, inspectable record of every step | `agent/trace.py` |
 | Routes | `agent/AgentController.java`, `agent/AgentRequests.java` | the two endpoints, FastAPI-style 422s | `routes/agent.py` |
@@ -64,7 +64,7 @@ flowchart LR
 
 | Piece | File | Job | Python twin |
 | --- | --- | --- | --- |
-| The gate | `agent/ApprovalGate.java` | second graph, Postgres saver, pause, resume, derived thread id | the checkpointer in `agent/workflow.py` |
+| The gate | `agent/control/ApprovalGate.java` | second graph, Postgres saver, pause, resume, derived thread id | the checkpointer in `agent/workflow.py` |
 | Wiring | `agent/AgentController.java`, `AgentWorkflow.java` | `/recommend` pauses after a completed run; `/confirm` resumes | `routes/agent.py` |
 
 ### Concepts

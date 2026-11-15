@@ -1,11 +1,11 @@
 package com.customercompass.api.kb;
 
-import com.customercompass.api.rag.Chunker;
-import com.customercompass.api.rag.DocumentReader;
 import com.customercompass.api.rag.EmbeddingsUnavailableException;
-import com.customercompass.api.rag.ParsedDocument;
-import com.customercompass.api.rag.SegmentChunk;
 import com.customercompass.api.rag.VectorIndex;
+import com.customercompass.api.rag.ingestion.Chunker;
+import com.customercompass.api.rag.ingestion.SegmentChunk;
+import com.customercompass.api.rag.reader.DocumentReader;
+import com.customercompass.api.rag.reader.ParsedDocument;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

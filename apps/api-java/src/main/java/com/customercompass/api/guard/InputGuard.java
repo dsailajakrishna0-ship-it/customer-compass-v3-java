@@ -2,7 +2,7 @@ package com.customercompass.api.guard;
 
 import com.customercompass.api.llm.ChatMessage;
 import com.customercompass.api.llm.GenerationResult;
-import com.customercompass.api.llm.ModelGateway;
+import com.customercompass.api.llm.gateway.ModelGateway;
 import com.customercompass.api.observability.Tracing;
 import java.util.List;
 import org.slf4j.Logger;

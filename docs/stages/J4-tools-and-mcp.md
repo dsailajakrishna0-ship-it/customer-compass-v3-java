@@ -18,8 +18,8 @@ flowchart LR
 
 | Piece | File | Job | Python twin |
 | --- | --- | --- | --- |
-| Tools | `mcp/CrmTools.java` | the four tools, as `@McpTool` methods | `app/mcp/tools.py`, `server.py` |
-| Writes | `mcp/ToolLog.java` | audit rows and the one write (a task) | `_log_tool_call` |
+| Tools | `mcp/server/CrmTools.java` | the four tools, as `@McpTool` methods | `app/mcp/tools.py`, `server.py` |
+| Writes | `mcp/audit/ToolLog.java` | audit rows and the one write (a task) | `_log_tool_call` |
 | Company match | `crm/CompanySummary.CompanyRef.findMentioned` | "Acme" finds "Acme Fabrication" | `find_mentioned_company` |
 | Settings | `application.yml` (`spring.ai.mcp.server`) | the endpoint and the server name | `app/mcp/server.py` |
 | Contract | `contracts/mcp-tools.json`, `contracts/check_server.py` | the one description both editions follow | the same files |
@@ -70,8 +70,8 @@ sequenceDiagram
 | --- | --- | --- | --- |
 | Tool types | `llm/ToolDefinition.java`, `llm/ToolCall.java` | what is offered, what the model asked for | `ToolCall` in `llm/types.py` |
 | Messages | `llm/ChatMessage.java` | an assistant turn with tool calls, a tool result | the OpenAI message shapes |
-| Gateway | `llm/ModelGateway.java` | tools through the chain; a tool call is a valid answer; raw markup is a failed attempt | `generate(..., tools=)`, `_is_raw_tool_markup` |
-| Client | `llm/SpringAiModelClient.java` | send the definitions, read the calls, never run a tool | LiteLLM `acompletion` |
+| Gateway | `llm/gateway/ModelGateway.java` | tools through the chain; a tool call is a valid answer; raw markup is a failed attempt | `generate(..., tools=)`, `_is_raw_tool_markup` |
+| Client | `llm/gateway/SpringAiModelClient.java` | send the definitions, read the calls, never run a tool | LiteLLM `acompletion` |
 
 ### Concepts
 
@@ -115,12 +115,12 @@ flowchart TD
 | Piece | File | Job | Python twin |
 | --- | --- | --- | --- |
 | Route | `chat/ToolsChatController.java` | the loop, the limits, the response | `tools_chat` in `routes/chat.py` |
-| Run one call | `mcp/ToolCallRunner.java` | validate, set `confirm`, call, never throw | `_run_tool_call` |
-| Schemas | `mcp/ToolSchemas.java` | what the model is shown and may send | `app/mcp/schemas.py` |
-| Confirm | `mcp/ConfirmationRule.java` | the user's words decide | `looks_like_confirmation` |
-| Servers | `mcp/McpServers.java`, `mcp/McpController.java` | which server, `GET /mcp/servers` | `registry.py`, `routes/mcp.py` |
-| MCP client | `mcp/McpToolClient.java` | connect, list, call | `app/mcp/client.py` |
-| Audit | `mcp/ToolAuditController.java` | `GET /tool-audit-log` | `routes/tasks.py` |
+| Run one call | `mcp/client/ToolCallRunner.java` | validate, set `confirm`, call, never throw | `_run_tool_call` |
+| Schemas | `mcp/server/ToolSchemas.java` | what the model is shown and may send | `app/mcp/schemas.py` |
+| Confirm | `mcp/client/ConfirmationRule.java` | the user's words decide | `looks_like_confirmation` |
+| Servers | `mcp/client/McpServers.java`, `mcp/client/McpController.java` | which server, `GET /mcp/servers` | `registry.py`, `routes/mcp.py` |
+| MCP client | `mcp/client/McpToolClient.java` | connect, list, call | `app/mcp/client.py` |
+| Audit | `mcp/audit/ToolAuditController.java` | `GET /tool-audit-log` | `routes/tasks.py` |
 
 ### Concepts
 
