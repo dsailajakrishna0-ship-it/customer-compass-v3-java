@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- The Spring Boot parent is only used for its dependency versions (the same ones as apps/api-java);
+       no module here needs Spring unless its own name says so (withSpringAi). -->
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.2</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>com.customercompass.comparisons</groupId>
+  <artifactId>comparisons</artifactId>
+  <version>0.1.0</version>
+  <packaging>pom</packaging>
+  <name>comparisons</name>
+  <description>J8: the same module built several ways, one folder per approach. Separate from the application.</description>
+
+  <properties>
+    <java.version>21</java.version>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <!-- `exec:java` runs for every module of a reactor build, but only a backend has a main class:
+             skipped here, switched on again in the module that has one -->
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <modules>
+    <module>common</module>
+    <module>tool-calling/handWritten</module>
+  </modules>
+</project>

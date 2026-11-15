@@ -2,6 +2,7 @@ import { useChatSession } from "../../context/ChatSessionContext";
 import { useCloudModels } from "../../hooks/useCloudModels";
 import { useChat } from "../../hooks/useChat";
 import { useMcpServers } from "../../hooks/useMcpServers";
+import { useApproachStatus } from "../../hooks/useApproachStatus";
 import { MODE_COPY } from "../../context/ChatSessionContext";
 import { ChatModeSelector } from "./ChatModeSelector";
 import { MessageList } from "./MessageList";
@@ -17,9 +18,10 @@ type ChatPanelProps = {
 
 /** Composes the chat-mode controls, message list, and input into the full "Ask Compass" panel. */
 export function ChatPanel({ ingestStatus, isIngesting, onIngest }: ChatPanelProps) {
-  const { chatMode, switchChatMode, cloudModel, setCloudModel, mcpServer, setMcpServer, messages } = useChatSession();
+  const { chatMode, switchChatMode, cloudModel, setCloudModel, mcpServer, setMcpServer, approach, setApproach, messages } = useChatSession();
   const { cloudModels } = useCloudModels();
   const mcpServers = useMcpServers(chatMode === "tools");
+  const approachStatus = useApproachStatus(chatMode === "tools");
   const { question, setQuestion, isAsking, askQuestion } = useChat();
 
   // Default to the first free OpenRouter model once the catalog loads, unless
@@ -43,6 +45,9 @@ export function ChatPanel({ ingestStatus, isIngesting, onIngest }: ChatPanelProp
           mcpServers={mcpServers}
           mcpServer={mcpServer}
           onChangeMcpServer={setMcpServer}
+          approach={approach}
+          onChangeApproach={setApproach}
+          approachStatus={approachStatus}
           isIngesting={isIngesting}
           onIngest={onIngest}
         />

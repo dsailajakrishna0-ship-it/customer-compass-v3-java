@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { recommendForAccount, sendChat } from "../api/chat";
+import { approachBaseUrl, isMainApproach } from "../api/approaches";
 import { useChatSession } from "../context/ChatSessionContext";
 import type { ChatMessage } from "../types";
 
@@ -10,7 +11,7 @@ export function useChat(): {
   isAsking: boolean;
   askQuestion: (event: FormEvent<HTMLFormElement>) => void;
 } {
-  const { chatMode, cloudModel, mcpServer, messages, setMessages } = useChatSession();
+  const { chatMode, cloudModel, mcpServer, approach, messages, setMessages } = useChatSession();
   const [question, setQuestion] = useState("");
   const [isAsking, setIsAsking] = useState(false);
 
@@ -28,7 +29,9 @@ export function useChat(): {
     if (cloudModel) requestBody.model = cloudModel;
 
     // Stage 2.2: only tool-calling mode talks to an MCP server; empty means the server's default
-    if (chatMode === "tools" && mcpServer) requestBody.mcpServer = mcpServer;
+    // J8: a comparison backend has no MCP server choice; only the application itself takes one
+    const otherApproach = chatMode === "tools" && !isMainApproach(approach);
+    if (chatMode === "tools" && mcpServer && !otherApproach) requestBody.mcpServer = mcpServer;
 
     // Stage 10: agent mode runs the bounded workflow instead of a single chat call
     if (chatMode === "agent") {
@@ -49,7 +52,7 @@ export function useChat(): {
       return;
     }
 
-    sendChat(chatMode, requestBody)
+    sendChat(chatMode, requestBody, otherApproach ? approachBaseUrl(approach) : undefined)
       .then((body) => {
         setMessages((current) => [
           ...current,

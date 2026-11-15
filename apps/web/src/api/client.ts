@@ -12,8 +12,8 @@
 // API layer: every request goes to the FastAPI backend (api-py) on port 8001
 export const API_BASE_URL = "http://localhost:8001";
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, init);
+async function request<T>(path: string, init?: RequestInit, baseUrl: string = API_BASE_URL): Promise<T> {
+  const response = await fetch(`${baseUrl}${path}`, init);
   return (await response.json()) as T;
 }
 
@@ -21,10 +21,15 @@ export function apiGet<T>(path: string): Promise<T> {
   return request<T>(path);
 }
 
-export function apiPost<T>(path: string, data?: unknown): Promise<T> {
-  return request<T>(path, {
-    method: "POST",
-    headers: data === undefined ? undefined : { "Content-Type": "application/json" },
-    body: data === undefined ? undefined : JSON.stringify(data),
-  });
+/** `baseUrl` is only passed by the tool-calling approach chooser (J8); every other call uses the default address. */
+export function apiPost<T>(path: string, data?: unknown, baseUrl?: string): Promise<T> {
+  return request<T>(
+    path,
+    {
+      method: "POST",
+      headers: data === undefined ? undefined : { "Content-Type": "application/json" },
+      body: data === undefined ? undefined : JSON.stringify(data),
+    },
+    baseUrl,
+  );
 }

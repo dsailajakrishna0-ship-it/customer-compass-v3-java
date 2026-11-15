@@ -5,6 +5,7 @@ const STORAGE_KEYS = {
   chatMode: "customer-compass:chatMode",
   cloudModel: "customer-compass:cloudModel",
   mcpServer: "customer-compass:mcpServer",
+  approach: "customer-compass:approach",
 } as const;
 
 function readStored<T extends string>(key: string, fallback: T): T {
@@ -61,6 +62,9 @@ type ChatSessionValue = {
   /** tools mode: the chosen MCP server id; empty means the server's default */
   mcpServer: string;
   setMcpServer: (next: string) => void;
+  /** tools mode (J8): which build of the copilot answers; empty means the application itself */
+  approach: string;
+  setApproach: (next: string) => void;
   messages: ChatMessage[];
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
 };
@@ -77,6 +81,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
   const [chatMode, setChatMode] = useState<ChatMode>(() => readStored(STORAGE_KEYS.chatMode, "general"));
   const [cloudModel, setCloudModelState] = useState<string>(() => readStored(STORAGE_KEYS.cloudModel, ""));
   const [mcpServer, setMcpServerState] = useState<string>(() => readStored(STORAGE_KEYS.mcpServer, ""));
+  const [approach, setApproachState] = useState<string>(() => readStored(STORAGE_KEYS.approach, ""));
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
 
   function switchChatMode(nextMode: ChatMode) {
@@ -102,9 +107,14 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
     writeStored(STORAGE_KEYS.mcpServer, next);
   }
 
+  function setApproach(next: string) {
+    setApproachState(next);
+    writeStored(STORAGE_KEYS.approach, next);
+  }
+
   const value = useMemo<ChatSessionValue>(
-    () => ({ chatMode, switchChatMode, cloudModel, setCloudModel, mcpServer, setMcpServer, messages, setMessages }),
-    [chatMode, cloudModel, mcpServer, messages],
+    () => ({ chatMode, switchChatMode, cloudModel, setCloudModel, mcpServer, setMcpServer, approach, setApproach, messages, setMessages }),
+    [chatMode, cloudModel, mcpServer, approach, messages],
   );
 
   return <ChatSessionContext.Provider value={value}>{children}</ChatSessionContext.Provider>;

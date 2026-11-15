@@ -18,6 +18,18 @@ fmt:
 test:
     cd {{api}} && ./mvnw -B -ntp verify
 
+# J8: build and test the comparison modules under comparisons/ (no keys, no network; the live test is skipped unless CRM_BASE_URL is set)
+comparisons-test:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml verify
+
+# J8.1: the same, plus the test that reads the real CRM routes: needs `just db` and `just run` up (the application on port 8001)
+comparisons-test-live:
+    CRM_BASE_URL=http://localhost:8001 ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml verify
+
+# J8.1: start the handWritten tool-calling backend on port 18101 (needs OPENROUTER_API_KEY to answer; CRM_BASE_URL, LLM_BASE_URL, MODEL, PORT optional)
+comparisons-hand-written:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl tool-calling/handWritten -am compile exec:java
+
 # web app: lint, types, tests, production build (copied from the Python edition)
 test-web:
     npm run lint

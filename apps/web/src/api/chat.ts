@@ -21,8 +21,8 @@ const CHAT_ENDPOINTS: Record<Exclude<ChatMode, "agent">, string> = {
 };
 
 /** Routes to the right additive endpoint ("/", "/rag", "/crm") for the active chat mode. */
-export function sendChat(mode: Exclude<ChatMode, "agent">, body: SendChatRequest): Promise<ChatResponse> {
-  return apiPost<ChatResponse>(CHAT_ENDPOINTS[mode], body);
+export function sendChat(mode: Exclude<ChatMode, "agent">, body: SendChatRequest, baseUrl?: string): Promise<ChatResponse> {
+  return apiPost<ChatResponse>(CHAT_ENDPOINTS[mode], body, baseUrl);
 }
 
 /** Stage 10: runs the bounded agent workflow. Never creates a task. */
