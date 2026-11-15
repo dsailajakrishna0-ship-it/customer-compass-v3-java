@@ -14,7 +14,7 @@ Goal: the same product and API contract as the Python edition, built with the Ja
 | J5 | The agent: graph, human approval with a durable pause, `/agent/recommend` and `/agent/confirm` | Stage 3.2 | Merged (J5.1 graph, J5.2 durable pause) |
 | J6 | Guardrails and audit: prompt guard, output guard, audit logs | V2 base | Merged (J6.1 guard and audit log, J6.2 agent guard and LLM classifier) |
 | J7 | Evals and observability: J7.1 adversarial set on the guard, J7.2 retrieval golden set, J7.3 tracing, J7.4 guard comparison with the classifier, J7.5 tool and agent golden cases ([ADR 0025](adr/0025-evals-as-shared-files-and-replayable-baselines.md)) | Stage 5 | J7.1 to J7.3 merged (tracing: [ADR 0027](adr/0027-tracing-with-opentelemetry.md)); J7.4 (guard comparison harness, [ADR 0028](adr/0028-guard-comparison-over-a-dry-run-route.md); its recording needs approval) in review |
-| J8 | The same module built several ways, one named folder per approach (see "Stage J8" below): plain-Java core flow, then RAG, memory, structured output, tool calling and the agent graph, and later the other modules; with a way to choose the approach in the web app | none (Java only) | Planned |
+| J8 | Five modules each built several ways, one named folder per approach (see "Stage J8" below): tool calling, RAG ingestion, RAG retrieval, observability and the agent graph; the approach is chosen in the web app; the other modules are future scope | none (Java only) | Planned |
 | E3 | Java extension: a supervisor with specialist agents; see [java-extensions.md](java-extensions.md) | none (Java only) | E3.1 (the supervisor graph) merged; E3.2 (answer team, supervisor-written queries) merged; E3.3 (comparison) in review |
 | E1 | Java extension: multi-source RAG with routing (several knowledge bases the model searches across); see [java-extensions.md](java-extensions.md) | none (Java only) | E1.1 (second knowledge base) merged; E1.2 (routing strategies) merged; E1.3 (comparison) merged; E1.4 (per-corpus similarity floor) in review |
 
@@ -67,22 +67,21 @@ The idea: take one module of an AI application, build it **several ways** with t
 
 An approach is added to a module only where its library has that feature; a missing folder means the library has nothing there, and the write-up says so. Extra approaches (Embabel, Google ADK) can be added later as `withEmbabel` and `withAdk`. If their own documentation shows a fit, `withLangchain4jAgentic` and `withSpringAiWorkflows` can be added for the agent graph; this is not yet checked.
 
-### The modules (the stage list)
+### The modules
 
-| # | Module | Approaches to build | Today in the app |
+**First round (decided by the owner, to get to know the latest frameworks without overloading):**
+
+| Slice | Module | Approaches to build | Today in the app |
 | --- | --- | --- | --- |
-| 1 | Model layer (chat, fallback, embeddings) | `handWritten`, `withSpringAi`, `withLangchain4j` | Spring AI plus our own `ModelGateway` |
-| 2 | Prompts and structured output | `handWritten`, `withSpringAi`, `withLangchain4j` | Hand-written prompts and JSON parsing |
-| 3 | RAG: ingestion (read, split, embed) | `handWritten`, `withSpringAi`, `withLangchain4j` | Our readers and chunker, Spring AI embeddings |
-| 4 | RAG: retrieval (search, hybrid, reranker, floor) | `handWritten`, `withSpringAi`, `withLangchain4j` | Spring AI Qdrant store plus our own retrieval |
-| 5 | Memory (conversation history, long-term facts) | `handWritten`, `withSpringAi`, `withLangchain4j` | None: the client sends the messages each time. A new feature in each approach. |
-| 6 | Tool calling | `handWritten`, `withSpringAi`, `withLangchain4j` | Our own tool loop plus an MCP server |
-| 7 | Agent graph and approval pause | `handWritten`, `withLangGraph4j` (maybe `withLangchain4jAgentic`, `withSpringAiWorkflows`) | LangGraph4j |
-| 8 | Multi-agent supervisor | `handWritten`, `withLangGraph4j` | Our supervisor on LangGraph4j |
-| 9 | Guardrails | `handWritten` only unless a library offers it | Our rule guard and optional LLM classifier |
-| 10 | Evals and observability | shared, not compared | Our harnesses and OpenTelemetry |
+| J8.1 | Tool calling (the template: built first) | `handWritten`, `withSpringAi`, `withLangchain4j` | Our own tool loop plus an MCP server |
+| J8.2 | RAG ingestion (read, split, embed, store) | `handWritten`, `withSpringAi`, `withLangchain4j` | Our readers and chunker, Spring AI embeddings and store |
+| J8.3 | RAG retrieval (search, hybrid, reranker, similarity floor) | `handWritten`, `withSpringAi`, `withLangchain4j` | Spring AI Qdrant store plus our own retrieval |
+| J8.4 | Observability (traces, metrics, model and tool call records) | `handWritten`, `withSpringAi`, `withLangchain4j` | Our OpenTelemetry spans and optional Langfuse export (J7.3) |
+| J8.5 | The agent graph with the approval pause | `handWritten`, `withLangGraph4j` (maybe `withLangchain4jAgentic`, `withSpringAiWorkflows`) | LangGraph4j |
 
-Not in the first round: streaming and multimodal (both new features, planned after the comparison).
+Each approach exists only where its library has the feature. What each library offers for J8.4 and for the J8.5 maybes is not yet checked; it is read from the project's own documentation before the slice is built.
+
+**Future scope (not planned yet):** model layer, prompts and structured output, memory (a new feature: the app keeps no conversation memory today), multi-agent supervisor, guardrails, streaming and multimodal.
 
 ### Layout
 
@@ -90,26 +89,18 @@ Not in the first round: streaming and multimodal (both new features, planned aft
 comparisons/
   common/                      shared code every approach uses: the HTTP contract types, sample data loading,
                                small utilities, the evaluation questions (kept out of the approach folders)
-  01-model-layer/{handWritten, withSpringAi, withLangchain4j}
-  02-prompts-and-structured-output/{...}
-  03-rag-ingestion/{...}
-  04-rag-retrieval/{...}
-  05-memory/{...}
-  06-tool-calling/{...}
-  07-agent-graph/{handWritten, withLangGraph4j, ...}
-  08-supervisor/{handWritten, withLangGraph4j}
+  tool-calling/{handWritten, withSpringAi, withLangchain4j}
+  rag-ingestion/{handWritten, withSpringAi, withLangchain4j}
+  rag-retrieval/{handWritten, withSpringAi, withLangchain4j}
+  observability/{handWritten, withSpringAi, withLangchain4j}
+  agent-graph/{handWritten, withLangGraph4j, ...}
 ```
 
-Rules: every comparison module is separate from the main app and holds its own dependencies, so the app never gains a second AI framework. Each module gets a short write-up with lines of code, what the approach hides and what it lets you control (turn limits, a guard on every tool result, failure behaviour). Library versions are checked on each project's own page before a dependency is added. Any live recording needs the owner's approval. Order: 6 (tool calling) first as the template, then 4, 5 and 2, then 7, then the rest.
+Rules: every comparison module is separate from the main app and holds its own dependencies, so the app never gains a second AI framework. Each module gets a short write-up with lines of code, what the approach hides and what it lets you control (turn limits, a guard on every tool result, failure behaviour). Library versions are checked on each project's own page before a dependency is added. Any live recording needs the owner's approval. Folder names are fixed so every slice follows them.
 
-### Choosing an approach in the web app (an open decision)
+### Choosing an approach in the web app (decided: separate backends)
 
-Today the web app has no switch between the Python and Java editions: it calls one fixed address (`http://localhost:8001`), and you choose by starting one backend on that port. A real chooser in the UI is a new feature, with two ways to build it:
-
-- **A. Separate backends, the UI picks the address (recommended).** Each approach is a small backend that serves the same routes of the shared contract on its own port; the web app gets an "Approach" drop-down that switches the base address, and the contract tests run against each. No second framework enters the main app, and it matches how the two editions already work. Cost: every compared module needs a runnable backend, so each approach is a bigger piece of work.
-- **B. One app, one choice per request.** The main app contains every approach and a setting or header picks one. Simpler for the UI, but the app then depends on every framework, which is what the plan avoids.
-
-To be decided by the owner before the first comparison is built. Until then the comparisons are runnable tests and small programs only.
+Today the web app has no switch between the Python and Java editions: it calls one fixed address (`http://localhost:8001`), and you choose by starting one backend on that port. The owner chose **option A**: each approach is a small backend that serves the same routes of the shared contract on its own port; the web app gets an "Approach" drop-down that switches the base address, and the contract tests run against each backend. No second framework enters the main app. Consequence: each compared module needs a runnable backend, so each approach is a bigger piece of work than a code sample; the chooser itself (the drop-down and the list of backends) is built with the first slice, J8.1. The rejected option B (one app with a per-request setting) would have put every framework in the main app.
 
 ## Rules for this plan
 
