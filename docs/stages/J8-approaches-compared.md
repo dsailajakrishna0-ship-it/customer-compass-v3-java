@@ -10,7 +10,7 @@ A model cannot look at your CRM. **Tool calling** is the trick that lets it: you
 | --- | --- | --- |
 | A shop assistant who may phone the stockroom | **The model with tools**: it can ask for a company's facts | the two tools in `common/CrmTools.java` |
 | The phone call, written down by hand | **handWritten**: our own loop, plain Java | `tool-calling/handWritten/HandWrittenToolChat.java` |
-| The same call, through a switchboard that dials for you | **withSpringAi** (J8.1b), **withLangchain4j** (a later slice) | `tool-calling/withSpringAi`, `tool-calling/withLangchain4j` |
+| The same call, through a switchboard that dials for you | **withSpringAi** (J8.1b), **withLangchain4j** (J8.1c) | `tool-calling/withSpringAi`, `tool-calling/withLangchain4j` |
 | A switch on the counter that picks which assistant serves you | **The Approach buttons** in the web app | `apps/web/src/api/approaches.ts` |
 
 ## J8.1a: what is built
@@ -67,6 +67,29 @@ flowchart LR
 
 **Rule to remember.** *A framework gives you the loop and takes away the rules around it. Measure which rules you lost before you trust it with a customer's question.*
 
+## J8.1c: tool calling with LangChain4j
+
+The same backend, the same HTTP face, the same two tools, with LangChain4j doing the loop: `AiServices` over an `OpenAiChatModel`, the tools as `@Tool` methods, the earlier turns in a `MessageWindowChatMemory`. Version 1.23.0. The `@AiService` annotation belongs to the Spring Boot starter (beta only, needs a Spring application), so the framework-independent `AiServices.builder` is used. Decisions and the full tables: [ADR 0031](../adr/0031-tool-calling-with-langchain4j.md).
+
+**What LangChain4j gave, without a line of ours** (measured in `LangChain4jLibraryBehaviourTests`): the loop, the tool schemas from the annotations, parsing the arguments, a **round limit** (100 by default, which Spring AI has no equivalent of), the sum of tokens over the loop, and a reply without the OpenAI `id` is accepted.
+
+**What it did not give, and what that took:**
+
+| The rule | What LangChain4j does | In `withLangchain4j` |
+| --- | --- | --- |
+| At most 4 rounds, then a plain answer | Limit exists, but **throws** when passed | The tool method throws `RoundLimitReached`, the error handler rethrows it, and one more request asks for a plain answer with tools off |
+| Results are data, not instructions | No wrapper; a tool's error message goes through unwrapped | `Untrusted.wrap`, and `ErrorsAsData` for the error paths |
+| A tool that does not exist | Throws out of the whole question | `hallucinatedToolNameStrategy` |
+| Bad JSON arguments | Throws out of the whole question | `ErrorsAsData.arguments()`: one fixed sentence (the ready-made handler would send the parser's own message) |
+| Bad arguments otherwise | Missing runs with `null`; an extra is ignored; `5` becomes "5" | The missing one is refused inside the method; the other two cannot be (stated) |
+| 4 tools at most per reply | All run | The surplus gets an error result |
+
+**One difference you would not guess.** With earlier turns in memory, the model reads **user, assistant, system, user**: LangChain4j adds the system message **after** the history. The other two approaches send it first. Whether that changes real answers is not measured here.
+
+**Measured here:** the library's behaviour and ours against scripted stand-ins (`just comparisons-test`). **Not measured:** a real model, lines of code, speed, cost (J8.1d).
+
+**Rule to remember.** *Every framework has a limit that throws and a default that trusts. Read the defaults before the features.*
+
 ## Code tour
 
 | | Where | What |
@@ -75,9 +98,10 @@ flowchart LR
 | new | `comparisons/common/` | `Chat` (the shared types and the one interface an approach implements), `CrmClient` (the CRM over HTTP), `CrmTools` (the two tools, their schemas, validation), `ToolBackendServer` (the shared HTTP face) |
 | new | `comparisons/tool-calling/handWritten/` | `HandWrittenToolChat` (the loop), `HandWrittenMain` (starts it on port 18101) |
 | new (J8.1b) | `comparisons/tool-calling/withSpringAi/` | `SpringAiToolChat` (the `ChatClient` call and the manager's settings), `CrmToolMethods` (`@Tool` methods), `RoundLimitedToolCallingAdvisor`, `UntrustedResultConverter`, `ErrorsAsData`, `TurnState`, `WithSpringAiMain` (port 18102); tests `SpringAiLibraryBehaviourTests` (the library alone) and `SpringAiToolChatTests` |
+| new (J8.1c) | `comparisons/tool-calling/withLangchain4j/` | `LangChain4jToolChat` (the `AiServices` call), `CrmToolMethods` (`@Tool` methods), `ErrorsAsData`, `RoundLimitReached`, `Untrusted`, `TurnListener`, `TurnState` |
 | new | `apps/web/src/api/approaches.ts`, `components/chat/ApproachPicker.tsx`, `hooks/useApproachStatus.ts` | The list of approaches, the buttons, the health check |
 | changed | `apps/web/src/api/client.ts`, `chat.ts`, `hooks/useChat.ts`, `context/ChatSessionContext.tsx`, `ChatModeSelector.tsx`, `ChatPanel.tsx` | The tool-calling request can go to another address; the choice is remembered |
-| new | `justfile` | `comparisons-test`, `comparisons-test-live`, `comparisons-hand-written`, `comparisons-with-spring-ai` (J8.1b) |
+| new | `justfile` | `comparisons-test`, `comparisons-test-live`, `comparisons-hand-written`, `comparisons-with-spring-ai` (J8.1b), `comparisons-with-langchain4j` (J8.1c) |
 | new | `.github/workflows/ci.yml` | A step that builds and tests the comparison modules |
 
 ## Questions to try

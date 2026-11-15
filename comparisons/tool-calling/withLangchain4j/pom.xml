@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.customercompass.comparisons</groupId>
+    <artifactId>comparisons</artifactId>
+    <version>0.1.0</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>tool-calling-with-langchain4j</artifactId>
+  <name>tool-calling-with-langchain4j</name>
+  <description>Tool calling with LangChain4j: AiServices, @Tool methods and the library's tool loop (the core library only, no Spring Boot starter)</description>
+
+  <properties>
+    <!-- the newest stable (not beta) release on Maven Central on 2026-11-15; the Spring Boot starters exist only as 1.23.0-beta33 -->
+    <langchain4j.version>1.23.0</langchain4j.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>dev.langchain4j</groupId>
+        <artifactId>langchain4j-bom</artifactId>
+        <version>${langchain4j.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.customercompass.comparisons</groupId>
+      <artifactId>comparisons-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <!-- AiServices, @Tool, chat memory -->
+    <dependency>
+      <groupId>dev.langchain4j</groupId>
+      <artifactId>langchain4j</artifactId>
+    </dependency>
+    <!-- the OpenAI-compatible chat model (pointed at OpenRouter) and its default JDK http client -->
+    <dependency>
+      <groupId>dev.langchain4j</groupId>
+      <artifactId>langchain4j-open-ai</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>tools.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <configuration>
+          <skip>false</skip>
+          <mainClass>com.customercompass.comparisons.toolcalling.withlangchain4j.WithLangchain4jMain</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
