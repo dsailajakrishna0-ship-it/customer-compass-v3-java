@@ -14,7 +14,7 @@ Goal: the same product and API contract as the Python edition, built with the Ja
 | J5 | The agent: graph, human approval with a durable pause, `/agent/recommend` and `/agent/confirm` | Stage 3.2 | Merged (J5.1 graph, J5.2 durable pause) |
 | J6 | Guardrails and audit: prompt guard, output guard, audit logs | V2 base | Merged (J6.1 guard and audit log, J6.2 agent guard and LLM classifier) |
 | J7 | Evals and observability: J7.1 adversarial set on the guard, J7.2 retrieval golden set, J7.3 tracing, J7.4 guard comparison with the classifier, J7.5 tool and agent golden cases ([ADR 0025](adr/0025-evals-as-shared-files-and-replayable-baselines.md)) | Stage 5 | J7.1 to J7.3 merged (tracing: [ADR 0027](adr/0027-tracing-with-opentelemetry.md)); J7.4 (guard comparison harness, [ADR 0028](adr/0028-guard-comparison-over-a-dry-run-route.md); its recording needs approval) in review |
-| J8 | Five modules each built several ways, one named folder per approach (see "Stage J8" below): tool calling, RAG ingestion, RAG retrieval, observability and the agent graph; the approach is chosen in the web app; the other modules are future scope | none (Java only) | Planned |
+| J8 | Seven modules each built several ways, one named folder per approach (see "Stage J8" below): tool calling, RAG ingestion, RAG retrieval, observability, the agent graph, memory and the multi-agent supervisor; the approach is chosen in the web app; the other modules are future scope | none (Java only) | Planned |
 | E3 | Java extension: a supervisor with specialist agents; see [java-extensions.md](java-extensions.md) | none (Java only) | E3.1 (the supervisor graph) merged; E3.2 (answer team, supervisor-written queries) merged; E3.3 (comparison) in review |
 | E1 | Java extension: multi-source RAG with routing (several knowledge bases the model searches across); see [java-extensions.md](java-extensions.md) | none (Java only) | E1.1 (second knowledge base) merged; E1.2 (routing strategies) merged; E1.3 (comparison) merged; E1.4 (per-corpus similarity floor) in review |
 
@@ -78,10 +78,14 @@ An approach is added to a module only where its library has that feature; a miss
 | J8.3 | RAG retrieval (search, hybrid, reranker, similarity floor) | `handWritten`, `withSpringAi`, `withLangchain4j` | Spring AI Qdrant store plus our own retrieval |
 | J8.4 | Observability (traces, metrics, model and tool call records) | `handWritten`, `withSpringAi`, `withLangchain4j` | Our OpenTelemetry spans and optional Langfuse export (J7.3) |
 | J8.5 | The agent graph with the approval pause | `handWritten`, `withLangGraph4j` (maybe `withLangchain4jAgentic`, `withSpringAiWorkflows`) | LangGraph4j |
+| J8.6 | Memory (conversation history that the server keeps between requests; later long-term facts) | `handWritten`, `withSpringAi`, `withLangchain4j` | None: the client sends the messages each time. A new feature in every approach. |
+| J8.7 | Multi-agent supervisor (specialist agents chosen by a coordinator, rules in code) | `handWritten`, `withLangGraph4j` (maybe `withLangchain4jAgentic`) | Our supervisor on LangGraph4j (E3) |
 
-Each approach exists only where its library has the feature. What each library offers for J8.4 and for the J8.5 maybes is not yet checked; it is read from the project's own documentation before the slice is built.
+Each approach exists only where its library has the feature. What each library offers for J8.4, J8.6 and for the J8.5 and J8.7 maybes is not yet checked; it is read from the project's own documentation before the slice is built.
 
-**Future scope (not planned yet):** model layer, prompts and structured output, memory (a new feature: the app keeps no conversation memory today), multi-agent supervisor, guardrails, streaming and multimodal.
+**Memory is a new feature, not just a comparison.** The app keeps no conversation memory today (the client sends 1 to 12 messages per request), and the HTTP contract is shared with the Python edition, so a server-kept conversation needs a decision before J8.6 starts: either a Java-only optional field in the comparison backends (for example a conversation id), or a contract change made in the Python edition first. Nothing changes in the main app either way.
+
+**Future scope (not planned yet):** model layer, prompts and structured output, guardrails, long-term memory beyond conversation history, streaming and multimodal.
 
 ### Layout
 
@@ -94,6 +98,8 @@ comparisons/
   rag-retrieval/{handWritten, withSpringAi, withLangchain4j}
   observability/{handWritten, withSpringAi, withLangchain4j}
   agent-graph/{handWritten, withLangGraph4j, ...}
+  memory/{handWritten, withSpringAi, withLangchain4j}
+  supervisor/{handWritten, withLangGraph4j, ...}
 ```
 
 Rules: every comparison module is separate from the main app and holds its own dependencies, so the app never gains a second AI framework. Each module gets a short write-up with lines of code, what the approach hides and what it lets you control (turn limits, a guard on every tool result, failure behaviour). Library versions are checked on each project's own page before a dependency is added. Any live recording needs the owner's approval. Folder names are fixed so every slice follows them.
