@@ -19,6 +19,16 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 5 | `curl -s localhost:8001/v3/api-docs` | The same description as JSON (the Python edition's `/docs` is the counterpart) | A machine-readable contract |
 | 6 | Start with `OPENAPI_ENABLED=false` | Both addresses answer 404 | The switch |
 
+## J8.2a: RAG ingestion by hand (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; the new tests are in `rag-ingestion/handWritten` (chunker, reader, embedder, pipeline) and `IngestBackendServerTests` in `common`; no keys, no network | Every rule runs against fake Gemini and Qdrant servers |
+| 2 | Read `HandWrittenIngestTests` | Tests for the order of calls (delete, create, add), the payload of a point, a failed embedding leaving Qdrant untouched | The rules around the pipeline |
+| 3 | `just qdrant`, then `GOOGLE_API_KEY=... just comparisons-ingest-hand-written`, then `curl -s localhost:18111/health` | `{"status":"ok","approach":"handWritten"}` | The backend is running (a live run uses embedding quota: see step 4) |
+| 4 | `curl -s -X POST localhost:18111/api/v1/ingest -H 'Content-Type: application/json' -d '{"limit":2}'` | `status: completed` with the counts, `collection: compare_handwritten`; without a key HTTP 503 "GOOGLE_API_KEY is not set." About one embedding request per 100 chunks | A real run, kept small by `limit` |
+| 5 | `curl -s localhost:26333/collections/compare_handwritten` | The collection exists with the points of the run | The result is in Qdrant, in a collection the application never reads |
+
 ## J8.1c: tool calling with LangChain4j (Java extension)
 
 | # | Do | Expect | What it shows |

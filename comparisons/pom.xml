@@ -42,5 +42,6 @@
     <module>tool-calling/handWritten</module>
     <module>tool-calling/withSpringAi</module>
     <module>tool-calling/withLangchain4j</module>
+    <module>rag-ingestion/handWritten</module>
   </modules>
 </project>
