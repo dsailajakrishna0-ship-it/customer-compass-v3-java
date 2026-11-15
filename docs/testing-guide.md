@@ -12,7 +12,7 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 | # | Do | Expect | What it shows |
 | --- | --- | --- | --- |
-| 1 | `just verify` (or `cd apps/api-java && ./mvnw verify`) | `BUILD SUCCESS`; 368 tests, 5 new in `OpenApiTests` | Every one of the 23 routes has a summary and a tag, the body routes show an example, Swagger UI is served |
+| 1 | `just test` | `BUILD SUCCESS`; 368 tests, 5 new in `OpenApiTests` | Every one of the 23 routes has a summary and a tag, the body routes show an example, Swagger UI is served |
 | 2 | `just db`, `just run`, then open `http://localhost:8001/swagger-ui.html` | A page titled "Customer Compass API (Java edition)" with the routes grouped by tag | The API description, generated from the controllers |
 | 3 | In Swagger UI open **Health**, **Try it out**, **Execute** | HTTP 200 and `{"status":"ok"}` | "Try it out" calls the running app |
 | 4 | Open **Chat**, the first POST, look at the request body | An example with `messages` that you can edit | The example is written by hand in the controller |
