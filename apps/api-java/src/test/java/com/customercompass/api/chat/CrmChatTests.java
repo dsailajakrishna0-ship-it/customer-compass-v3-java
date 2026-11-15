@@ -4,11 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.customercompass.api.llm.ChatMessage;
 import com.customercompass.api.llm.Completion;
-import com.customercompass.api.llm.ModelClient;
-import com.customercompass.api.rag.DocumentIngestionService;
+import com.customercompass.api.llm.gateway.ModelClient;
 import com.customercompass.api.rag.RagProperties;
 import com.customercompass.api.rag.RagTestSupport;
 import com.customercompass.api.rag.VectorIndex;
+import com.customercompass.api.rag.ingestion.DocumentIngestionService;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;

@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.customercompass.api.llm.ChatMessage;
 import com.customercompass.api.llm.Completion;
-import com.customercompass.api.llm.ModelClient;
+import com.customercompass.api.llm.gateway.ModelClient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

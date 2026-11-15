@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.customercompass.api.agent.AgentTestSupport.FakeRetriever;
 import com.customercompass.api.agent.AgentTestSupport.RoleModel;
 import com.customercompass.api.guard.PromptGuard;
-import com.customercompass.api.rag.Retriever;
+import com.customercompass.api.rag.retrieval.Retriever;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;

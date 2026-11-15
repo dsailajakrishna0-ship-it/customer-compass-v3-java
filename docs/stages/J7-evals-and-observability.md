@@ -117,9 +117,9 @@ flowchart TD
 | new | `observability/Tracing.java` | The only class that knows OpenTelemetry: `span`, `requestSpan`, `finishedSpan`, `current`/`within`, attribute cleaning, never raises |
 | new | `observability/TracingProperties.java`, `TracingLifecycle.java`, `OtlpExporters.java` | The settings, start and stop, and the exporter for Langfuse's endpoint |
 | change | `web/RequestIdFilter.java` | The request span (not `/health`) with the request id as trace id |
-| change | `llm/ModelGateway.java` | An `llm.generate` span per call |
-| change | `rag/Retriever.java` | A `retrieval` span per search |
-| change | `mcp/ToolCallRunner.java` | A `tool.<name>` span per tool call |
+| change | `llm/gateway/ModelGateway.java` | An `llm.generate` span per call |
+| change | `rag/retrieval/Retriever.java` | A `retrieval` span per search |
+| change | `mcp/client/ToolCallRunner.java` | A `tool.<name>` span per tool call |
 | change | `guard/InputGuard.java`, `ChatGuard.java` | `guard.input` and `guard.output` spans |
 | change | `agent/Trace.java`, `AgentWorkflow.java`, `SupervisorWorkflow.java`, `ApprovalGate.java` | Every recorded step is also a span; `agent.run` and `agent.resume`; the context travels to the graph's threads |
 | new | tests: `TracingTests`, `OtlpExportTests`, `TracingLifecycleTests`, `GatewayTracingTests`, `GuardTracingTests`, `AgentTracingTests`, one in `HybridRetrievalTests` | In-memory exporter, a localhost receiver, no key, no network |

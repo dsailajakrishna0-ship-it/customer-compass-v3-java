@@ -23,9 +23,9 @@ flowchart TD
 
 | Piece | File | Job |
 | --- | --- | --- |
-| The graph, the rules, the specialists | `agent/SupervisorWorkflow.java` | supervisor node, allowed lists, the five specialists |
-| The route | `agent/SupervisorController.java` | `POST /agent/supervise`, same request and errors as `/agent/recommend` |
-| The settings | `agent/SupervisorProperties.java` | `supervisor.max-turns` |
+| The graph, the rules, the specialists | `agent/supervisor/SupervisorWorkflow.java` | supervisor node, allowed lists, the five specialists |
+| The route | `agent/supervisor/SupervisorController.java` | `POST /agent/supervise`, same request and errors as `/agent/recommend` |
+| The settings | `agent/supervisor/SupervisorProperties.java` | `supervisor.max-turns` |
 | Reused | `agent/AgentWorkflow.java` nodes, `Agents`, `ApprovalGate` | the specialists' work, the guard, the pause |
 
 ### What the supervisor may do

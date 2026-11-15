@@ -4,11 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.customercompass.api.llm.ChatMessage;
 import com.customercompass.api.llm.Completion;
-import com.customercompass.api.llm.ModelClient;
 import com.customercompass.api.llm.ToolCall;
 import com.customercompass.api.llm.ToolDefinition;
-import com.customercompass.api.rag.RetrievedChunk;
-import com.customercompass.api.rag.Retriever;
+import com.customercompass.api.llm.gateway.ModelClient;
+import com.customercompass.api.rag.retrieval.RetrievedChunk;
+import com.customercompass.api.rag.retrieval.Retriever;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -456,15 +456,20 @@ class ToolsChatTests {
 
   @Test
   void theConfirmationRuleIsTheUsersWordsNotTheModels() {
-    assertThat(com.customercompass.api.mcp.ConfirmationRule.looksLikeConfirmation("Yes, go ahead"))
-        .isTrue();
-    assertThat(com.customercompass.api.mcp.ConfirmationRule.looksLikeConfirmation("  PROCEED  "))
+    assertThat(
+            com.customercompass.api.mcp.client.ConfirmationRule.looksLikeConfirmation(
+                "Yes, go ahead"))
         .isTrue();
     assertThat(
-            com.customercompass.api.mcp.ConfirmationRule.looksLikeConfirmation(
+            com.customercompass.api.mcp.client.ConfirmationRule.looksLikeConfirmation(
+                "  PROCEED  "))
+        .isTrue();
+    assertThat(
+            com.customercompass.api.mcp.client.ConfirmationRule.looksLikeConfirmation(
                 "Create a task for Acme"))
         .isFalse();
-    assertThat(com.customercompass.api.mcp.ConfirmationRule.looksLikeConfirmation("no thanks"))
+    assertThat(
+            com.customercompass.api.mcp.client.ConfirmationRule.looksLikeConfirmation("no thanks"))
         .isFalse();
   }
 }

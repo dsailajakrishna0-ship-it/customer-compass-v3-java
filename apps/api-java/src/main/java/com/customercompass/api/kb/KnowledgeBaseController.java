@@ -2,9 +2,9 @@ package com.customercompass.api.kb;
 
 import com.customercompass.api.rag.EmbeddingsUnavailableException;
 import com.customercompass.api.rag.RagContext;
-import com.customercompass.api.rag.RetrievedChunk;
-import com.customercompass.api.rag.Retriever;
 import com.customercompass.api.rag.VectorIndex;
+import com.customercompass.api.rag.retrieval.RetrievedChunk;
+import com.customercompass.api.rag.retrieval.Retriever;
 import com.customercompass.api.web.ApiException;
 import com.customercompass.api.web.RequestValidationException;
 import com.customercompass.api.web.ValidationProblems;

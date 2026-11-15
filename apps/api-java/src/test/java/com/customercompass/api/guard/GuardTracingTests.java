@@ -3,11 +3,11 @@ package com.customercompass.api.guard;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.customercompass.api.llm.LlmProperties;
-import com.customercompass.api.llm.ModelCatalog;
-import com.customercompass.api.llm.ModelGateway;
-import com.customercompass.api.llm.Sleeper;
 import com.customercompass.api.llm.ToolCall;
-import com.customercompass.api.mcp.ToolCallRunner;
+import com.customercompass.api.llm.catalog.ModelCatalog;
+import com.customercompass.api.llm.gateway.ModelGateway;
+import com.customercompass.api.llm.gateway.Sleeper;
+import com.customercompass.api.mcp.client.ToolCallRunner;
 import com.customercompass.api.observability.Tracing;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter;

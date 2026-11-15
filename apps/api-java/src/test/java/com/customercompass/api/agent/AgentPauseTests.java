@@ -4,8 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.customercompass.api.agent.AgentTestSupport.FakeRetriever;
 import com.customercompass.api.agent.AgentTestSupport.RoleModel;
-import com.customercompass.api.mcp.CrmTools;
-import com.customercompass.api.rag.Retriever;
+import com.customercompass.api.agent.control.ApprovalGate;
+import com.customercompass.api.mcp.server.CrmTools;
+import com.customercompass.api.rag.retrieval.Retriever;
 import java.util.Map;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;

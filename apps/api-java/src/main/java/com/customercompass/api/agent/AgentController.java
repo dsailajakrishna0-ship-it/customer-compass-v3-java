@@ -1,10 +1,11 @@
 package com.customercompass.api.agent;
 
+import com.customercompass.api.agent.control.ApprovalGate;
 import com.customercompass.api.guard.PromptGuard;
 import com.customercompass.api.guard.SecurityAudit;
-import com.customercompass.api.llm.LlmUnavailableException;
-import com.customercompass.api.llm.ModelGateway;
-import com.customercompass.api.mcp.CrmTools;
+import com.customercompass.api.llm.gateway.LlmUnavailableException;
+import com.customercompass.api.llm.gateway.ModelGateway;
+import com.customercompass.api.mcp.server.CrmTools;
 import com.customercompass.api.rag.EmbeddingsUnavailableException;
 import com.customercompass.api.rag.VectorIndex;
 import com.customercompass.api.web.ApiException;

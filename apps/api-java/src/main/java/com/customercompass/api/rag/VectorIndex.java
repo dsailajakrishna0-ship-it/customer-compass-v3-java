@@ -1,5 +1,6 @@
 package com.customercompass.api.rag;
 
+import com.customercompass.api.rag.retrieval.KeywordIndex;
 import io.qdrant.client.ConditionFactory;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
@@ -30,7 +31,7 @@ public class VectorIndex {
   private volatile VectorStore store;
 
   @org.springframework.beans.factory.annotation.Autowired
-  VectorIndex(RagProperties properties) {
+  public VectorIndex(RagProperties properties) {
     this(properties, null, null);
   }
 

@@ -2,15 +2,15 @@ package com.customercompass.api.kb;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.customercompass.api.rag.DocumentIngestionService;
-import com.customercompass.api.rag.KeywordIndex;
 import com.customercompass.api.rag.RagProperties;
 import com.customercompass.api.rag.RagTestSupport;
-import com.customercompass.api.rag.RerankProperties;
-import com.customercompass.api.rag.Reranker;
-import com.customercompass.api.rag.RetrievalProperties;
-import com.customercompass.api.rag.Retriever;
 import com.customercompass.api.rag.VectorIndex;
+import com.customercompass.api.rag.ingestion.DocumentIngestionService;
+import com.customercompass.api.rag.retrieval.KeywordIndex;
+import com.customercompass.api.rag.retrieval.RerankProperties;
+import com.customercompass.api.rag.retrieval.Reranker;
+import com.customercompass.api.rag.retrieval.RetrievalProperties;
+import com.customercompass.api.rag.retrieval.Retriever;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;

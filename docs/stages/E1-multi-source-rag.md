@@ -125,8 +125,8 @@ flowchart LR
 
 | Piece | File | Job |
 | --- | --- | --- |
-| The floor | `rag/Retriever.java` (`floor`, `retrieve(..., minSimilarity)`) | one floor per retriever; the global one when none is set |
-| Settings | `rag/RetrievalProperties.java`, `kb/KnowledgeBaseProperties.java`, `application.yml` | `retrieval.min-similarity`, `knowledge-bases.extra[].min-similarity` |
+| The floor | `rag/retrieval/Retriever.java` (`floor`, `retrieve(..., minSimilarity)`) | one floor per retriever; the global one when none is set |
+| Settings | `rag/retrieval/RetrievalProperties.java`, `kb/KnowledgeBaseProperties.java`, `application.yml` | `retrieval.min-similarity`, `knowledge-bases.extra[].min-similarity` |
 | Registry | `kb/KnowledgeBases.java` | gives each knowledge base's retriever its floor; refuses a value outside 0 to 1 |
 | Routes | `kb/KnowledgeBaseController.java` | `similarityFloor` in the list and the search; `minSimilarity` override for calibration |
 | Calibration | `evals/knowledge-bases/calibrate_floor.py`, `calibration.json`, `heldout.json`, `calibration-heldout.json` | record the scores, show the gap, check on new questions |

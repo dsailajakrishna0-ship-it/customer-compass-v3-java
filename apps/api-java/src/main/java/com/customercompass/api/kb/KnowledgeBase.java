@@ -1,8 +1,8 @@
 package com.customercompass.api.kb;
 
-import com.customercompass.api.rag.KeywordIndex;
-import com.customercompass.api.rag.Retriever;
 import com.customercompass.api.rag.VectorIndex;
+import com.customercompass.api.rag.retrieval.KeywordIndex;
+import com.customercompass.api.rag.retrieval.Retriever;
 
 /**
  * One searchable corpus: its name, what it holds, and the index and retriever that serve it. The

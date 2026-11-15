@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.customercompass.api.agent.AgentTestSupport.FakeRetriever;
 import com.customercompass.api.agent.AgentTestSupport.RoleModel;
 import com.customercompass.api.observability.Tracing;
-import com.customercompass.api.rag.Retriever;
+import com.customercompass.api.rag.retrieval.Retriever;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter;
 import io.opentelemetry.sdk.trace.data.SpanData;

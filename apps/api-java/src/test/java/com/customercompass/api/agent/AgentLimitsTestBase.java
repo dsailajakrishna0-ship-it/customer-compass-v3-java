@@ -2,7 +2,7 @@ package com.customercompass.api.agent;
 
 import com.customercompass.api.agent.AgentTestSupport.FakeRetriever;
 import com.customercompass.api.agent.AgentTestSupport.RoleModel;
-import com.customercompass.api.rag.Retriever;
+import com.customercompass.api.rag.retrieval.Retriever;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,18 +29,18 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(AgentLimitsTestBase.Fakes.class)
-abstract class AgentLimitsTestBase {
+public abstract class AgentLimitsTestBase {
 
   @Container @ServiceConnection
-  static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17.11-alpine");
+  public static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17.11-alpine");
 
   @DynamicPropertySource
-  static void settings(DynamicPropertyRegistry registry) {
+  public static void settings(DynamicPropertyRegistry registry) {
     registry.add("llm.openrouter-api-key", () -> "test-key-not-real");
   }
 
   @TestConfiguration
-  static class Fakes {
+  public static class Fakes {
     @Bean
     @Primary
     RoleModel roleModel() {
@@ -54,11 +54,11 @@ abstract class AgentLimitsTestBase {
     }
   }
 
-  static final String ACME = "Analyze Acme Fabrication and recommend a next action";
+  public static final String ACME = "Analyze Acme Fabrication and recommend a next action";
 
-  @LocalServerPort int port;
-  @Autowired JdbcClient jdbc;
-  @Autowired RoleModel model;
+  @LocalServerPort public int port;
+  @Autowired public JdbcClient jdbc;
+  @Autowired public RoleModel model;
 
   @BeforeEach
   void fresh() {
@@ -66,7 +66,7 @@ abstract class AgentLimitsTestBase {
   }
 
   @SuppressWarnings("unchecked")
-  Map<String, Object> recommend(String message) {
+  public Map<String, Object> recommend(String message) {
     return RestClient.builder()
         .baseUrl("http://localhost:" + port)
         .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {})
@@ -79,7 +79,7 @@ abstract class AgentLimitsTestBase {
         .body(Map.class);
   }
 
-  long tasks() {
+  public long tasks() {
     return jdbc.sql("SELECT count(*) FROM tasks").query(Long.class).single();
   }
 }
