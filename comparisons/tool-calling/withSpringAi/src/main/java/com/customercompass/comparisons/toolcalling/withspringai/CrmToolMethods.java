@@ -1,0 +1,72 @@
+package com.customercompass.comparisons.toolcalling.withspringai;
+
+import com.customercompass.comparisons.common.Chat;
+import com.customercompass.comparisons.common.CrmTools;
+import java.util.Map;
+import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.annotation.ToolParam;
+import tools.jackson.databind.json.JsonMapper;
+
+/**
+ * The two CRM tools as Spring AI sees them: ordinary Java methods with {@code @Tool}. Spring AI
+ * reads the annotations and the parameter list to build the JSON Schema it shows the model, and
+ * it parses the model's arguments into the parameters. The work is still done by the shared
+ * {@link CrmTools}; this class only adapts it, and keeps what one question used in {@link
+ * TurnState}.
+ *
+ * <p>The descriptions are literals because an annotation value must be a constant; a test checks
+ * that they match {@link CrmTools#specs()}, the text the other approaches send.
+ */
+public final class CrmToolMethods {
+
+  /** The most tools one model reply may call; the calls after that get an error as their result. */
+  static final int MAX_CALLS_PER_REPLY = 4;
+
+  private static final JsonMapper JSON = JsonMapper.builder().build();
+
+  private final CrmTools tools;
+  private final TurnState state;
+
+  CrmToolMethods(CrmTools tools, TurnState state) {
+    this.tools = tools;
+    this.state = state;
+  }
+
+  @Tool(
+      name = "get_company_summary",
+      description =
+          "Get verified CRM facts for a company: industry, relationship status, open deals, "
+              + "and won/lost deal counts.",
+      resultConverter = UntrustedResultConverter.class)
+  public String getCompanySummary(
+      @ToolParam(description = "The company's name, as the user wrote it.") String company_name) {
+    return run("get_company_summary", company_name);
+  }
+
+  @Tool(
+      name = "get_open_deals",
+      description = "Get only the open deals for a company (name, amount, status, expected close date).",
+      resultConverter = UntrustedResultConverter.class)
+  public String getOpenDeals(
+      @ToolParam(description = "The company's name, as the user wrote it.") String company_name) {
+    return run("get_open_deals", company_name);
+  }
+
+  private String run(String tool, String companyName) {
+    if (state.countCall() > MAX_CALLS_PER_REPLY) {
+      return error("Too many tool calls in one reply: at most " + MAX_CALLS_PER_REPLY + " are run.");
+    }
+    Map<String, Object> clean;
+    try {
+      clean = CrmTools.validate(tool, JSON.createObjectNode().put("company_name", companyName));
+    } catch (IllegalArgumentException e) {
+      return error(e.getMessage());
+    }
+    state.used(new Chat.ToolUse(tool, clean));
+    return tools.call(tool, clean);
+  }
+
+  private static String error(String message) {
+    return JSON.writeValueAsString(Map.of("status", "error", "message", message));
+  }
+}

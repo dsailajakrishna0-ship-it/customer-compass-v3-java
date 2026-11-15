@@ -8,7 +8,7 @@ comparisons/
   common/                       shared by every approach: the HTTP face, the CRM tools, the CRM client
   tool-calling/
     handWritten/                J8.1a: no AI framework, our own loop (port 18101)
-    withSpringAi/               J8.1b (not built yet): Spring AI @Tool and ChatClient (port 18102)
+    withSpringAi/               J8.1b: Spring AI @Tool and ChatClient (port 18102)
     withLangchain4j/            J8.1c (not built yet): LangChain4j @Tool and @AiService (port 18103)
 ```
 
@@ -19,5 +19,6 @@ Every backend serves the same route as the application's tool-calling chat, `POS
 | `just comparisons-test` | Builds and tests every module; no keys, no network |
 | `just comparisons-test-live` | The same, plus a test that reads the real CRM routes (needs `just db` and `just run`) |
 | `just comparisons-hand-written` | Starts the handWritten backend on port 18101 (needs `OPENROUTER_API_KEY` to answer) |
+| `just comparisons-with-spring-ai` | Starts the withSpringAi backend on port 18102 (same settings) |
 
 Read [`docs/stages/J8-approaches-compared.md`](../docs/stages/J8-approaches-compared.md) for what is compared and how to try it.

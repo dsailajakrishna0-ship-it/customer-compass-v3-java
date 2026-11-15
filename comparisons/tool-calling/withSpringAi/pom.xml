@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.customercompass.comparisons</groupId>
+    <artifactId>comparisons</artifactId>
+    <version>0.1.0</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>tool-calling-with-spring-ai</artifactId>
+  <name>tool-calling-with-spring-ai</name>
+  <description>Tool calling with Spring AI: ChatClient, @Tool methods and the ToolCallingAdvisor loop (the library classes only, no Spring Boot application)</description>
+
+  <properties>
+    <!-- the same Spring AI line as apps/api-java (its reference documentation is the 2.0.2 one) -->
+    <spring-ai.version>2.0.2</spring-ai.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-bom</artifactId>
+        <version>${spring-ai.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.customercompass.comparisons</groupId>
+      <artifactId>comparisons-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <!-- the client module only, as in the application: the starter's auto-configuration demands a key at start-up -->
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-openai</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-client-chat</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>tools.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <configuration>
+          <skip>false</skip>
+          <mainClass>com.customercompass.comparisons.toolcalling.withspringai.WithSpringAiMain</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
