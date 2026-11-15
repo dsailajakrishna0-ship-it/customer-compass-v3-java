@@ -34,6 +34,10 @@ comparisons-hand-written:
 comparisons-with-spring-ai:
     ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl tool-calling/withSpringAi -am compile exec:java
 
+# J8.1c: the withLangchain4j backend on port 18103
+comparisons-with-langchain4j:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl tool-calling/withLangchain4j -am compile exec:java
+
 # web app: lint, types, tests, production build (copied from the Python edition)
 test-web:
     npm run lint

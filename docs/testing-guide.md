@@ -8,6 +8,16 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## J8.1c: tool calling with LangChain4j (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; 96 tests, 1 skipped (the live one): 56 from before, 40 new for `withLangchain4j` | LangChain4j's own behaviour (`LangChain4jLibraryBehaviourTests`, 20 tests) and our additions (`LangChain4jToolChatTests`, 20), no keys, no network |
+| 2 | Read `LangChain4jLibraryBehaviourTests` | Short tests: a round limit of 100 that throws, all 6 calls of a reply run, results unwrapped, unknown tool and bad JSON throw, missing argument runs with `null`, usage summed, reply without `id` accepted, system message placed after the history | What the library does on its own; each is a measurement |
+| 3 | With the application up (`just db`, `just run`): `OPENROUTER_API_KEY=... just comparisons-with-langchain4j`, then `curl -s localhost:18103/health` | `{"status":"ok","approach":"withLangchain4j"}` | The backend is running |
+| 4 | `curl -s -X POST localhost:18103/api/v1/chat/tools -H 'Content-Type: application/json' -d '{"messages":[{"role":"user","content":"What open deals does Acme Fabrication have?"}]}'` | The same kind of answer as on 18101 and 18102, `"mcpServer":"withLangchain4j"`. Without a key: HTTP 503 "OPENROUTER_API_KEY is not set". | LangChain4j's loop behind the same contract |
+| 5 | Web app, tool-calling mode, **Approach** buttons | `withLangchain4j` is selectable while step 3 runs, "(not running)" otherwise | The chooser reaches the third backend. Not clicked in a browser by the author of this slice |
+
 ## J8.1b: tool calling with Spring AI (Java extension)
 
 | # | Do | Expect | What it shows |
