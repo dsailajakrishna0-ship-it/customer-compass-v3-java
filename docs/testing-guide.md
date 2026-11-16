@@ -19,6 +19,15 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 5 | `curl -s localhost:8001/v3/api-docs` | The same description as JSON (the Python edition's `/docs` is the counterpart) | A machine-readable contract |
 | 6 | Start with `OPENAPI_ENABLED=false` | Both addresses answer 404 | The switch |
 
+## J8.2c: RAG ingestion with LangChain4j (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; the new module has its own tests (loader and splitter behaviour, the pipeline, the real store); the real-store ones are skipped without Qdrant; no keys, no network, no Docker | What LangChain4j does alone (`LangChain4jIngestionBehaviourTests`) and our rules (`LangChain4jIngestTests`) |
+| 2 | `just qdrant`, then `QDRANT_REST_URL=http://localhost:26333 QDRANT_GRPC_PORT=26334 just comparisons-test` | The real-store tests run too and pass | The store and our collection handling against a real Qdrant |
+| 3 | `GOOGLE_API_KEY=... just comparisons-ingest-with-langchain4j`, then `curl -s localhost:18113/health` | `{"status":"ok","approach":"withLangchain4j"}` | The backend is running (a live run uses embedding quota) |
+| 4 | `curl -s -X POST localhost:18113/api/v1/ingest -H 'Content-Type: application/json' -d '{"limit":2}'` | `status: completed` with the counts, `collection: compare_withlangchain4j`; without a key HTTP 503 | A real run, kept small by `limit` |
+| 5 | `curl -s localhost:26333/collections/compare_withlangchain4j` | The collection exists with the points of the run | The result in Qdrant, in a collection the application never reads |
 ## J8.2b: RAG ingestion with Spring AI (Java extension)
 
 | # | Do | Expect | What it shows |

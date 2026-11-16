@@ -65,6 +65,29 @@ flowchart LR
 **Measured here:** the library's behaviour in each step against a scripted Gemini server, the real Qdrant store against a throw-away Qdrant (when `QDRANT_GRPC_PORT` is set), and ours against stand-ins. **Not measured:** a call to the real Gemini service, real quota use, and search quality.
 
 **Rule to remember.** *A library class that does a step well does not know your order of steps. Find out what it does on failure before you let it hold the only copy.*
+## J8.2c: ingestion with LangChain4j
+
+The same backend with LangChain4j 1.23.0: its loader reads the files, `DocumentSplitters.recursive(600, 100)` cuts them, its Gemini embedding model embeds, and **`EmbeddingStoreIngestor`** runs split, embed and store as one call into a Qdrant collection (`compare_withlangchain4j`, port 18113). Decisions and the measured tables: [ADR 0035](../adr/0035-rag-ingestion-with-langchain4j.md).
+
+**What LangChain4j gave, without a line of ours** (measured in `LangChain4jIngestionBehaviourTests`): the loader and its glob, a splitter that cuts at paragraph and sentence boundaries, batching of embedding requests (250 texts made 3 requests), the key in a header, and an ingestor that embeds everything before it touches the store once.
+
+**What it did not give, and what that took:**
+
+| The rule | What LangChain4j does | In `withLangchain4j` |
+| --- | --- | --- |
+| Front matter is not text | Kept in the text; the splitter cuts it into chunks and **repeats it** in the next | Cut off before splitting; title and company parsed by hand |
+| Embed first, then replace | The ingestor embeds all, then stores once | `ReplacingStore` resets the collection inside that one store call |
+| The collection exists with the right size | The store **does not create it** (NOT_FOUND) | Created with Qdrant's client; its own `recreateCollectionAsync` **fails on a missing collection** |
+| Check the vectors | A short reply or a wrong-length vector is **not detected** | `CheckedEmbeddings` |
+| Errors without the service's reply | The exception message **is** the service's reply | Rewritten to status only |
+| No key, nothing called | The library **calls anyway** | Checked first |
+| Character offsets | None | Not in the payload (stated) |
+
+**One difference from Spring AI worth noting.** LangChain4j lets a wrapper put the replace between embedding and storing, so the ingestor can still be used; Spring AI's store always embeds by itself, so the J8.2b approach embeds first by hand.
+
+**Measured here:** the library's behaviour and ours against a fake Gemini, and the store against a throw-away Qdrant (the live tests, skipped by default). **Not measured:** a real Gemini call, chunk counts against `handWritten`, search quality, quota.
+
+**Rule to remember.** *Run the library against the real service once: two of our own tests failed only on a real Qdrant, because a recreate that works when the collection exists fails when it does not.*
 
 ## Code tour
 
@@ -75,6 +98,7 @@ flowchart LR
 | new | `justfile` | `comparisons-ingest-hand-written` |
 | new (J8.2b) | `comparisons/rag-ingestion/withSpringAi/` | `MarkdownSections` (the reader and the front matter), `SpringAiIngest` (the pipeline and the splitter), `BatchedEmbeddings`, `QdrantChunkStore`, `PrecomputedEmbeddings`, `ChunkStore`, `WithSpringAiIngestMain` (port 18112) |
 | new (J8.2b) | `justfile` | `comparisons-ingest-with-spring-ai` |
+| new (J8.2c) | `comparisons/rag-ingestion/withLangchain4j/` | `LangChain4jIngest`, `SourceDocuments`, `CheckedEmbeddings`, `ReplacingStore`, `QdrantCollection`, `WithLangchain4jIngestMain` (port 18113); justfile `comparisons-ingest-with-langchain4j` |
 
 ## Questions to try
 
