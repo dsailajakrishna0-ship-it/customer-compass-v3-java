@@ -35,6 +35,28 @@ flowchart LR
 
 **Rule to remember.** *A threshold is only useful if you can see what it removed: report how many were considered as well as how many were kept.*
 
+## J8.3b: retrieval with Spring AI
+
+The same backend, the same HTTP face, with Spring AI doing the embedding and the search in one call: `QdrantVectorStore.similaritySearch` over the Gemini embedding model, against `compare_withspringai` (port 18122). Decisions and the measured tables: [ADR 0037](../adr/0037-rag-retrieval-with-spring-ai.md).
+
+**What Spring AI gave, without a line of ours** (measured in `SpringAiRetrievalBehaviourTests` and `SpringAiQdrantSearchTests`): the question is embedded by the store itself in one request, the key goes in a header, the score is Qdrant's cosine similarity, results come best first, `topK` is honoured, and the chunk text and metadata come back ready to use.
+
+**What it did not give, and what that took:**
+
+| The rule | What Spring AI does | In `withSpringAi` |
+| --- | --- | --- |
+| A chunk at the floor is kept | Its threshold is **strict**, and "accept all" drops chunks of cosine 0 or below | Search with no threshold, apply the floor in our code |
+| `considered` is how many the store returned | Chunks it drops by the threshold are not counted | Follows from the line above |
+| Errors without the service's reply | A refusal's message **contains the service's reply** | `CheckedEmbeddings` and `QdrantChunkSearch` reduce errors to the status |
+| A vector of the right length | A wrong-length vector is **returned as it is** | Checked before the store is asked |
+| A missing collection says to ingest first | A gRPC `NOT_FOUND` that names the collection | Mapped to the sentence |
+| Query task type | **Never sent** | Cannot be done: a difference from `handWritten` |
+
+**One number worth remembering.** A chunk stored with a score of 0.6 comes back as **0.6000000238418579**: Qdrant scores are floats, widened to doubles. The floor of 0.60 therefore keeps it, and so does `handWritten`, which reads the same float as text.
+
+**Measured here:** the library's behaviour and ours against a fake Gemini, and the store against a throw-away Qdrant (skipped by default). **Not measured:** a real Gemini call, whether the missing query task type changes the scores, speed, quota.
+
+**Rule to remember.** *A library's threshold is a decision made for you: check whether it is strict, and what it hides from your counts.*
 ## J8.3c: retrieval with LangChain4j
 
 The same backend with LangChain4j 1.23.0: its Gemini embedding model embeds the question and its `QdrantEmbeddingStore` searches `compare_withlangchain4j` (port 18123). Decisions and the measured tables: [ADR 0038](../adr/0038-rag-retrieval-with-langchain4j.md).
@@ -65,6 +87,7 @@ The same backend with LangChain4j 1.23.0: its Gemini embedding model embeds the 
 | new | `comparisons/common/.../Retrieve.java`, `RetrieveBackendServer.java` | The interface every approach implements and the shared HTTP face |
 | new | `comparisons/rag-retrieval/handWritten/` | `GeminiQueryEmbedder`, `QdrantSearch`, `HandWrittenRetrieve`, `HandWrittenRetrieveMain` (port 18121) |
 | new | `justfile` | `comparisons-retrieve-hand-written` |
+| new (J8.3b) | `comparisons/rag-retrieval/withSpringAi/` | `SpringAiRetrieve`, `ChunkSearch`, `QdrantChunkSearch`, `CheckedEmbeddings`, `WithSpringAiRetrieveMain` (port 18122); justfile `comparisons-retrieve-with-spring-ai` |
 | new (J8.3c) | `comparisons/rag-retrieval/withLangchain4j/` | `LangChain4jRetrieve`, `QueryEmbedder`, `WithLangchain4jRetrieveMain` (port 18123); justfile `comparisons-retrieve-with-langchain4j` |
 
 ## Questions to try

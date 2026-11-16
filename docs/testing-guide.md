@@ -29,6 +29,16 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 4 | `GOOGLE_API_KEY=... just comparisons-retrieve-with-langchain4j`, then `curl -s localhost:18123/health` | `{"status":"ok","approach":"withLangchain4j"}` | The backend is running |
 | 5 | `curl -s -X POST localhost:18123/api/v1/retrieve -H 'Content-Type: application/json' -d '{"query":"Acme renewal terms"}'` | `considered` up to 4, `kept` how many passed 0.60 (as a **cosine**), `hits` with scores, one embedding request | A real search |
 | 6 | The same against `localhost:18121` (`handWritten`) after its own ingestion | Comparable scores for the same question | The floor means the same thing in both |
+## J8.3b: RAG retrieval with Spring AI (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; the new module has its own tests (`SpringAiRetrievalBehaviourTests`, `SpringAiRetrieveTests`); the real-store tests are skipped without Qdrant; no keys, no network, no Docker | What Spring AI does alone on the query path, and our rules |
+| 2 | `just qdrant`, then `QDRANT_GRPC_PORT=26334 just comparisons-test` | The real-store tests (`SpringAiQdrantSearchTests`) run too and pass | The score, the strict threshold and the missing collection, against a real Qdrant |
+| 3 | Ingest first: `GOOGLE_API_KEY=... just comparisons-ingest-with-spring-ai`, then `curl -s -X POST localhost:18112/api/v1/ingest -H 'Content-Type: application/json' -d '{"limit":4}'` | `status: completed` | The collection `compare_withspringai` exists |
+| 4 | `GOOGLE_API_KEY=... just comparisons-retrieve-with-spring-ai`, then `curl -s localhost:18122/health` | `{"status":"ok","approach":"withSpringAi"}` | The backend is running |
+| 5 | `curl -s -X POST localhost:18122/api/v1/retrieve -H 'Content-Type: application/json' -d '{"query":"Acme renewal terms"}'` | `considered`, `kept`, `hits` with scores like 0.6000000238418579; one embedding request | A real search |
+| 6 | Search before any ingestion (a fresh `just qdrant`) | HTTP 503 "The collection compare_withspringai does not exist. Run the ingestion for this approach first." | The missing-collection message |
 
 ## J8.3a: RAG retrieval by hand (Java extension)
 
