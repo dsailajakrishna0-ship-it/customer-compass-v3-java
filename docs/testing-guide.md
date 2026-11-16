@@ -19,6 +19,17 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 5 | `curl -s localhost:8001/v3/api-docs` | The same description as JSON (the Python edition's `/docs` is the counterpart) | A machine-readable contract |
 | 6 | Start with `OPENAPI_ENABLED=false` | Both addresses answer 404 | The switch |
 
+## J8.2b: RAG ingestion with Spring AI (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; the new tests are in `rag-ingestion/withSpringAi`; no keys, no network, no Docker (the Qdrant tests are skipped) | What the library does on its own (`SpringAiIngestionBehaviourTests`) and our additions (`SpringAiIngestTests`) |
+| 2 | Read `SpringAiIngestionBehaviourTests` | Short tests: the reader misreads front matter and joins paragraphs with no separator, the splitter counts tokens and has no overlap, the Gemini model sends 250 texts in one request, never sends the task type, accepts wrong vectors and echoes the service's reply in its errors | Each one is a measurement |
+| 3 | `just qdrant` (gRPC on 26334), then `QDRANT_GRPC_PORT=26334 just comparisons-test` | The same build, with `SpringAiQdrantBehaviourTests` now running against the real Qdrant (made-up vectors, no embedding quota) | What the Spring AI store does on its own, and that our store class replaces a collection cleanly |
+| 4 | `GOOGLE_API_KEY=... just comparisons-ingest-with-spring-ai`, then `curl -s localhost:18112/health` | `{"status":"ok","approach":"withSpringAi"}` | The backend is running |
+| 5 | `curl -s -X POST localhost:18112/api/v1/ingest -H 'Content-Type: application/json' -d '{"limit":2}'` | `status: completed`, `collection: compare_withspringai`; without a key HTTP 503 "GOOGLE_API_KEY is not set." (a live run uses embedding quota, one request per 100 chunks) | A real run, kept small by `limit` |
+| 6 | Compare with `handWritten` (port 18111) on the same `limit` | Different chunk counts: Spring AI cuts by tokens with no overlap | The chunking difference, in numbers |
+
 ## J8.2a: RAG ingestion by hand (Java extension)
 
 | # | Do | Expect | What it shows |

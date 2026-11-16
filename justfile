@@ -42,6 +42,10 @@ comparisons-with-langchain4j:
 comparisons-ingest-hand-written:
     ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl rag-ingestion/handWritten -am compile exec:java
 
+# J8.2b: the withSpringAi RAG-ingestion backend on port 18112 (needs GOOGLE_API_KEY to run, and `just qdrant`; SOURCE_DIR, QDRANT_HOST, QDRANT_GRPC_PORT, PORT optional)
+comparisons-ingest-with-spring-ai:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl rag-ingestion/withSpringAi -am compile exec:java
+
 # web app: lint, types, tests, production build (copied from the Python edition)
 test-web:
     npm run lint

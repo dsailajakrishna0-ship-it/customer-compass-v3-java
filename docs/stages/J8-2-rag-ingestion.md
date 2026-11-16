@@ -36,6 +36,36 @@ flowchart LR
 
 **Rule to remember.** *Do the step that can fail and costs money first; replace what exists only when you hold the new result.*
 
+## J8.2b: ingestion with Spring AI
+
+The same pipeline and the same HTTP face, with a Spring AI class for each step: `MarkdownDocumentReader` reads, `TokenTextSplitter` cuts, `GoogleGenAiTextEmbeddingModel` embeds, `QdrantVectorStore` stores. Port 18112, collection `compare_withspringai`. Decisions and the full tables: [ADR 0034](../adr/0034-rag-ingestion-with-spring-ai.md).
+
+```mermaid
+flowchart LR
+  folder["source folder"] --> read["MarkdownDocumentReader<br/>(+ front matter by hand)"] --> split["TokenTextSplitter<br/>150 tokens, no overlap"] --> embed["BatchedEmbeddings<br/>100 per request, checked"]
+  embed --> store["QdrantChunkStore<br/>delete, then QdrantVectorStore.add"]
+```
+
+**What Spring AI gave, without a line of ours** (measured in `SpringAiIngestionBehaviourTests`): reading a markdown file into one document per heading; a splitter and a tokenizer; the Gemini request and the response parsing; the key in a header; the collection created with the right size and the cosine distance; points with the metadata as payload.
+
+**What it did not give, and what that took:**
+
+| The rule | What Spring AI does | In `withSpringAi` |
+| --- | --- | --- |
+| Embed first, replace the collection after | The store always embeds the documents itself and cannot recreate a collection | Vectors computed first and handed to the store through `PrecomputedEmbeddings`; the collection deleted through the Qdrant client |
+| At most 100 texts per request | Sends all in one request | `BatchedEmbeddings` |
+| The right number and length of vectors | Accepts wrong ones silently | Checked, the run stops |
+| Errors say the status only | The exception carries the service's reply | Caught and reduced to the status |
+| One failed call is not repeated five times | 5 requests and about 35 seconds | One attempt, set on the SDK |
+| Front matter gives title and company | Misread by the reader (its key lines become a heading, only the last survives) | Read and cut off by hand before the reader sees the file |
+| Offsets of a chunk | Not available | Not stored |
+
+**Four differences you would not guess.** The reader joins paragraphs with **no separator** ("there.More"). The splitter counts **tokens** and has **no overlap**, so its chunks differ from handWritten's 600 characters with 100 overlap (on the sample documents: 20 chunks of about 570 characters against about 28 of up to 600). The Gemini model **never sends the task type**, so the vectors are not asked for as "document" vectors. And a text of 3 characters is dropped. Whether any of this changes search quality was not measured.
+
+**Measured here:** the library's behaviour in each step against a scripted Gemini server, the real Qdrant store against a throw-away Qdrant (when `QDRANT_GRPC_PORT` is set), and ours against stand-ins. **Not measured:** a call to the real Gemini service, real quota use, and search quality.
+
+**Rule to remember.** *A library class that does a step well does not know your order of steps. Find out what it does on failure before you let it hold the only copy.*
+
 ## Code tour
 
 | | Where | What |
@@ -43,6 +73,8 @@ flowchart LR
 | new | `comparisons/common/.../Ingest.java`, `IngestBackendServer.java` | The interface every approach implements and the shared HTTP face |
 | new | `comparisons/rag-ingestion/handWritten/` | `MarkdownDocuments`, `Chunker`, `GeminiEmbedder`, `QdrantRest`, `HandWrittenIngest`, `HandWrittenIngestMain` (port 18111) |
 | new | `justfile` | `comparisons-ingest-hand-written` |
+| new (J8.2b) | `comparisons/rag-ingestion/withSpringAi/` | `MarkdownSections` (the reader and the front matter), `SpringAiIngest` (the pipeline and the splitter), `BatchedEmbeddings`, `QdrantChunkStore`, `PrecomputedEmbeddings`, `ChunkStore`, `WithSpringAiIngestMain` (port 18112) |
+| new (J8.2b) | `justfile` | `comparisons-ingest-with-spring-ai` |
 
 ## Questions to try
 
