@@ -50,6 +50,10 @@ comparisons-ingest-with-spring-ai:
 comparisons-ingest-with-langchain4j:
     ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl rag-ingestion/withLangchain4j -am compile exec:java
 
+# J8.3a: the handWritten RAG-retrieval backend on port 18121 (needs GOOGLE_API_KEY, `just qdrant` and a prior handWritten ingestion; QDRANT_URL, PORT optional)
+comparisons-retrieve-hand-written:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl rag-retrieval/handWritten -am compile exec:java
+
 # web app: lint, types, tests, production build (copied from the Python edition)
 test-web:
     npm run lint
