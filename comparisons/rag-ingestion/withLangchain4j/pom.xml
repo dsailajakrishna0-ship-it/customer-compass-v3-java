@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.customercompass.comparisons</groupId>
+    <artifactId>comparisons</artifactId>
+    <version>0.1.0</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>rag-ingestion-with-langchain4j</artifactId>
+  <name>rag-ingestion-with-langchain4j</name>
+  <description>RAG ingestion with LangChain4j: document loader, splitter, Gemini embedding model and Qdrant embedding store (the core library only, no Spring Boot starter)</description>
+
+  <properties>
+    <!-- the same line as comparisons/tool-calling/withLangchain4j: the newest stable release; the Qdrant store and the Tika parser are published only as betas, which the BOM pins -->
+    <langchain4j.version>1.23.0</langchain4j.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>dev.langchain4j</groupId>
+        <artifactId>langchain4j-bom</artifactId>
+        <version>${langchain4j.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.customercompass.comparisons</groupId>
+      <artifactId>comparisons-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <!-- document loading, splitters, EmbeddingStoreIngestor -->
+    <dependency>
+      <groupId>dev.langchain4j</groupId>
+      <artifactId>langchain4j</artifactId>
+    </dependency>
+    <!-- the Gemini embedding model -->
+    <dependency>
+      <groupId>dev.langchain4j</groupId>
+      <artifactId>langchain4j-google-ai-gemini</artifactId>
+    </dependency>
+    <!-- the Qdrant embedding store (gRPC) -->
+    <dependency>
+      <groupId>dev.langchain4j</groupId>
+      <artifactId>langchain4j-qdrant</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>tools.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <configuration>
+          <skip>false</skip>
+          <mainClass>com.customercompass.comparisons.ragingestion.withlangchain4j.WithLangchain4jIngestMain</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
