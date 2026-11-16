@@ -54,6 +54,10 @@ comparisons-ingest-with-langchain4j:
 comparisons-retrieve-hand-written:
     ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl rag-retrieval/handWritten -am compile exec:java
 
+# J8.3c: the withLangchain4j RAG-retrieval backend on port 18123 (needs GOOGLE_API_KEY, `just qdrant` and a prior withLangchain4j ingestion; QDRANT_HOST, QDRANT_GRPC_PORT, PORT optional)
+comparisons-retrieve-with-langchain4j:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl rag-retrieval/withLangchain4j -am compile exec:java
+
 # web app: lint, types, tests, production build (copied from the Python edition)
 test-web:
     npm run lint

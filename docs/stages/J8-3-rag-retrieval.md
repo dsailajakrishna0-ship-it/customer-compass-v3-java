@@ -35,6 +35,29 @@ flowchart LR
 
 **Rule to remember.** *A threshold is only useful if you can see what it removed: report how many were considered as well as how many were kept.*
 
+## J8.3c: retrieval with LangChain4j
+
+The same backend with LangChain4j 1.23.0: its Gemini embedding model embeds the question and its `QdrantEmbeddingStore` searches `compare_withlangchain4j` (port 18123). Decisions and the measured tables: [ADR 0038](../adr/0038-rag-retrieval-with-langchain4j.md).
+
+**The one thing to know: the score is not the cosine.** LangChain4j's score is a **relevance score `(cosine + 1) / 2`**, from 0 (opposite) to 1 (the same), and its `minScore` is compared with that. Measured against known vectors: the same vector scores 1.0, an orthogonal one 0.5, an opposite one 0.0. **A floor of 0.60 handed straight to `minScore` would really be a cosine of 0.20**: it would return results, look right, and let in far less relevant chunks, with no error. The backend therefore searches with `minScore` 0, converts each score back (`cosine = 2 * score - 1`) and applies the floor itself, so 0.60 means the same here as in `handWritten`.
+
+**What LangChain4j gave, without a line of ours:** a one-line embedding of the question (one request, key in a header), a one-call search that returns the chunks best first with their metadata, and a store that refuses a query of the wrong length and reports a missing collection (both measured).
+
+**What it did not give, and what that took:**
+
+| The rule | What LangChain4j does | In `withLangchain4j` |
+| --- | --- | --- |
+| The floor is a cosine of 0.60 | `minScore` is on the relevance scale | Converted back; the floor applied here |
+| `considered` and `kept` | `minScore` hides how many there were | Search with `minScore` 0 and filter here |
+| No key, nothing called | The library **calls anyway** | Checked first |
+| Check the vector | A wrong-length reply is **not detected** | Checked |
+| Errors without the service's reply | The exception message **is** the service's reply | Reduced to status only; the store's gRPC status to a fixed sentence |
+| A missing collection | `NOT_FOUND` | "Run the ingestion for this approach first" |
+
+**Measured here:** the library's behaviour against a fake Gemini, and the store and the whole search against a real throw-away Qdrant with vectors of known cosine (those tests are skipped unless `QDRANT_GRPC_PORT` is set). **Not measured:** a live Gemini call, search quality, speed, quota.
+
+**Rule to remember.** *A threshold is only as good as the scale it is on. Find out what scale a library's score is on before you hand it a number that was calibrated on another.*
+
 ## Code tour
 
 | | Where | What |
@@ -42,6 +65,7 @@ flowchart LR
 | new | `comparisons/common/.../Retrieve.java`, `RetrieveBackendServer.java` | The interface every approach implements and the shared HTTP face |
 | new | `comparisons/rag-retrieval/handWritten/` | `GeminiQueryEmbedder`, `QdrantSearch`, `HandWrittenRetrieve`, `HandWrittenRetrieveMain` (port 18121) |
 | new | `justfile` | `comparisons-retrieve-hand-written` |
+| new (J8.3c) | `comparisons/rag-retrieval/withLangchain4j/` | `LangChain4jRetrieve`, `QueryEmbedder`, `WithLangchain4jRetrieveMain` (port 18123); justfile `comparisons-retrieve-with-langchain4j` |
 
 ## Questions to try
 

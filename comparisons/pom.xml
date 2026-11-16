@@ -46,5 +46,6 @@
     <module>rag-ingestion/withSpringAi</module>
     <module>rag-ingestion/withLangchain4j</module>
     <module>rag-retrieval/handWritten</module>
+    <module>rag-retrieval/withLangchain4j</module>
   </modules>
 </project>
