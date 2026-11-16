@@ -1,0 +1,50 @@
+# Stage J8.3: RAG retrieval, built several ways
+
+Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0036](../adr/0036-rag-retrieval-comparison.md) (the contract). Code: [`comparisons/rag-retrieval/`](../../comparisons/README.md). One section per approach, added as each is built: **J8.3a `handWritten`** (here), J8.3b `withSpringAi`, J8.3c `withLangchain4j`, and J8.3d the three side by side.
+
+## In one minute
+
+Ingestion (J8.2) filed the index cards on the shelf. **Retrieval** is the librarian: you ask a question, the librarian writes the question's meaning-fingerprint (an **embedding**), asks the shelf for the cards whose fingerprints are closest (**similarity search**), and hands over only the cards that are close *enough*: the **similarity floor**. A floor of 0.60 means "a card must score at least 0.60 out of 1 to be shown". Too low and unrelated cards slip in; too high and useful ones are lost.
+
+| Shop idea | Project idea | Where |
+| --- | --- | --- |
+| Write the question's fingerprint | **Embed the question** (Gemini, task type "query") | `GeminiQueryEmbedder.java` |
+| Ask the shelf for the closest cards | **Search** Qdrant for the `topK` nearest chunks | `QdrantSearch.java` |
+| Hand over only close-enough cards | **The floor**: keep chunks with score at or above it, best first | `HandWrittenRetrieve.java` |
+
+## J8.3a: retrieval by hand
+
+No AI framework: JDK `HttpClient` and Jackson only, calling Gemini's `embedContent` and Qdrant's `points/query` directly. It searches `compare_handwritten`, the collection the J8.2a ingestion built.
+
+```mermaid
+flowchart LR
+  q["question"] --> embed["GeminiQueryEmbedder<br/>RETRIEVAL_QUERY"] --> search["QdrantSearch<br/>topK nearest"] --> floor["floor<br/>score >= 0.60"] --> hits["hits, best first"]
+```
+
+**The rules the code enforces** (each has a test):
+- The answer says how many chunks the store returned (`considered`) and how many passed the floor (`kept`), so a floor that is too strict is visible.
+- A chunk exactly at the floor is kept; hits are best first; nothing above the floor gives no hits, not an error.
+- The key travels in a header, never in the URL; errors say the HTTP status only, never what the service replied.
+- No key means nothing is called; a failed embedding never reaches the store.
+- A missing collection says to run the ingestion first.
+- The caller cannot choose the collection; `topK` is 1 to 20, the floor 0 to 1, the question at most 1,000 characters.
+
+**Measured here:** the behaviour of every step against scripted stand-ins (fake Gemini and Qdrant servers). **Not measured:** a live search, real scores, whether `RETRIEVAL_QUERY` vectors score differently from other task types, speed or quota.
+
+**Left out, on purpose:** hybrid keyword search and a reranker (ADR 0036).
+
+**Rule to remember.** *A threshold is only useful if you can see what it removed: report how many were considered as well as how many were kept.*
+
+## Code tour
+
+| | Where | What |
+| --- | --- | --- |
+| new | `comparisons/common/.../Retrieve.java`, `RetrieveBackendServer.java` | The interface every approach implements and the shared HTTP face |
+| new | `comparisons/rag-retrieval/handWritten/` | `GeminiQueryEmbedder`, `QdrantSearch`, `HandWrittenRetrieve`, `HandWrittenRetrieveMain` (port 18121) |
+| new | `justfile` | `comparisons-retrieve-hand-written` |
+
+## Questions to try
+
+1. Ask the same question with floors 0.45, 0.60 and 0.75. How do `considered` and `kept` change, and which hits disappear first?
+2. Ask something the documents do not cover (a refund policy). What does the floor do, and what would the model have to say?
+3. Why does the answer report `considered` as well as `kept`?

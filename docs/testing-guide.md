@@ -19,6 +19,17 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 5 | `curl -s localhost:8001/v3/api-docs` | The same description as JSON (the Python edition's `/docs` is the counterpart) | A machine-readable contract |
 | 6 | Start with `OPENAPI_ENABLED=false` | Both addresses answer 404 | The switch |
 
+## J8.3a: RAG retrieval by hand (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; new tests in `rag-retrieval/handWritten` (embedder, search, the floor) and `RetrieveBackendServerTests` in `common`; no keys, no network | Every rule runs against fake Gemini and Qdrant servers |
+| 2 | `just qdrant`, then (with a key) `just comparisons-ingest-hand-written` and `curl -s -X POST localhost:18111/api/v1/ingest -H 'Content-Type: application/json' -d '{"limit":4}'` | `status: completed` | The collection `compare_handwritten` exists (retrieval needs it) |
+| 3 | `GOOGLE_API_KEY=... just comparisons-retrieve-hand-written`, then `curl -s localhost:18121/health` | `{"status":"ok","approach":"handWritten"}` | The backend is running |
+| 4 | `curl -s -X POST localhost:18121/api/v1/retrieve -H 'Content-Type: application/json' -d '{"query":"Acme renewal terms"}'` | `considered` up to 4, `kept` how many passed 0.60, `hits` with scores, titles and text; one embedding request | A real search |
+| 5 | The same with `-d '{"query":"Acme renewal terms","minSimilarity":0.3}'` | More hits kept | The cost of the floor, live |
+| 6 | Search before any ingestion (`just qdrant-stop`, `just qdrant`, then step 4) | HTTP 503 "The collection compare_handwritten does not exist. Run the ingestion for this approach first." | The missing-collection message |
+
 ## J8.2c: RAG ingestion with LangChain4j (Java extension)
 
 | # | Do | Expect | What it shows |
