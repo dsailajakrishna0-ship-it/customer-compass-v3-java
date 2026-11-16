@@ -7,7 +7,6 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -31,7 +30,7 @@ public final class IngestBackendServer {
   public IngestBackendServer(int port, Ingest ingest) throws IOException {
     this.ingest = ingest;
     this.server = HttpServer.create(new InetSocketAddress(port), 0);
-    server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
+    server.setExecutor(BackendThreads.forApproach(ingest));
     server.createContext("/health", this::health);
     server.createContext("/api/v1/ingest", this::run);
   }

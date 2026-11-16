@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -37,7 +36,7 @@ public final class ToolBackendServer {
   public ToolBackendServer(int port, Chat.ToolChat chat) throws IOException {
     this.chat = chat;
     this.server = HttpServer.create(new InetSocketAddress(port), 0);
-    server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
+    server.setExecutor(BackendThreads.forApproach(chat));
     server.createContext("/health", this::health);
     server.createContext("/api/v1/chat/tools", this::tools);
   }
