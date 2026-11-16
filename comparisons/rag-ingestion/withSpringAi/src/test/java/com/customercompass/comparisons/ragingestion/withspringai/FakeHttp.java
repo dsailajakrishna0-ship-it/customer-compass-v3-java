@@ -55,11 +55,11 @@ final class FakeHttp implements AutoCloseable {
     server.stop(0);
   }
 
-  /** A Gemini that answers every batch with one vector of {@code dimensions} numbers per text. */
+  /** A Gemini that answers every batch with one vector of {@code dimensions} numbers per text (counted by the "parts" entries). */
   static FakeHttp gemini(int dimensions) throws IOException {
     return new FakeHttp(
         request -> {
-          int texts = request.body().split("\"taskType\"", -1).length - 1;
+          int texts = request.body().split("\"parts\"", -1).length - 1;
           var vector = new StringBuilder("[");
           for (int i = 0; i < dimensions; i++) {
             vector.append(i == 0 ? "" : ",").append("0.5");

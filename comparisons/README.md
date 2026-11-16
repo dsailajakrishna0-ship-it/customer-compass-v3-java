@@ -12,6 +12,7 @@ comparisons/
     withLangchain4j/            J8.1c: LangChain4j @Tool and AiServices (port 18103)
   rag-ingestion/
     handWritten/                J8.2a: no AI framework, REST calls to Gemini and Qdrant (port 18111)
+    withSpringAi/               J8.2b: Spring AI reader, splitter, embedding model and Qdrant store (port 18112)
 ```
 
 Every backend serves the same route as the application's tool-calling chat, `POST /api/v1/chat/tools`, and `GET /health`, so the web app can talk to any of them: pick one with the **Approach** buttons in the web app's tool-calling mode. Ports are listed in `apps/web/src/api/approaches.ts`.
@@ -24,5 +25,6 @@ Every backend serves the same route as the application's tool-calling chat, `POS
 | `just comparisons-with-spring-ai` | Starts the withSpringAi backend on port 18102 (same settings) |
 | `just comparisons-with-langchain4j` | Starts the withLangchain4j backend on port 18103 (same settings) |
 | `just comparisons-ingest-hand-written` | Starts the handWritten ingestion backend on port 18111 (needs `GOOGLE_API_KEY` and `just qdrant` to run) |
+| `just comparisons-ingest-with-spring-ai` | Starts the withSpringAi ingestion backend on port 18112 (same needs; talks to Qdrant over gRPC on port 26334) |
 
 Read [`docs/stages/J8-approaches-compared.md`](../docs/stages/J8-approaches-compared.md) for what is compared and how to try it.
