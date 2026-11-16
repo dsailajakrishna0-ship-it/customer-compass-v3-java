@@ -1,6 +1,6 @@
 # Stage J8.2: RAG ingestion, built several ways
 
-Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0033](../adr/0033-rag-ingestion-comparison.md). Code: [`comparisons/rag-ingestion/`](../../comparisons/README.md). This page grows with each approach: **J8.2a `handWritten`** (here), J8.2b `withSpringAi` and J8.2c `withLangchain4j` (later slices), J8.2d the side-by-side.
+Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0033](../adr/0033-rag-ingestion-comparison.md) (the contract), [0034](../adr/0034-rag-ingestion-with-spring-ai.md) (Spring AI), [0035](../adr/0035-rag-ingestion-with-langchain4j.md) (LangChain4j). Code: [`comparisons/rag-ingestion/`](../../comparisons/README.md). One section per approach (J8.2a `handWritten`, J8.2b `withSpringAi`, J8.2c `withLangchain4j`) and, last, J8.2d, the three side by side.
 
 ## In one minute
 
@@ -88,6 +88,44 @@ The same backend with LangChain4j 1.23.0: its loader reads the files, `DocumentS
 **Measured here:** the library's behaviour and ours against a fake Gemini, and the store against a throw-away Qdrant (the live tests, skipped by default). **Not measured:** a real Gemini call, chunk counts against `handWritten`, search quality, quota.
 
 **Rule to remember.** *Run the library against the real service once: two of our own tests failed only on a real Qdrant, because a recreate that works when the collection exists fails when it does not.*
+
+## J8.2d: the three side by side
+
+The same pipeline, the same HTTP contract and the same rules, written three ways. Everything here comes from the code, the tests and ADRs 0033 to 0035. **Not measured:** a live run against the real Gemini service, search quality of the three collections, speed or cost, so nothing below says which approach finds better answers.
+
+**Size.** Lines of Java that are not blank, not comments, not `import` or `package` lines, in each approach's folder only (the shared `comparisons/common` is used by all three and is not counted):
+
+| | handWritten | withSpringAi | withLangchain4j |
+| --- | --- | --- | --- |
+| Main files | 6 | 7 | 6 |
+| Main code lines | 328 | 316 | 326 |
+| Test files | 5 | 5 | 5 |
+| Test code lines | 367 | 581 | 563 |
+| Libraries besides Jackson | none | `spring-ai-markdown-document-reader`, `spring-ai-google-genai-embedding`, `spring-ai-qdrant-store` | `langchain4j`, `langchain4j-google-ai-gemini`, `langchain4j-qdrant` (a beta) |
+
+**Read this table carefully.** The main code is **about the same size in all three** (316 to 328 lines). The libraries replaced the Gemini and Qdrant calls, the reader and the splitter, and the code that took their place was the rules the libraries do not enforce: order of steps, batching or checks, error text, ids or the collection. The tests are where the difference shows: the two framework approaches have **53% to 58% more test code** (563 and 581 lines against 367), because each needed a class that measures what the library does on its own (`SpringAiIngestionBehaviourTests`, `LangChain4jIngestionBehaviourTests`). Counting lines hides the real cost, which is reading the library's behaviour before trusting it.
+
+**What each one does with the five steps.** The framework columns show what the library does **on its own** (measured); each backend then adds code to enforce the same rules as `handWritten`.
+
+| | handWritten | withSpringAi | withLangchain4j |
+| --- | --- | --- | --- |
+| **Read** | Our reader; front matter gives title and company | `MarkdownDocumentReader` **misreads front matter** (the closing `---` makes the key lines a heading) and joins paragraphs with no separator; one document per heading | Loader **keeps front matter in the text**, skips blank files, glob only, no sub-folders |
+| **Split** | 600 characters, 100 overlap, fixed windows, with character offsets | **Tokens**, no overlap, no offsets, cuts inside sentences, drops a very short text; 150 tokens chosen (about 570 characters on average on the sample) | 600 characters, 100 overlap, cut at paragraph, line, sentence and word boundaries; **repeats the front matter** in the next chunk; no offsets |
+| **Embed** | Our REST call, 100 texts per request, `RETRIEVAL_DOCUMENT` | Sends **all texts in one request**, **never sends the task type**, 5 retries (about 35 seconds) by default | Batches itself (100 per request), sends the task type only if set; **calls the service even with no key** |
+| **Check the reply** | Count and length checked | Wrong length or count **accepted silently** | **Not detected** |
+| **Errors** | Status only, by construction | Exception text **contains the service's reply** | Exception message **is the service's reply** |
+| **Store** | Delete, create, add in batches of 64 over REST | The store **always embeds the documents itself** and has **no recreate**: embed first by hand, then the store gets precomputed vectors | The store **does not create its collection**, and Qdrant's own recreate **fails when it is missing**; the ingestor embeds everything before it stores once |
+| **Embed first, then replace** | Natural: the code order | By hand (`BatchedEmbeddings`, `PrecomputedEmbeddings`) | `ReplacingStore` resets the collection inside the ingestor's one store call |
+
+**What the libraries gave, honestly:** no Gemini or Qdrant request code to write, a reader and a splitter that work on plain files, and (LangChain4j) an ingestor that runs split, embed and store as one call. **What they cost:** their chunks are not the same chunks, they have no character offsets, and every rule that matters when an ingestion fails halfway (order, error text, checks) is ours.
+
+**When to pick which** (a judgement from this exercise, not a measurement):
+- **Hand-written** when you want the chunk policy, offsets and failure rules in one readable place, and are willing to keep two small HTTP clients.
+- **Spring AI** when the application already uses Spring AI for retrieval, so ingestion and search share one embedding model and one store. Accept token-sized chunks and strip front matter yourself.
+- **LangChain4j** when you want the ingestor's one-call pipeline and a character-based splitter that respects sentence boundaries. Accept a beta Qdrant store and write the collection handling.
+- In all three cases, **list the rules first** (embed before replacing, batch size, vector checks, error text, ids) and check each against the library with a test.
+
+**Rule to remember.** *The five steps are the easy part. The pipeline is the order and what happens when step three fails. A library's reader and splitter decide what your model can later quote, so measure what they do to your own files.*
 
 ## Code tour
 
