@@ -12,6 +12,7 @@ comparisons/
     withLangchain4j/            J8.1c: LangChain4j @Tool and AiServices (port 18103)
   rag-retrieval/
     handWritten/                J8.3a: no AI framework, REST calls to Gemini and Qdrant, the floor in our code (port 18121)
+    withSpringAi/               J8.3b: Spring AI QdrantVectorStore search over the Gemini embedding model (port 18122)
     withLangchain4j/            J8.3c: LangChain4j embedding model and Qdrant store, the floor on the cosine in our code (port 18123)
   rag-ingestion/
     handWritten/                J8.2a: no AI framework, REST calls to Gemini and Qdrant (port 18111)
@@ -29,6 +30,7 @@ Every backend serves the same route as the application's tool-calling chat, `POS
 | `just comparisons-with-spring-ai` | Starts the withSpringAi backend on port 18102 (same settings) |
 | `just comparisons-with-langchain4j` | Starts the withLangchain4j backend on port 18103 (same settings) |
 | `just comparisons-ingest-with-langchain4j` | Starts the withLangchain4j ingestion backend on port 18113 (needs `GOOGLE_API_KEY` and `just qdrant` to run; Qdrant's gRPC port 26334 by default) |
+| `just comparisons-retrieve-with-spring-ai` | Starts the withSpringAi retrieval backend on port 18122 (needs `GOOGLE_API_KEY`, `just qdrant` and a prior withSpringAi ingestion) |
 | `just comparisons-retrieve-with-langchain4j` | Starts the withLangchain4j retrieval backend on port 18123 (needs `GOOGLE_API_KEY`, `just qdrant` and a prior withLangchain4j ingestion; Qdrant gRPC port 26334 by default) |
 | `just comparisons-retrieve-hand-written` | Starts the handWritten retrieval backend on port 18121 (needs `GOOGLE_API_KEY`, `just qdrant` and a prior handWritten ingestion) |
 | `just comparisons-ingest-hand-written` | Starts the handWritten ingestion backend on port 18111 (needs `GOOGLE_API_KEY` and `just qdrant` to run) |
