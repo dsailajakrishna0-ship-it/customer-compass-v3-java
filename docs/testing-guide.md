@@ -19,6 +19,17 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 5 | `curl -s localhost:8001/v3/api-docs` | The same description as JSON (the Python edition's `/docs` is the counterpart) | A machine-readable contract |
 | 6 | Start with `OPENAPI_ENABLED=false` | Both addresses answer 404 | The switch |
 
+## J8.3c: RAG retrieval with LangChain4j (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; the new module's tests run with no keys, no network and no Docker; the ones that need a real Qdrant are skipped | What LangChain4j does alone (`LangChain4jRetrievalBehaviourTests`) and our rules (`LangChain4jRetrieveTests`) |
+| 2 | `just qdrant`, then `QDRANT_GRPC_PORT=26334 just comparisons-test` | The skipped tests run too and pass | The library's scores measured against vectors of known cosine, and a whole search against a real Qdrant |
+| 3 | `just qdrant`, `GOOGLE_API_KEY=... just comparisons-ingest-with-langchain4j` and `curl -s -X POST localhost:18113/api/v1/ingest -H 'Content-Type: application/json' -d '{"limit":4}'` | `status: completed` | The collection `compare_withlangchain4j` exists (retrieval needs it) |
+| 4 | `GOOGLE_API_KEY=... just comparisons-retrieve-with-langchain4j`, then `curl -s localhost:18123/health` | `{"status":"ok","approach":"withLangchain4j"}` | The backend is running |
+| 5 | `curl -s -X POST localhost:18123/api/v1/retrieve -H 'Content-Type: application/json' -d '{"query":"Acme renewal terms"}'` | `considered` up to 4, `kept` how many passed 0.60 (as a **cosine**), `hits` with scores, one embedding request | A real search |
+| 6 | The same against `localhost:18121` (`handWritten`) after its own ingestion | Comparable scores for the same question | The floor means the same thing in both |
+
 ## J8.3a: RAG retrieval by hand (Java extension)
 
 | # | Do | Expect | What it shows |
