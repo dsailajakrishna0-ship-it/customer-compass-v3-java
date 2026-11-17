@@ -19,6 +19,16 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 5 | `curl -s localhost:8001/v3/api-docs` | The same description as JSON (the Python edition's `/docs` is the counterpart) | A machine-readable contract |
 | 6 | Start with `OPENAPI_ENABLED=false` | Both addresses answer 404 | The switch |
 
+## J8.5c: the agent with LangChain4j agentic (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; the new module has 27 tests: `LangChain4jAgenticAgentTests` (the contract: steps, pause, resume, dry run, failures) and `LangChain4jAgenticBehaviourTests` (what the agentic module does on its own); no keys, no network | The suspension, the resume, the activation condition, the blocking alternative, the registry that only grows |
+| 2 | With the application up (`just db`, `just run`): `OPENROUTER_API_KEY=... just comparisons-agent-with-langchain4j-agentic`, then `curl -s localhost:18143/health` | `{"status":"ok","approach":"withLangchain4jAgentic"}` | The backend is running |
+| 3 | `curl -s -X POST localhost:18143/api/v1/agent/start -H 'Content-Type: application/json' -d '{"company":"Acme"}'` | The same answer shape as on 18141: `awaiting_approval`, four steps, a recommendation, a `runId` | The same contract from another path |
+| 4 | `curl -s -X POST localhost:18143/api/v1/agent/resume -H 'Content-Type: application/json' -d '{"runId":"<the runId>","approve":true}'` | `completed`, `act` is `done`, a dry-run message | The library resumed the sequence from the pause |
+| 5 | The same with `"approve":false` on a new run | `declined`, `act` is `skipped` | The activation condition |
+| 6 | Answer the same run again | HTTP 409 | A run is answered once |
 ## J8.5b: a simple agent with an approval pause, with LangGraph4j (Java extension)
 
 | # | Do | Expect | What it shows |
