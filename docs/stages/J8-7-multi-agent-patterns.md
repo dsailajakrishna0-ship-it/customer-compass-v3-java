@@ -1,6 +1,6 @@
 # Stage J8.7: multi-agent patterns and frameworks
 
-Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0045](../adr/0045-multi-agent-patterns-on-langgraph4j.md). This page grows slice by slice: **J8.7a the verified survey** (here), then the patterns, then the write-up.
+Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0045](../adr/0045-multi-agent-patterns-on-langgraph4j.md). This page grows slice by slice: **J8.7a the verified survey**, the four patterns (**J8.7b** supervisor, **J8.7c** hierarchical, **J8.7d** network, **J8.7e** handoff, ADRs [0046](../adr/0046-supervisor-on-langgraph4j-with-spring-ai.md) to [0049](../adr/0049-handoff-pattern-on-langgraph4j-with-spring-ai.md)) and **J8.7f**, the four side by side.
 
 ## In one minute
 
@@ -228,14 +228,57 @@ flowchart LR
 
 **When handoff fits.** Triage and routing to specialists, customer-facing flows. **When it does not:** a rule that must hold across the whole run, which a supervisor enforces in one allowed-list function and a handoff team spreads over the lists and the shared state.
 
+## J8.7f: the four patterns side by side
+
+The same scenario (the account review), the same four pieces of work, the same model layer (Spring AI), the same graph engine (LangGraph4j 1.9.9) and the same telemetry, organised four ways. Everything here comes from the code, the tests and ADRs 0046 to 0049. **Not measured:** a live model (whether it routes sensibly), real latencies, and cost in money, so the numbers below are counts from scripted runs, not general results.
+
+**Size.** Lines of Java that are not blank, not comments, not `import` or `package` lines, in each pattern's folder (`comparisons/common` is shared and not counted). Each folder holds its own copy of the model layer and the four pieces of work, on purpose, so one folder reads on its own:
+
+| | Supervisor | Hierarchical | Network | Handoff |
+| --- | --- | --- | --- | --- |
+| **The team class** (the pattern itself) | **282** | **350** | **330** | **308** |
+| Module main code | 435 | 552 | 497 | 516 |
+| Module test code | 638 | 783 | 708 | 662 |
+
+The patterns differ by tens of lines, not by an order of magnitude. **The pattern is a small part of the code; the rules around it are most of it.**
+
+**How each is organised, and what it costs** (counts from the same scripted happy path: facts, one deals lookup, analysis, review):
+
+| | Supervisor | Hierarchical | Network | Handoff |
+| --- | --- | --- | --- | --- |
+| **Who decides what is next** | One coordinator model, from a list **code** builds | A top coordinator, then one per team | **Every peer**, any other peer | **The agent that just worked**, from **its own** list |
+| **Model calls** | **4** (2 routing) | **5** (3 routing) | **6** (4 namings) | **3** (1 handoff) |
+| **Where the rules live** | One allowed-list function | One per level | Nowhere central: each peer checks its own inputs | The union of the agents' lists |
+| **The decision log** | One place, audited as a whole | One place, with the level in each entry | **Scattered over four peers** | Spread, but **auditable through the lists** |
+| **Loops** | Bounded: a turn cap, one revision, two lookups | Bounded per level and in total | **Not bounded by design:** a runaway needs guards | Bounded by construction: a handoff cap, visits per agent |
+| **Graphs** | 1 | 3 (the top and two child graphs) | 1, fully connected | 1 |
+
+**What the tests measured about the failure modes**
+- **Network:** a peer that names itself is stopped after 3 turns by the loop guard; two peers naming each other, after 4; but **an analyst and a reviewer that keep changing the board slip past the loop guard**, and only a per-peer cap stopped them, after **7 turns and 13 model calls**. A peer that names FINISH too early ends the run with no recommendation: **nothing checks the job.**
+- **Hierarchical:** one more level means **four more decisions and one more model call** for the same review; three of the four extra decisions were made by code because the answer team's order is fixed. **The hierarchy pays off only when each level has a real choice.**
+- **Handoff:** fewer routing questions, because each agent has few places to go; but **a rule that spans the whole run** (never draft before a review) is the union of lists and limits, where a supervisor has one function.
+- **Supervisor:** the simplest to audit and to bound; every routing decision, its allowed list and any override is in one log.
+
+**What the libraries gave, in all four patterns.** LangGraph4j: nodes, edges, conditional edges, child graphs, and an outer limit of **25 iterations**; it wraps a node's exception in several layers and runs nodes on its own platform threads. Spring AI: the model call with the token usage and the answering model, and (read directly from the ChatModel, because the ChatClient would execute the tool) a tool call that comes back unexecuted, which is how the handoff is read. **Neither gave any of the rules:** the allowed lists, the caps, the loop detection, the 404, the status-only errors, the recorded decisions and the never-content telemetry were **written by us in every pattern**. The choice of pattern changes the organisation, not who owns the rules.
+
+**When to pick which** (a judgement from this exercise and the sources, not a measurement):
+- **Start with a pipeline** (a fixed order in code). Move to a pattern only when the next step really depends on results.
+- **Supervisor** is the default for a team with a real choice at each step: one place to enforce rules and one log to audit. It is also the one the application runs (E3).
+- **Handoff** fits triage and routing to specialists, where the next owner of the conversation is a natural decision and each agent knows its neighbours.
+- **Hierarchical** only when there are real teams with their own choices inside each team; otherwise the extra level is cost without benefit.
+- **Network** only for a few symmetric peers doing exploratory work where a wandering run is cheap; it is **rare in production** because of the missing central control, the scattered log and the loops.
+- In every case: **write the allowed lists, the caps and the never-content rule first**, test each against the library with a scripted model, and put a turn or cost cap on the whole run.
+
+**Rule to remember.** *The pattern decides who chooses the next step. It never decides who owns the rules: you do, in every pattern.*
+
 ## The plan
 
-| Slice | What | ETA |
+| Slice | What | Status |
 | --- | --- | --- |
-| **J8.7a** (this PR) | The verified survey, ADR 0045, the roadmap updated | done |
-| **J8.7b** | A shared scenario and contract; the **supervisor** pattern on LangGraph4j with Spring AI's chat model in the nodes | 80 to 100 min |
-| **J8.7c to e** | **Hierarchical** (subgraphs), **network** (peer agents) and **handoff** (agents name the next one), in parallel | 60 to 80 min each, in parallel |
-| **J8.7f** | The write-up: the four patterns side by side (size, control, cost, failure modes) and the production recommendations | 25 min |
+| **J8.7a** | The verified survey, ADR 0045, the roadmap updated | done |
+| **J8.7b** | A shared scenario and contract; the **supervisor** pattern on LangGraph4j with Spring AI's chat model in the nodes | done |
+| **J8.7c to e** | **Hierarchical** (subgraphs), **network** (peer agents) and **handoff** (agents name the next one) | done |
+| **J8.7f** | The four patterns side by side (size, control, cost, failure modes) and the production recommendations | done (here) |
 
 The same scenario in every pattern (the account review: facts, an analysis, a review, a recommendation), the same limits (turn cap, caps per specialist), the decisions recorded as data, and the J8.4 telemetry sink (a span per specialist and per decision, never content) so the four patterns can be compared on the same signals.
 
