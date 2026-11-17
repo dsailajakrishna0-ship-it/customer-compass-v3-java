@@ -19,6 +19,16 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 5 | `curl -s localhost:8001/v3/api-docs` | The same description as JSON (the Python edition's `/docs` is the counterpart) | A machine-readable contract |
 | 6 | Start with `OPENAPI_ENABLED=false` | Both addresses answer 404 | The switch |
 
+## J8.7d: the network pattern (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; the new module `multi-agent/network/withLangGraph4jSpringAi` has tests for the peers, the guards, the signals and the library measurements; no keys, no network | Every rule runs against a scripted model and a stub CRM |
+| 2 | With the application up (`just db`, `just run`): `OPENROUTER_API_KEY=... TELEMETRY_ENABLED=true just comparisons-multi-agent-network`, then `curl -s localhost:18153/health` | `{"status":"ok","approach":"withLangGraph4jSpringAi","pattern":"network"}` | The backend is running |
+| 3 | `curl -s -X POST localhost:18153/api/v1/multi-agent/run -H 'Content-Type: application/json' -d '{"company":"Acme"}'` | `status`, the `specialists` that ran, and `decisions` whose `decidedBy` is `peer:<name>` for each peer (or `code` when a choice was forced), plus the recommendation | The decision log of a network is the sum of four peers' choices |
+| 4 | Compare with the supervisor on the same question: `curl -s -X POST localhost:18151/api/v1/multi-agent/run ...` | The supervisor's decisions are `supervisor` or `code`; count the model calls in `curl -s localhost:18153/api/v1/observability/recent` (the `llm.generate` spans): about 6 here against about 4 there | What it costs to let every peer decide |
+| 5 | `curl -s -X POST localhost:18153/api/v1/multi-agent/run -H 'Content-Type: application/json' -d '{"company":"Zephyr Holdings"}'` | HTTP 404 "No company matching ... was found." with no model call | The forced choice for a company that is not there |
+
 ## J8.7b: the supervisor pattern (Java extension)
 
 | # | Do | Expect | What it shows |
