@@ -47,6 +47,14 @@ public interface ChatObserver {
     /** The question could not be answered; {@code kind} is a short word such as {@code model_unavailable}. */
     void fail(String kind);
 
+    /**
+     * One step of a multi-agent run: a specialist that ran, or the supervisor's decision. {@code agent}
+     * is a fixed name the backend chose (lower-case letters and underscores) and {@code outcome} a
+     * fixed word such as {@code ok}, {@code model}, {@code code} or {@code override}. Does nothing by
+     * default, so approaches that have no steps need not implement it.
+     */
+    default void step(String agent, String outcome, long millis) {}
+
     @Override
     void close();
   }

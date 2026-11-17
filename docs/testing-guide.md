@@ -19,6 +19,16 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 5 | `curl -s localhost:8001/v3/api-docs` | The same description as JSON (the Python edition's `/docs` is the counterpart) | A machine-readable contract |
 | 6 | Start with `OPENAPI_ENABLED=false` | Both addresses answer 404 | The switch |
 
+## J8.7b: the supervisor pattern (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; new tests in `multi-agent/supervisor/withLangGraph4jSpringAi` (the routing, the limits, the library measurements, the signals) and `common` (the server and the step hook); no keys, no network, no Docker | Every rule against a scripted model and a stub CRM |
+| 2 | With the application up (`just db`, `just run`): `TELEMETRY_ENABLED=true OPENROUTER_API_KEY=... just comparisons-multi-agent-supervisor`, then `curl -s localhost:18151/health` | `{"status":"ok","approach":"withLangGraph4jSpringAi","pattern":"supervisor"}` | The backend is running |
+| 3 | `curl -s -X POST localhost:18151/api/v1/multi-agent/run -H 'Content-Type: application/json' -d '{"company":"Acme"}'` | `status: completed`, the `specialists` in order, a `decisions` list (who chose each step, what was allowed, whether the model was overridden) and a `recommendation` | The supervisor at work: every routing choice is in the answer |
+| 4 | `curl -s localhost:18151/api/v1/observability/recent` | A trace with `agent.supervisor`, `agent.analyst`, `llm.generate` and `tool.*` spans and metrics; **no company or CRM text** | The J8.4 signals for a team |
+| 5 | `{"company":"Zephyr Holdings"}` | HTTP 404 "No company matching ..." | The model is never asked for a company that is not there |
+
 ## J8.5c: the agent with LangChain4j agentic (Java extension)
 
 | # | Do | Expect | What it shows |

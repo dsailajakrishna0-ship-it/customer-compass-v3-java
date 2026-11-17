@@ -57,5 +57,6 @@
     <module>agent-graph/withLangchain4jAgentic</module>
     <module>agent-graph/handWritten</module>
     <module>agent-graph/withLangGraph4j</module>
+    <module>multi-agent/supervisor/withLangGraph4jSpringAi</module>
   </modules>
 </project>
