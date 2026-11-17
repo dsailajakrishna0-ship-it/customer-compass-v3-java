@@ -12,6 +12,7 @@ comparisons/
     withLangchain4j/            J8.1c: LangChain4j @Tool and AiServices (port 18103)
   multi-agent/
     supervisor/
+    handoff/withLangGraph4jSpringAi/   J8.7e: the handoff (swarm) pattern: agents hand off by named tool calls, no supervisor (port 18154)
       withLangGraph4jSpringAi/  J8.7b: the supervisor pattern: LangGraph4j routes, Spring AI makes the model calls (port 18151)
     hierarchical/
       withLangGraph4jSpringAi/  J8.7c: the hierarchical pattern: a top supervisor over two teams, each a LangGraph4j child graph (port 18152)
@@ -54,6 +55,7 @@ Every backend serves the same route as the application's tool-calling chat, `POS
 | `just comparisons-multi-agent-hierarchical` | Starts the hierarchical-pattern backend on port 18152 (`TELEMETRY_ENABLED=true` to record signals; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-multi-agent-supervisor` | Starts the supervisor-pattern backend on port 18151 (`TELEMETRY_ENABLED=true` to record signals; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-multi-agent-network` | Starts the network-pattern backend on port 18153 (`TELEMETRY_ENABLED=true` to record signals; needs `OPENROUTER_API_KEY` and the application up) |
+| `just comparisons-multi-agent-handoff` | Starts the handoff-pattern backend on port 18154 (`TELEMETRY_ENABLED=true` to record signals; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-agent-hand-written` | Starts the handWritten agent backend on port 18141 (needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-observe-hand-written` | Starts the handWritten tool-calling backend with observation on port 18131 (`TELEMETRY_ENABLED=true`; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-retrieve-hand-written` | Starts the handWritten retrieval backend on port 18121 (needs `GOOGLE_API_KEY`, `just qdrant` and a prior handWritten ingestion) |
