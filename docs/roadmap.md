@@ -79,7 +79,7 @@ An approach is added to a module only where its library has that feature; a miss
 | J8.4 | Observability (traces, metrics, model and tool call records) | `handWritten`, `withSpringAi`, `withLangchain4j` | Our OpenTelemetry spans and optional Langfuse export (J7.3) |
 | J8.5 | The agent graph with the approval pause | `handWritten`, `withLangGraph4j` (maybe `withLangchain4jAgentic`, `withSpringAiWorkflows`) | LangGraph4j |
 | J8.6 | Memory (conversation history that the server keeps between requests; later long-term facts) | `handWritten`, `withSpringAi`, `withLangchain4j` | None: the client sends the messages each time. A new feature in every approach. |
-| J8.7 | Multi-agent supervisor (specialist agents chosen by a coordinator, rules in code) | `handWritten`, `withLangGraph4j` (maybe `withLangchain4jAgentic`) | Our supervisor on LangGraph4j (E3) |
+| J8.7 | Multi-agent patterns: supervisor, hierarchical, network, handoff (rules in code). **Plan changed, ADR 0045:** the four patterns on LangGraph4j with Spring AI as the model layer; no hand-written path; other frameworks by a verified survey | `multi-agent/{supervisor, hierarchical, network, handoff}` on LangGraph4j | Our supervisor on LangGraph4j (E3) |
 
 Each approach exists only where its library has the feature. What each library offers for J8.4, J8.6 and for the J8.5 and J8.7 maybes is not yet checked; it is read from the project's own documentation before the slice is built.
 
@@ -99,7 +99,7 @@ comparisons/
   observability/{handWritten, withSpringAi, withLangchain4j}
   agent-graph/{handWritten, withLangGraph4j, ...}
   memory/{handWritten, withSpringAi, withLangchain4j}
-  supervisor/{handWritten, withLangGraph4j, ...}
+  multi-agent/{supervisor, hierarchical, network, handoff}   (J8.7: patterns on LangGraph4j, ADR 0045)
 ```
 
 Rules: every comparison module is separate from the main app and holds its own dependencies, so the app never gains a second AI framework. Each module gets a short write-up with lines of code, what the approach hides and what it lets you control (turn limits, a guard on every tool result, failure behaviour). Library versions are checked on each project's own page before a dependency is added. Any live recording needs the owner's approval. Folder names are fixed so every slice follows them.
