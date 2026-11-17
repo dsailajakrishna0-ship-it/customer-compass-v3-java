@@ -1,6 +1,6 @@
 # Stage J8.4: observability, built several ways
 
-Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0039](../adr/0039-observability-comparison.md). Code: [`comparisons/observability/`](../../comparisons/README.md) and the shared `comparisons/common` (`ChatObserver`, `Telemetry`). One section per approach, added as each is built: **J8.4a `handWritten`** (here), J8.4b `withSpringAi`, J8.4c `withLangchain4j`, and J8.4d the three side by side.
+Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0039](../adr/0039-observability-comparison.md). Code: [`comparisons/observability/`](../../comparisons/README.md) and the shared `comparisons/common` (`ChatObserver`, `Telemetry`). One section per approach (J8.4a `handWritten`, J8.4b `withSpringAi`, J8.4c `withLangchain4j`) and, last, J8.4d, the three side by side. The per-approach decisions: [ADR 0040](../adr/0040-observability-with-spring-ai.md), [ADR 0041](../adr/0041-observability-with-langchain4j.md).
 
 ## In one minute
 
@@ -97,6 +97,45 @@ flowchart LR
 **Measured here:** the library's hooks against a scripted model, and the signals the backend produces for scripted questions. **Not measured:** a live model, real timings, export to Langfuse or another OTLP receiver. The two optional LangChain4j modules for Micrometer exist only as betas and were not used.
 
 **Rule to remember.** *A framework's hooks tell you that something happened. Why it failed, how long it took and what must not be written down are still yours.*
+
+## J8.4d: the three side by side
+
+The same signals, the same shared sink and the same rules, captured three ways. Everything here comes from the code, the tests and ADRs 0039 to 0041. **Not measured:** a live model, real latencies, and export to Langfuse or another OTLP receiver, so nothing below says which path is faster or cheaper to run.
+
+**Size.** Lines of Java that are not blank, not comments, not `import` or `package` lines. The shared sink in `comparisons/common` (`ChatObserver`, `Telemetry`, `RecentSpans`, **230 lines**) is used by all three and is counted once, not per path. The capture code of a path is its observation module **plus the hooks that were added to its tool-calling module** (the extension point and the places that know a tool's outcome):
+
+| | handWritten | withSpringAi | withLangchain4j |
+| --- | --- | --- | --- |
+| Observation module, main code | 25 | 141 | 100 |
+| Hooks added to the tool-calling module | +45 (and 6 changed) | +45 (and 4 changed) | +60 (and 3 changed) |
+| **Capture code, about** | **70** | **186** | **160** |
+| Observation module, test code | 292 | 665 | 571 |
+| Test files | 2 | 4 | 3 |
+
+**Read this table carefully.** Here the hand-written path is **much smaller**: about 70 lines against 186 and 160. The reason is not that frameworks are worse. The hand-written loop already holds every fact (the model's reply, the tool it ran, why a call was refused), so reporting costs a line at each place. A framework hands you its own event model, and you must translate it, correlate it to the right question and strip out content. The frameworks also need over twice the test code, because each needed a class that measures what its hooks do (`SpringAiObservabilityBehaviourTests`, `LangChain4jObservabilityBehaviourTests`).
+
+**What each path gets for free, and what it adds** (the framework columns show what the library does on its own, measured):
+
+| Signal | handWritten | withSpringAi | withLangchain4j |
+| --- | --- | --- | --- |
+| A model call: model, tokens | We read them from the reply we parse | **Free:** the model observation holds the model and the token counts | **Free:** the model hook gives the requested and the answering model and the tokens |
+| A model error | We catch it | **Free:** an error on the model observation | **Free:** `onError`, then an error event |
+| A tool's name | We have it | **Free,** but under the name the model wrote, even an invented one | **Free,** but under the name the model wrote, even an invented one |
+| A tool's outcome (`ran`, `invalid_call`, `invalid_arguments`, `tool_error`) | We know why, at the place we decide | **Nothing:** a refused call and a thrown tool look like a success; **we add the word** where we know | **Only `isError()`,** which is false for a tool nobody offered and for a tool that returns its own error text; **we add the word** |
+| A tool's duration | We time it | **Free:** the observation starts and stops | **Not given:** derived from the previous event |
+| Which question a call belongs to | A local variable | **No parent:** found by walking the registry's scope chain | Service events carry an **invocation id**; the model hook carries none |
+| A call the round limit refuses | Dropped silently, no span | A `skipped` span | Still reported as executed; we record `skipped` |
+| Content | Never captured unless we write it | **In the contexts, in memory:** the prompt, the answer, the tool arguments and result; the handler reads fixed fields only | **In the contexts, in memory:** the messages, the tool arguments and result; the listeners read fixed fields only |
+
+**The same lesson, three times.** A framework tells you *that* something happened (a model call, a tool call, an error) and gives you the numbers it already has. It rarely tells you *why* (is this tool failure our validation or the tool itself?) and it never keeps the content out for you: the contexts hold everything, so **the privacy rule lives in the code that reads them**, a fixed list of fields and a test that checks every span, name and metric.
+
+**When to pick which** (a judgement from this exercise, not a measurement):
+- **Hand-written** when you have a few places that call a model or a tool and want the smallest, clearest code and full control of what is recorded. The cost: every new call site must remember to report.
+- **Spring AI** when the application already uses Spring AI and Micrometer: model and tool observations, with tokens, come for free. Plan for the outcome words, the correlation and the content rule.
+- **LangChain4j** when you want listeners on the model and events for the AI service. It gives an invocation id for correlation; plan for the outcome words and the tool durations.
+- In all three cases, **write down the signals first** (names, attributes, outcomes, what must never be recorded), then test each against the library with a scripted model, including two questions at once.
+
+**Rule to remember.** *A framework tells you that something happened, rarely why, and never keeps the content out. The outcome words and the privacy rule are always yours.*
 
 ## Code tour
 
