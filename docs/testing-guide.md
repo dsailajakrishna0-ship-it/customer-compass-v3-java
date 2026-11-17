@@ -19,6 +19,16 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 5 | `curl -s localhost:8001/v3/api-docs` | The same description as JSON (the Python edition's `/docs` is the counterpart) | A machine-readable contract |
 | 6 | Start with `OPENAPI_ENABLED=false` | Both addresses answer 404 | The switch |
 
+## J8.4a: observation by hand (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; new tests in `observability/handWritten` (the hand-written loop's signals) and `common` | Spans, metrics, failure paths and the no-content rule, against a fake model and CRM; no keys, no network |
+| 2 | With the application up (`just db`, `just run`): `TELEMETRY_ENABLED=true OPENROUTER_API_KEY=... just comparisons-observe-hand-written`, then `curl -s localhost:18131/health` | `{"status":"ok","approach":"handWritten"}` | The backend is running with observation on |
+| 3 | `curl -s -X POST localhost:18131/api/v1/chat/tools -H 'Content-Type: application/json' -d '{"messages":[{"role":"user","content":"What open deals does Acme Fabrication have?"}]}'` | An answer, as on 18101 | A normal question |
+| 4 | `curl -s localhost:18131/api/v1/observability/recent` | A trace with `chat.request`, `llm.generate` and `tool.get_open_deals` spans, their durations and attributes, and metrics with counts and tokens; **no question or answer text anywhere** | The signals of the question you just asked |
+| 5 | Start it without `TELEMETRY_ENABLED` and call the same route | HTTP 404 "Observation is off..." | Off by default |
+
 ## J8.3c: RAG retrieval with LangChain4j (Java extension)
 
 | # | Do | Expect | What it shows |

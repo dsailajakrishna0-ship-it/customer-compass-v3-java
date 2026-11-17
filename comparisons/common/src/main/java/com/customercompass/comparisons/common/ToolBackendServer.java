@@ -32,13 +32,24 @@ public final class ToolBackendServer {
 
   private final HttpServer server;
   private final Chat.ToolChat chat;
+  private final Telemetry telemetry;
 
   public ToolBackendServer(int port, Chat.ToolChat chat) throws IOException {
+    this(port, chat, null);
+  }
+
+  /**
+   * With a {@link Telemetry}, {@code GET /api/v1/observability/recent} shows the most recent traces and
+   * metrics; without one (observation off) that route answers 404 with a hint.
+   */
+  public ToolBackendServer(int port, Chat.ToolChat chat, Telemetry telemetry) throws IOException {
     this.chat = chat;
+    this.telemetry = telemetry;
     this.server = HttpServer.create(new InetSocketAddress(port), 0);
     server.setExecutor(BackendThreads.forApproach(chat));
     server.createContext("/health", this::health);
     server.createContext("/api/v1/chat/tools", this::tools);
+    server.createContext("/api/v1/observability/recent", this::recent);
   }
 
   public void start() {
@@ -58,6 +69,25 @@ public final class ToolBackendServer {
       return;
     }
     send(exchange, 200, Map.of("status", "ok", "approach", chat.approach()));
+  }
+
+  private void recent(HttpExchange exchange) throws IOException {
+    if (cors(exchange)) {
+      return;
+    }
+    if (!exchange.getRequestMethod().equals("GET")) {
+      send(exchange, 405, Map.of("detail", "Method Not Allowed"));
+      return;
+    }
+    if (telemetry == null) {
+      send(exchange, 404, Map.of("enabled", false, "detail", "Observation is off. Start the backend with TELEMETRY_ENABLED=true."));
+      return;
+    }
+    byte[] bytes = telemetry.recentJson().getBytes(StandardCharsets.UTF_8);
+    exchange.getResponseHeaders().set("Content-Type", "application/json");
+    exchange.sendResponseHeaders(200, bytes.length);
+    exchange.getResponseBody().write(bytes);
+    exchange.close();
   }
 
   private void tools(HttpExchange exchange) throws IOException {

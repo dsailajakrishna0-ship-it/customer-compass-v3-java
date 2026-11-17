@@ -1,6 +1,7 @@
 package com.customercompass.comparisons.toolcalling.handwritten;
 
 import com.customercompass.comparisons.common.Chat;
+import com.customercompass.comparisons.common.ChatObserver;
 import com.customercompass.comparisons.common.CrmTools;
 import java.io.IOException;
 import java.net.URI;
@@ -57,6 +58,7 @@ public final class HandWrittenToolChat implements Chat.ToolChat {
   private final String apiKey;
   private final String defaultModel;
   private final CrmTools tools;
+  private ChatObserver observer = ChatObserver.NONE;
   private final HttpClient http =
       HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
@@ -67,6 +69,16 @@ public final class HandWrittenToolChat implements Chat.ToolChat {
     this.tools = tools;
   }
 
+  /**
+   * Reports what happens while a question is answered (a model call, a tool call, a failure) to the
+   * observer; the default does nothing. The loop calls it directly, which is the hand-written way
+   * of getting the signals (J8.4, ADR 0039).
+   */
+  public HandWrittenToolChat withObserver(ChatObserver observer) {
+    this.observer = observer == null ? ChatObserver.NONE : observer;
+    return this;
+  }
+
   @Override
   public String approach() {
     return "handWritten";
@@ -75,6 +87,20 @@ public final class HandWrittenToolChat implements Chat.ToolChat {
   @Override
   public Chat.Result answer(List<Chat.Message> messages, String model) {
     String useModel = model == null ? defaultModel : model;
+    try (ChatObserver.Request observed = observer.begin(approach(), useModel)) {
+      try {
+        return answer(messages, useModel, observed);
+      } catch (Chat.UnavailableException e) {
+        observed.fail("unavailable");
+        throw e;
+      } catch (RuntimeException e) {
+        observed.fail("error");
+        throw e;
+      }
+    }
+  }
+
+  private Chat.Result answer(List<Chat.Message> messages, String useModel, ChatObserver.Request observed) {
     ArrayNode conversation = JSON.createArrayNode();
     conversation.add(message("system", SYSTEM_PROMPT));
     for (Chat.Message m : messages) {
@@ -86,7 +112,7 @@ public final class HandWrittenToolChat implements Chat.ToolChat {
     Reply reply = null;
     boolean answered = false;
     for (int round = 0; round < MAX_TOOL_ITERATIONS; round++) {
-      reply = complete(useModel, conversation, toolSchemas, "auto");
+      reply = complete(useModel, conversation, toolSchemas, "auto", observed);
       if (reply.toolCalls().isEmpty()) {
         answered = true;
         break;
@@ -96,7 +122,7 @@ public final class HandWrittenToolChat implements Chat.ToolChat {
       for (JsonNode call : calls) {
         String id = call.path("id").asString("");
         String name = call.path("function").path("name").asString("");
-        String result = runTool(name, call.path("function").path("arguments"), toolsUsed);
+        String result = runTool(name, call.path("function").path("arguments"), toolsUsed, observed);
         ObjectNode toolMessage = JSON.createObjectNode();
         toolMessage.put("role", "tool");
         toolMessage.put("tool_call_id", id);
@@ -107,32 +133,45 @@ public final class HandWrittenToolChat implements Chat.ToolChat {
     if (!answered) {
       // Hit the limit with the model still asking for tools: force one last plain-text answer.
       conversation.add(message("user", MAX_CALLS_MESSAGE));
-      reply = complete(useModel, conversation, toolSchemas, "none");
+      reply = complete(useModel, conversation, toolSchemas, "none", observed);
     }
     return new Chat.Result(reply.content(), toolsUsed, reply.usage());
   }
 
   /** Runs one tool call and returns the text the model reads; a bad call becomes an error text, never an exception. */
-  private String runTool(String name, JsonNode rawArguments, List<Chat.ToolUse> toolsUsed) {
+  private String runTool(
+      String name, JsonNode rawArguments, List<Chat.ToolUse> toolsUsed, ChatObserver.Request observed) {
+    long started = System.nanoTime();
+    // a name the model made up is not recorded as such: it is model output, not something we offer
+    String observedName = CrmTools.knows(name) ? name : "unknown";
     JsonNode arguments;
     try {
       // the arguments arrive as a JSON string; some models send an object instead
       arguments = rawArguments.isString() ? JSON.readTree(rawArguments.asString()) : rawArguments;
     } catch (JacksonException e) {
+      observed.toolCall(observedName, "invalid_call", millisSince(started));
       return error("Invalid tool call: the arguments are not valid JSON.");
     }
     Map<String, Object> clean;
     try {
       clean = CrmTools.validate(name, arguments);
     } catch (IllegalArgumentException e) {
+      observed.toolCall(observedName, "invalid_arguments", millisSince(started));
       return error(e.getMessage());
     }
     toolsUsed.add(new Chat.ToolUse(name, clean));
     try {
-      return tools.call(name, clean);
+      String result = tools.call(name, clean);
+      observed.toolCall(observedName, "ran", millisSince(started));
+      return result;
     } catch (RuntimeException e) {
+      observed.toolCall(observedName, "tool_error", millisSince(started));
       return error(String.valueOf(e.getMessage()));
     }
+  }
+
+  private static long millisSince(long startedNanos) {
+    return (System.nanoTime() - startedNanos) / 1_000_000;
   }
 
   private static String error(String message) {
@@ -142,7 +181,8 @@ public final class HandWrittenToolChat implements Chat.ToolChat {
   private record Reply(String content, List<JsonNode> toolCalls, Chat.Usage usage) {}
 
   /** One request to the model: the conversation, the tools and whether it may (auto) or may not (none) call them. */
-  private Reply complete(String model, ArrayNode conversation, ArrayNode toolSchemas, String toolChoice) {
+  private Reply complete(
+      String model, ArrayNode conversation, ArrayNode toolSchemas, String toolChoice, ChatObserver.Request observed) {
     if (apiKey == null || apiKey.isBlank()) {
       throw new Chat.UnavailableException("OPENROUTER_API_KEY is not set. Put it in the environment.");
     }
@@ -152,6 +192,15 @@ public final class HandWrittenToolChat implements Chat.ToolChat {
     body.set("tools", toolSchemas);
     body.put("tool_choice", toolChoice);
     long started = System.nanoTime();
+    try {
+      return completeOnce(model, body, started, observed);
+    } catch (Chat.UnavailableException e) {
+      observed.modelCall(model, null, null, millisSince(started), "error");
+      throw e;
+    }
+  }
+
+  private Reply completeOnce(String model, ObjectNode body, long started, ChatObserver.Request observed) {
     HttpResponse<String> response;
     try {
       response =
@@ -191,6 +240,7 @@ public final class HandWrittenToolChat implements Chat.ToolChat {
     Integer in = usage.path("prompt_tokens").isNumber() ? usage.path("prompt_tokens").asInt() : null;
     Integer out = usage.path("completion_tokens").isNumber() ? usage.path("completion_tokens").asInt() : null;
     long ms = (System.nanoTime() - started) / 1_000_000;
+    observed.modelCall(model, in, out, ms, "ok");
     return new Reply(content, calls, new Chat.Usage(model, in, out, ms));
   }
 
