@@ -19,6 +19,18 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 5 | `curl -s localhost:8001/v3/api-docs` | The same description as JSON (the Python edition's `/docs` is the counterpart) | A machine-readable contract |
 | 6 | Start with `OPENAPI_ENABLED=false` | Both addresses answer 404 | The switch |
 
+## J8.5a: a simple agent with an approval pause, by hand (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; new tests in `agent-graph/handWritten` (the agent) and `common` (the server and the model reply parsing); no keys, no network | The steps, the pause, the resume, the dry run and the failure paths against a scripted model and a stub CRM |
+| 2 | With the application up (`just db`, `just run`): `OPENROUTER_API_KEY=... just comparisons-agent-hand-written`, then `curl -s localhost:18141/health` | `{"status":"ok","approach":"handWritten"}` | The backend is running |
+| 3 | `curl -s -X POST localhost:18141/api/v1/agent/start -H 'Content-Type: application/json' -d '{"company":"Acme"}'` | Status `awaiting_approval`, four steps (`approval` is `waiting`, `act` is `pending`), a `recommendation` with an action and a rationale, and a `runId` | The run stopped at the pause (one model call) |
+| 4 | `curl -s -X POST localhost:18141/api/v1/agent/resume -H 'Content-Type: application/json' -d '{"runId":"<the runId>","approve":true}'` | Status `completed`, `act` is `done`, and a message that says "Dry run ... Nothing was written." | The approval continued the run; nothing was written to the CRM |
+| 5 | The same with `"approve":false` on a new run | Status `declined`, `act` is `skipped` | The decline path |
+| 6 | Answer the same run again | HTTP 409 "This run is not waiting for approval" | A run is answered once |
+| 7 | Start with `{"company":"Zephyr Holdings"}` | HTTP 404 "No company matching ... was found." | No model call for a company that is not there |
+
 ## J8.4c: observation with LangChain4j (Java extension)
 
 | # | Do | Expect | What it shows |
