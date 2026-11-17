@@ -53,6 +53,52 @@ class HandWrittenMemoryChatTests {
     return chat.get(id).messages().stream().map(m -> m.role() + ": " + m.content()).toList();
   }
 
+  @Test
+  void aConversationNeverStoresMoreThanTheBoundAndKeepsTheNewest() {
+    var chat = chat(new MemoryLimits(20, 16_000, Duration.ofHours(24), 1_000, 10));
+    String id = chat.create().conversationId();
+    MemoryChat.Answer last = null;
+    for (int i = 1; i <= 8; i++) {
+      last = say(chat, id, "q" + i);
+    }
+    // eight turns of two messages would be 16; the bound keeps the newest 10
+    assertThat(last.messagesStored()).isEqualTo(10);
+    assertThat(stored(chat, id))
+        .containsExactly(
+            "user: q4", "assistant: answer to q4", "user: q5", "assistant: answer to q5", "user: q6",
+            "assistant: answer to q6", "user: q7", "assistant: answer to q7", "user: q8", "assistant: answer to q8");
+  }
+
+  @Test
+  void theBoundDoesNotChangeWhatIsSentToTheModel() {
+    var chat = chat(new MemoryLimits(4, 16_000, Duration.ofHours(24), 1_000, 6));
+    String id = chat.create().conversationId();
+    for (int i = 1; i <= 6; i++) {
+      say(chat, id, "q" + i);
+    }
+    // stored: 6 (the bound); sent with the sixth question: the window of 4 plus the new one
+    assertThat(chat.get(id).messages()).hasSize(6);
+    var sent = FakeModel.messages(model.requests.get(5));
+    assertThat(sent.size()).isEqualTo(1 + 4 + 1);
+  }
+
+  @Test
+  void belowTheBoundNothingIsDropped() {
+    var chat = chat(new MemoryLimits(20, 16_000, Duration.ofHours(24), 1_000, 10));
+    String id = chat.create().conversationId();
+    say(chat, id, "q1");
+    say(chat, id, "q2");
+    assertThat(stored(chat, id)).containsExactly("user: q1", "assistant: answer to q1", "user: q2", "assistant: answer to q2");
+  }
+
+  @Test
+  void theBoundIsAConfigurableLimitAndMustBeAtLeastOneTurn() {
+    assertThat(MemoryLimits.DEFAULTS.maxStoredMessages()).isEqualTo(200);
+    assertThat(MemoryLimits.fromEnvironment(name -> name.equals("MEMORY_MAX_STORED_MESSAGES") ? "50" : null).maxStoredMessages()).isEqualTo(50);
+    org.assertj.core.api.Assertions.assertThatThrownBy(() -> new MemoryLimits(20, 16_000, Duration.ofHours(24), 1_000, 1))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
   // ---------------------------------------------------------------- the turn
 
   @Test

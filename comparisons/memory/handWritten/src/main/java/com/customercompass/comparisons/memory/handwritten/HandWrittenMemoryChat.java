@@ -31,8 +31,9 @@ import java.util.UUID;
  *       appends only; <b>no lock is held while the model is called</b>.
  * </ul>
  *
- * <p>Not durable (a restart forgets everything). A conversation's stored messages are not bounded
- * by the contract, only by its time limit (ADR 0050 records this).
+ * <p>A conversation keeps at most {@code maxStoredMessages} messages (200 by default): when a turn is
+ * appended the oldest are dropped, so a client that keeps a conversation alive cannot grow it
+ * without limit. Not durable (a restart forgets everything).
  */
 public final class HandWrittenMemoryChat implements MemoryChat {
 
@@ -152,6 +153,10 @@ public final class HandWrittenMemoryChat implements MemoryChat {
       } else {
         conversation.messages.addAll(messages);
         conversation.messages.add(new Chat.Message("assistant", reply.content()));
+        int excess = conversation.messages.size() - limits.maxStoredMessages();
+        if (excess > 0) {
+          conversation.messages.subList(0, excess).clear();
+        }
         stored = conversation.messages.size();
       }
     }
