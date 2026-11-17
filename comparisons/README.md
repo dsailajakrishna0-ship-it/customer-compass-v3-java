@@ -12,6 +12,7 @@ comparisons/
     withLangchain4j/            J8.1c: LangChain4j @Tool and AiServices (port 18103)
   agent-graph/
     handWritten/                J8.5a: a simple agent with an approval pause, no AI framework (port 18141)
+    withLangGraph4j/            J8.5b: the same agent as a LangGraph4j graph with its checkpoint and interrupt (port 18142)
   observability/
     handWritten/                J8.4a: the hand-written tool loop with an observer, OpenTelemetry spans and metrics (port 18131)
     withSpringAi/               J8.4b: Spring AI's own observations turned into the same signals (port 18132)
@@ -40,6 +41,7 @@ Every backend serves the same route as the application's tool-calling chat, `POS
 | `just comparisons-retrieve-with-langchain4j` | Starts the withLangchain4j retrieval backend on port 18123 (needs `GOOGLE_API_KEY`, `just qdrant` and a prior withLangchain4j ingestion; Qdrant gRPC port 26334 by default) |
 | `just comparisons-observe-with-spring-ai` | Starts the withSpringAi tool-calling backend with observation on port 18132 (`TELEMETRY_ENABLED=true`; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-observe-with-langchain4j` | Starts the withLangchain4j tool-calling backend with observation on port 18133 (`TELEMETRY_ENABLED=true`; needs `OPENROUTER_API_KEY` and the application up) |
+| `just comparisons-agent-with-langgraph4j` | Starts the withLangGraph4j agent backend on port 18142 (needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-agent-hand-written` | Starts the handWritten agent backend on port 18141 (needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-observe-hand-written` | Starts the handWritten tool-calling backend with observation on port 18131 (`TELEMETRY_ENABLED=true`; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-retrieve-hand-written` | Starts the handWritten retrieval backend on port 18121 (needs `GOOGLE_API_KEY`, `just qdrant` and a prior handWritten ingestion) |

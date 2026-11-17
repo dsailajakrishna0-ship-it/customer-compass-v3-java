@@ -38,6 +38,39 @@ flowchart LR
 
 **Rule to remember.** *An agent is safe because of what surrounds the model: fixed steps, the model's text confined to a message, and a pause before anything that matters.*
 
+## J8.5b: the agent with LangGraph4j
+
+The same four steps and the same HTTP contract, as a **LangGraph4j 1.9.9 graph**: `gather` (plain code), `recommend` (the same model call as the hand-written agent), `approval`, `act`. The pause is the library's own: the graph is compiled with a **checkpoint saver** and an **interrupt before `approval`**; a run is a graph *thread* whose id is the run id. Port 18142. Decisions and the measured tables: [ADR 0043](../adr/0043-agent-with-langgraph4j.md).
+
+```mermaid
+flowchart LR
+  start["start: invoke(input, thread)"] --> gather --> recommend --> stop{{"interrupt before approval<br/>(state saved under the thread id)"}}
+  stop -->|"updateState(approved) + invoke(resume)"| approval --> edge{approved?}
+  edge -->|yes| act --> done(["end"])
+  edge -->|no| done
+```
+
+**What LangGraph4j gave, without a line of ours** (measured in `LangGraph4jBehaviourTests`): the stop and the saved state, the continue from the checkpoint with the answer put into the state, a conditional edge that reads that answer, independent threads, and a refusal to resume a finished thread.
+
+**What it did not give, and what that took:**
+
+| The rule | What LangGraph4j does | In `withLangGraph4j` |
+| --- | --- | --- |
+| Know that the run stopped | `invoke` returns the state so far, **no marker** | Ask the saver: `getState(...).nextNodeId()` |
+| 404 unknown run, 409 answered run | The **same two exceptions** for both | Our map of runs and a status |
+| Keep only the last 100 runs | The saver has **no bound and no way to forget a thread** | One graph and one saver **per run**, in a bounded map |
+| The original error | Wrapped in **three layers** | `unwrap` |
+| A failed run must not linger | It **stays saved at the failed node** | A run is kept only after it reached the pause |
+| State | Must be **serializable** | Strings only |
+
+**Two things you would not guess.** The nodes run on **the library's own platform thread**, not the caller's, so anything that depends on the calling thread (a request context) does not follow. And a **finished thread's checkpoints are kept** (moved into a tag) whatever the release setting, so a saver that serves many runs grows for ever.
+
+**Cost.** One direct dependency (`langgraph4j-core`, about 320 KB, bringing `async-generator`, `gson`, `slf4j-api`, `jspecify` and Jackson 2). The agent class is **178 lines of code against 112** for the hand-written one: the library replaced the state machine with two calls, but the contract rules it does not give were written out.
+
+**Measured here:** the library's behaviour and the agent's, against a scripted model and a stub CRM. **Not measured:** a live model, and a durable saver (the application's `langgraph4j-postgres-saver` is not used here).
+
+**Rule to remember.** *A checkpoint is not a record of runs. The library keeps the state; knowing which runs exist, which are answered and how many to keep is still yours.*
+
 ## Code tour
 
 | | Where | What |
@@ -45,6 +78,7 @@ flowchart LR
 | new | `comparisons/common/.../Agent.java`, `AgentBackendServer.java`, `Recommender.java`, `OpenRouterRecommender.java` | The contract, the shared HTTP face and the shared model call |
 | new | `comparisons/agent-graph/handWritten/` | `HandWrittenAgent` (the steps, the run store, the resume), `HandWrittenAgentMain` (port 18141) |
 | new | `justfile` | `comparisons-agent-hand-written` |
+| new (J8.5b) | `comparisons/agent-graph/withLangGraph4j/` | `LangGraph4jAgent` (the graph, the run map), `LangGraph4jAgentMain` (port 18142); `justfile` `comparisons-agent-with-langgraph4j` |
 
 ## Questions to try
 
