@@ -5,6 +5,7 @@ import com.customercompass.comparisons.common.CrmTools;
 import java.util.Map;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import io.micrometer.observation.ObservationRegistry;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -24,12 +25,33 @@ public final class CrmToolMethods {
 
   private static final JsonMapper JSON = JsonMapper.builder().build();
 
+  /** The word a tool observation carries for what the tool did (read by the observation handler of J8.4b). */
+  public static final String OUTCOME_KEY = "cc.outcome";
+
   private final CrmTools tools;
   private final TurnState state;
+  private final ObservationRegistry observations;
 
   CrmToolMethods(CrmTools tools, TurnState state) {
+    this(tools, state, ObservationRegistry.NOOP);
+  }
+
+  CrmToolMethods(CrmTools tools, TurnState state, ObservationRegistry observations) {
     this.tools = tools;
     this.state = state;
+    this.observations = observations;
+  }
+
+  /**
+   * Spring AI observes every tool call but knows nothing of our outcome words: a call that is
+   * refused (surplus call, bad arguments) returns an error text and looks like a success to it. The
+   * tool method runs inside the tool call's observation, so the word is added to that observation.
+   */
+  private void outcome(String word) {
+    var current = observations.getCurrentObservation();
+    if (current != null) {
+      current.lowCardinalityKeyValue(OUTCOME_KEY, word);
+    }
   }
 
   @Tool(
@@ -54,12 +76,14 @@ public final class CrmToolMethods {
 
   private String run(String tool, String companyName) {
     if (state.countCall() > MAX_CALLS_PER_REPLY) {
+      outcome("skipped");
       return error("Too many tool calls in one reply: at most " + MAX_CALLS_PER_REPLY + " are run.");
     }
     Map<String, Object> clean;
     try {
       clean = CrmTools.validate(tool, JSON.createObjectNode().put("company_name", companyName));
     } catch (IllegalArgumentException e) {
+      outcome("invalid_arguments");
       return error(e.getMessage());
     }
     state.used(new Chat.ToolUse(tool, clean));

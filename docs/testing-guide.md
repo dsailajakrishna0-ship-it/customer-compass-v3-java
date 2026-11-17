@@ -19,6 +19,17 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 5 | `curl -s localhost:8001/v3/api-docs` | The same description as JSON (the Python edition's `/docs` is the counterpart) | A machine-readable contract |
 | 6 | Start with `OPENAPI_ENABLED=false` | Both addresses answer 404 | The switch |
 
+## J8.4b: observation with Spring AI (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; new tests in `observability/withSpringAi`: `SpringAiObservabilityBehaviourTests` (what Spring AI observes on its own) and `ObservedSpringAiTests` (the signals); no keys, no network | The library's observations and our signals against a fake model and CRM |
+| 2 | Read `SpringAiObservabilityBehaviourTests` | Short tests: two model observations and one tool observation per question with one tool, tokens on the model observation, no content in any key, no parent, no error on a thrown tool | What the library does on its own; each is a measurement |
+| 3 | With the application up (`just db`, `just run`): `TELEMETRY_ENABLED=true OPENROUTER_API_KEY=... just comparisons-observe-with-spring-ai`, then `curl -s localhost:18132/health` | `{"status":"ok","approach":"withSpringAi"}` | The backend is running with observation on |
+| 4 | `curl -s -X POST localhost:18132/api/v1/chat/tools -H 'Content-Type: application/json' -d '{"messages":[{"role":"user","content":"What open deals does Acme Fabrication have?"}]}'`, then `curl -s localhost:18132/api/v1/observability/recent` | An answer, then a trace with `chat.request`, `llm.generate` and `tool.get_open_deals` spans and the metrics, with tokens; **no question or answer text anywhere** | The same signals as on 18131, from Spring AI's observations |
+| 5 | Ask the same question on 18131 and 18132 and compare the two traces | The same spans and attributes; `cc.approach` differs | Two paths, one set of signals |
+| 6 | Start without `TELEMETRY_ENABLED` and call the route | HTTP 404 "Observation is off..." | Off by default |
+
 ## J8.4a: observation by hand (Java extension)
 
 | # | Do | Expect | What it shows |

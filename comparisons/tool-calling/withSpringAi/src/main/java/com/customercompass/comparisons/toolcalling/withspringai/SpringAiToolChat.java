@@ -7,6 +7,7 @@ import com.openai.errors.OpenAIServiceException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -56,12 +57,14 @@ public final class SpringAiToolChat implements Chat.ToolChat {
   private final String apiKey;
   private final String defaultModel;
   private final CrmTools tools;
-  private final ToolCallingManager manager = manager();
+  private volatile ObservationRegistry observations = ObservationRegistry.NOOP;
+  private volatile ToolCallingManager manager = manager(ObservationRegistry.NOOP);
   private volatile OpenAiChatModel chatModel;
 
-  private static ToolCallingManager manager() {
-    var errors = new ErrorsAsData();
+  private static ToolCallingManager manager(ObservationRegistry observations) {
+    var errors = new ErrorsAsData(observations);
     return ToolCallingManager.builder()
+        .observationRegistry(observations)
         .toolExecutionExceptionProcessor(errors)
         .toolCallbackResolver(errors)
         .resolutionFallbackEnabled(true)
@@ -75,6 +78,22 @@ public final class SpringAiToolChat implements Chat.ToolChat {
     this.apiKey = apiKey;
     this.defaultModel = defaultModel;
     this.tools = tools;
+  }
+
+  /**
+   * Gives the chat model and the tool-calling manager an observation registry, so Spring AI's own
+   * observations (one per model call, one per tool call) reach whoever registered a handler on it
+   * (J8.4b, ADR 0040). Call it before the first question; the default registry observes nothing and
+   * behaviour is unchanged.
+   */
+  public SpringAiToolChat withObservationRegistry(ObservationRegistry registry) {
+    ObservationRegistry use = registry == null ? ObservationRegistry.NOOP : registry;
+    synchronized (this) {
+      this.observations = use;
+      this.manager = manager(use);
+      this.chatModel = null;
+    }
+    return this;
   }
 
   @Override
@@ -101,7 +120,7 @@ public final class SpringAiToolChat implements Chat.ToolChat {
               .system(SYSTEM_PROMPT)
               .messages(history(messages))
               .options(OpenAiChatOptions.builder().model(useModel))
-              .tools(new CrmToolMethods(tools, state))
+              .tools(new CrmToolMethods(tools, state, observations))
               .call()
               .chatResponse();
     } catch (RuntimeException e) {
@@ -145,6 +164,7 @@ public final class SpringAiToolChat implements Chat.ToolChat {
                           .timeout(Duration.ofSeconds(120))
                           .maxRetries(0)
                           .build())
+                  .observationRegistry(observations)
                   .build();
         }
         local = chatModel;

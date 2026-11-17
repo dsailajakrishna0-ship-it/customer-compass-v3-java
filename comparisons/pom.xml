@@ -52,5 +52,6 @@
     <module>rag-retrieval/withSpringAi</module>
     <module>rag-retrieval/withLangchain4j</module>
     <module>observability/handWritten</module>
+    <module>observability/withSpringAi</module>
   </modules>
 </project>
