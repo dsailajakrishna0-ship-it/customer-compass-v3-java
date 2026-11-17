@@ -26,6 +26,8 @@ comparisons/
     handWritten/                J8.4a: the hand-written tool loop with an observer, OpenTelemetry spans and metrics (port 18131)
     withSpringAi/               J8.4b: Spring AI's own observations turned into the same signals (port 18132)
     withLangchain4j/            J8.4c: the LangChain4j tool chat observed through its own listeners and events (port 18133)
+  memory/
+    handWritten/                J8.6a: conversation memory by hand: a store with a window, a time limit and a cap, no AI framework (port 18161)
   rag-retrieval/
     handWritten/                J8.3a: no AI framework, REST calls to Gemini and Qdrant, the floor in our code (port 18121)
     withSpringAi/               J8.3b: Spring AI QdrantVectorStore search over the Gemini embedding model (port 18122)
@@ -56,6 +58,7 @@ Every backend serves the same route as the application's tool-calling chat, `POS
 | `just comparisons-multi-agent-supervisor` | Starts the supervisor-pattern backend on port 18151 (`TELEMETRY_ENABLED=true` to record signals; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-multi-agent-network` | Starts the network-pattern backend on port 18153 (`TELEMETRY_ENABLED=true` to record signals; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-multi-agent-handoff` | Starts the handoff-pattern backend on port 18154 (`TELEMETRY_ENABLED=true` to record signals; needs `OPENROUTER_API_KEY` and the application up) |
+| `just comparisons-memory-hand-written` | Starts the handWritten conversation-memory backend on port 18161 (needs `OPENROUTER_API_KEY`; `TELEMETRY_ENABLED=true` to record signals) |
 | `just comparisons-agent-hand-written` | Starts the handWritten agent backend on port 18141 (needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-observe-hand-written` | Starts the handWritten tool-calling backend with observation on port 18131 (`TELEMETRY_ENABLED=true`; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-retrieve-hand-written` | Starts the handWritten retrieval backend on port 18121 (needs `GOOGLE_API_KEY`, `just qdrant` and a prior handWritten ingestion) |

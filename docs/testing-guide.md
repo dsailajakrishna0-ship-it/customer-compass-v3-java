@@ -701,3 +701,17 @@ just test-web        # web app: lint, types, 16 tests, build
 | 6 | Open the pull request's Checks tab | api, web, docs and security all green | CI runs the same commands |
 
 **Stop:** nothing is left running.
+
+## J8.6a: conversation memory by hand (Java lab)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; 23 new tests in `common` (the shared HTTP face, the model client) and 26 in `memory/handWritten` (the window, the time limit, the cap, the locks, the HTTP flow, the signals); no keys, no network, no Docker | Every rule runs against a scripted model and a movable clock |
+| 2 | `OPENROUTER_API_KEY=... just comparisons-memory-hand-written`, then `curl -s localhost:18161/health` | `{"status":"ok","approach":"handWritten"}` | The backend is running |
+| 3 | `curl -s -X POST localhost:18161/api/v1/conversations` | HTTP 201 with a `conversationId` (a random UUID) and an `expiresAt` 24 hours ahead | A conversation is created before use |
+| 4 | `curl -s -X POST localhost:18161/api/v1/chat/memory -H 'Content-Type: application/json' -d '{"conversationId":"<id>","messages":[{"role":"user","content":"My company is Acme."}]}'`, then the same with `"What did I just tell you?"` | The second answer mentions Acme; `memory.messagesUsed` is 2 and `messagesStored` is 4 | The server, not the client, remembers |
+| 5 | `curl -s localhost:18161/api/v1/conversations/<id>` | The four messages, user then assistant, in order | Reading a conversation |
+| 6 | `curl -s -i -X DELETE localhost:18161/api/v1/conversations/<id>`, then repeat step 5 | 204 with no body, then 404 "Conversation not found or expired." | Deleting |
+| 7 | Send a turn with a made-up id, or with 13 messages | 404 for the id, 422 for the body, no model call (with `TELEMETRY_ENABLED=true` there is no `llm.generate` span) | Validation comes before the model |
+
+**Stop:** end the backend with Ctrl+C.
