@@ -279,3 +279,7 @@ eval-retrieval-selftest:
 # J7.1: rewrite evals/adversarial/baseline.json from the guard's current behaviour (on purpose, after a rule change)
 eval-adversarial-baseline:
     cd {{api}} && EVAL_WRITE_BASELINE=1 ./mvnw -B -ntp -q test -Dtest=AdversarialEvalTests
+
+# J8.6a: the handWritten conversation-memory backend on port 18161 (needs OPENROUTER_API_KEY; TELEMETRY_ENABLED=true records signals; LLM_BASE_URL, MODEL, PORT, MEMORY_MAX_MESSAGES, MEMORY_MAX_CHARS, MEMORY_TTL_HOURS, MEMORY_MAX_CONVERSATIONS optional)
+comparisons-memory-hand-written:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl memory/handWritten -am compile exec:java
