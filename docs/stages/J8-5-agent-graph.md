@@ -1,6 +1,6 @@
 # Stage J8.5: a simple agent with an approval pause, built several ways
 
-Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0042](../adr/0042-agent-with-approval-pause-comparison.md) (the contract). Code: [`comparisons/agent-graph/`](../../comparisons/README.md). One section per approach, added as each is built: **J8.5a `handWritten`** (here), J8.5b `withLangGraph4j`, J8.5c `withLangchain4jAgentic`, and J8.5d the three side by side. Spring AI has no graph or pause feature, so it has no folder here.
+Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0042](../adr/0042-agent-with-approval-pause-comparison.md) (the contract). Code: [`comparisons/agent-graph/`](../../comparisons/README.md). One section per approach (J8.5a `handWritten`, J8.5b `withLangGraph4j`, J8.5c `withLangchain4jAgentic`) and, last, J8.5d, the three side by side. The per-approach decisions: [ADR 0043](../adr/0043-agent-with-langgraph4j.md), [ADR 0044](../adr/0044-agent-with-langchain4j-agentic.md). Spring AI has no graph or pause feature, so it has no folder here.
 
 ## In one minute
 
@@ -90,6 +90,46 @@ flowchart LR
 **Measured here:** the library's behaviour and ours against a scripted model and a stub CRM. **Not measured:** a live model, a durable pause across a restart (the module has a scope store that was not used), the loop and supervisor workflows.
 
 **Rule to remember.** *Ask a framework's pause two questions: does it hold a thread, and does it survive a restart? Here the answers are no, and not unless you add a store.*
+
+## J8.5d: the three side by side
+
+The same agent, the same HTTP contract and the same rules, built three ways. Everything here comes from the code, the tests and ADRs 0042 to 0044. **Spring AI has no graph or pause feature** (its documentation describes agent workflows as patterns you write with `ChatClient`), so it has no folder in this stage. **Not measured:** a live model, and a pause that survives a restart (all three keep their runs in memory), so nothing below says which path is faster or more reliable in production.
+
+**Size.** Lines of Java that are not blank, not comments, not `import` or `package` lines. The shared pieces in `comparisons/common` (`Agent`, `AgentBackendServer`, `Recommender`, `OpenRouterRecommender`, **254 lines**) are used by all three and counted once:
+
+| | handWritten | withLangGraph4j | withLangchain4jAgentic |
+| --- | --- | --- | --- |
+| **The agent class** | **112** | **178** | **242** |
+| Module main code (agent class and its main) | 131 | 197 | 262 |
+| Module test code | 258 | 438 | 433 |
+| Test files | 2 | 3 | 3 |
+| Library | none | `langgraph4j-core` (stable 1.9.9) | `langchain4j-agentic` (**beta**, 1.23.0-beta33) |
+
+**Read this table carefully.** As in the observability stage, the hand-written path is the **smallest**, and the gap is wider the more the library has to be told. For **four fixed steps and one pause**, a graph is more code than a state machine: the library replaces the state machine itself (the pause and the resume become library calls), but the rules of the contract are written out anyway. The frameworks needed about 70% more test code, because each needed a class that measures what the library does on its own.
+
+**How each one makes the pause** (the framework columns show what the library does on its own, measured):
+
+| | handWritten | withLangGraph4j | withLangchain4jAgentic |
+| --- | --- | --- | --- |
+| **The pause** | A run object in a map with the status `awaiting_approval`; `start` simply returns | A checkpoint saver and a stop before the `act` node; `invoke` returns the state **with no marker that it stopped**, so we ask `getState(config).nextNodeId()` | A human-in-the-loop provider that returns a **`SuspendedResponse`: the thread is released** and the result says `suspended() == true` |
+| Where the run's state lives | Our map | The library's `MemorySaver` (one per run) | The library's agentic scope, plus our map of suspended results |
+| **Resuming** | Find the run, run `act` | Put the answer in the saved state (`updateState`), then `invoke` again | `completePendingResponse(value)`: continues **from where it stopped**, earlier steps do not run again |
+| A thread held while waiting? | No | No | **No** (a provider that waits on a future would park a thread; that was measured, and is not used) |
+| A finished or unknown run | Our map and status give the 409 and the 404 | **The same exception for both**: the library cannot tell which is which, so our map does | A second completion throws `IllegalStateException`; our status check gives the 409 first |
+| **Memory** | A map that keeps the most recent 100 runs | **The saver has no bound and no way to forget a thread**: one graph and saver per run, in a bounded map | **Every scope stays in a registry**, finished ones too: we evict it ourselves |
+| An exception in a step | Plain | Wrapped in **three layers**; the thread stays saved at the failed node | Wrapped (`AgentInvocationException` and others); found by walking the causes |
+| Skipping `act` on a decline | An `if` | The end edge when the answer is not an approval (a resume with **no answer takes the end edge silently**) | An **activation condition** on the step |
+| Quirks found by running it | none | State must be **serializable**; nodes run on the library's own **platform** thread | Agent interfaces must be **public** (reflection); a **beta** |
+
+**The same lesson, three times.** The library gives you the stopping and the resuming. It does **not** give you a record of runs: the **404, the 409 and the memory bound came from our own map in all three**, because a checkpoint or a scope is state, not a list of runs someone may still answer. **A pause is only as safe as the code around it.** A durable pause (one that survives a restart) exists in LangGraph4j as a Postgres saver, which the application uses; this comparison does not use it.
+
+**When to pick which** (a judgement from this exercise, not a measurement):
+- **Hand-written** when the steps are few and fixed and the pause is one status: the code is the smallest and every rule is in one place. The cost: you own the state machine and the store.
+- **LangGraph4j** when the agent has many steps, conditions and loops, or the pause must be durable (the Postgres saver). It is a stable library; plan for the run record and the memory bound.
+- **LangChain4j agentic** when you already build on LangChain4j and want sequences of agents sharing one scope. Its human-in-the-loop can pause without holding a thread, but it is a beta: plan for API changes and the registry that only grows.
+- In all three cases, **write the contract's rules first** (one answer per run, unknown run, a bound on memory, status-only errors) and test each against the library, including two runs at once.
+
+**Rule to remember.** *A framework gives you the stopping and the resuming. The run record, the 404 and 409, and the memory bound are still yours.*
 
 ## Code tour
 
