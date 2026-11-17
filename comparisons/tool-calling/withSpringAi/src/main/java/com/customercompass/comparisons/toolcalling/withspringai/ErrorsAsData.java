@@ -6,6 +6,7 @@ import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.execution.ToolExecutionException;
 import org.springframework.ai.tool.execution.ToolExecutionExceptionProcessor;
 import org.springframework.ai.tool.resolution.ToolCallbackResolver;
+import io.micrometer.observation.ObservationRegistry;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -28,12 +29,36 @@ final class ErrorsAsData implements ToolExecutionExceptionProcessor, ToolCallbac
 
   private static final JsonMapper JSON = JsonMapper.builder().build();
 
+  private final ObservationRegistry observations;
+
+  ErrorsAsData() {
+    this(ObservationRegistry.NOOP);
+  }
+
+  ErrorsAsData(ObservationRegistry observations) {
+    this.observations = observations;
+  }
+
+  /**
+   * The manager handles a tool's exception itself, inside the tool call's observation, so Spring AI
+   * records no error on it (measured, ADR 0040). The processor runs in that observation's scope,
+   * so the outcome word is added to it here.
+   */
+  private void outcome(String word) {
+    var current = observations.getCurrentObservation();
+    if (current != null) {
+      current.lowCardinalityKeyValue(CrmToolMethods.OUTCOME_KEY, word);
+    }
+  }
+
   @Override
   public String process(ToolExecutionException exception) {
     Throwable cause = exception.getCause();
     if (cause instanceof JacksonException) {
+      outcome("invalid_call");
       return wrap(error("Invalid tool call: the arguments are not valid JSON."));
     }
+    outcome("tool_error");
     String message = exception.getMessage();
     if (message == null || message.isBlank()) {
       message = "The tool " + exception.getToolDefinition().name() + " failed.";

@@ -66,6 +66,10 @@ comparisons-retrieve-with-langchain4j:
 comparisons-observe-hand-written:
     ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl observability/handWritten -am -Dtoolcalling.exec.skip=true compile exec:java
 
+# J8.4b: the withSpringAi tool-calling backend with observation on port 18132 (TELEMETRY_ENABLED=true turns it on; needs OPENROUTER_API_KEY and the application up; CRM_BASE_URL, MODEL, PORT optional)
+comparisons-observe-with-spring-ai:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl observability/withSpringAi -am -Dtoolcalling.exec.skip=true compile exec:java
+
 # web app: lint, types, tests, production build (copied from the Python edition)
 test-web:
     npm run lint

@@ -12,6 +12,7 @@ comparisons/
     withLangchain4j/            J8.1c: LangChain4j @Tool and AiServices (port 18103)
   observability/
     handWritten/                J8.4a: the hand-written tool loop with an observer, OpenTelemetry spans and metrics (port 18131)
+    withSpringAi/               J8.4b: Spring AI's own observations turned into the same signals (port 18132)
   rag-retrieval/
     handWritten/                J8.3a: no AI framework, REST calls to Gemini and Qdrant, the floor in our code (port 18121)
     withSpringAi/               J8.3b: Spring AI QdrantVectorStore search over the Gemini embedding model (port 18122)
@@ -34,6 +35,7 @@ Every backend serves the same route as the application's tool-calling chat, `POS
 | `just comparisons-ingest-with-langchain4j` | Starts the withLangchain4j ingestion backend on port 18113 (needs `GOOGLE_API_KEY` and `just qdrant` to run; Qdrant's gRPC port 26334 by default) |
 | `just comparisons-retrieve-with-spring-ai` | Starts the withSpringAi retrieval backend on port 18122 (needs `GOOGLE_API_KEY`, `just qdrant` and a prior withSpringAi ingestion) |
 | `just comparisons-retrieve-with-langchain4j` | Starts the withLangchain4j retrieval backend on port 18123 (needs `GOOGLE_API_KEY`, `just qdrant` and a prior withLangchain4j ingestion; Qdrant gRPC port 26334 by default) |
+| `just comparisons-observe-with-spring-ai` | Starts the withSpringAi tool-calling backend with observation on port 18132 (`TELEMETRY_ENABLED=true`; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-observe-hand-written` | Starts the handWritten tool-calling backend with observation on port 18131 (`TELEMETRY_ENABLED=true`; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-retrieve-hand-written` | Starts the handWritten retrieval backend on port 18121 (needs `GOOGLE_API_KEY`, `just qdrant` and a prior handWritten ingestion) |
 | `just comparisons-ingest-hand-written` | Starts the handWritten ingestion backend on port 18111 (needs `GOOGLE_API_KEY` and `just qdrant` to run) |

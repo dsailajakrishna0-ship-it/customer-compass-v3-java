@@ -39,6 +39,36 @@ flowchart LR
 
 **Rule to remember.** *Record what happened, never what was said. The question and the answer are the customer's, not the recorder's.*
 
+## J8.4b: observation with Spring AI
+
+The same flow, the same signals, but the events come from **Spring AI's own observations** instead of reports written into the loop. Spring AI starts an observation for every model call and every tool call; a handler on the registry turns them into the shared signals. Port 18132. Decisions and the measured tables: [ADR 0040](../adr/0040-observability-with-spring-ai.md).
+
+```mermaid
+flowchart LR
+  chat["SpringAiToolChat<br/>(Spring AI's loop)"] -->|"observations"| handler["SpringAiObservationHandler"]
+  handler -->|"modelCall, toolCall"| obs["ChatObserver"]
+  wrap["ObservedSpringAiToolChat<br/>(begin, fail, close)"] --> obs
+  obs --> tel["Telemetry"]
+```
+
+**What Spring AI gave, without a line of ours** (measured in `SpringAiObservabilityBehaviourTests`): one observation per model call with the model, the **token counts** and the error; one per tool call with the tool's name; handlers that run on the asking thread; and key values that carry no question, answer, argument or result by default.
+
+**What it did not give, and what that took:**
+
+| The signal | What Spring AI does | In `withSpringAi` |
+| --- | --- | --- |
+| Tool outcome `invalid_arguments`, `skipped` | A refused call looks like a success | Our tool method adds the word to the current tool observation |
+| Tool outcome `invalid_call`, `tool_error` | A thrown tool leaves **no error** on its observation | Our exception processor adds the word |
+| Which question a call belongs to | The model and tool observations have **no parent**, even with an observation open | A per-question observation kept open on the thread; the handler walks the registry's scope chain (the question is not the top scope) |
+| A safe tool name | A tool the model made up is observed **under its own name** | Reported as `unknown` |
+| Never content | The key values are clean; the contexts hold the prompt, the answer, the arguments and the result | The handler reads only the model name, the tokens, the tool's name and our word |
+
+**One difference you would not guess.** A fifth tool call in one reply is a `tool.<name>` span with the outcome **`skipped`** here; the hand-written loop drops the surplus calls and records nothing.
+
+**Measured here:** the library's observations and our signals against a scripted model and CRM, including two questions at once. **Not measured:** a live model, real latencies, Spring AI's own meter handlers, export to a receiver.
+
+**Rule to remember.** *A framework observes what it does, not what you decided. Anything your own rules refuse or catch looks like a success to it, so say so where the rule runs.*
+
 ## Code tour
 
 | | Where | What |
@@ -48,6 +78,8 @@ flowchart LR
 | changed | `comparisons/tool-calling/handWritten/.../HandWrittenToolChat.java` | `withObserver(...)` and the reports where the loop holds the facts (off by default) |
 | new | `comparisons/observability/handWritten/` | `ObservedHandWrittenMain` (port 18131) and the tests |
 | new | `justfile` | `comparisons-observe-hand-written` |
+| new (J8.4b) | `comparisons/observability/withSpringAi/` | `SpringAiObservationHandler` (Spring AI's observations to the shared signals), `ObservedSpringAiToolChat` (the question's request and observation), `ObservedSpringAiMain` (port 18132); justfile `comparisons-observe-with-spring-ai` |
+| changed (J8.4b) | `comparisons/tool-calling/withSpringAi/` | `SpringAiToolChat.withObservationRegistry(...)`; `CrmToolMethods` and `ErrorsAsData` add `cc.outcome` to the current tool observation (off by default) |
 
 ## Questions to try
 
