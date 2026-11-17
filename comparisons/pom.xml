@@ -21,6 +21,9 @@
 
   <properties>
     <java.version>21</java.version>
+    <!-- The observation modules (J8.4) start a tool-calling chat but must not start the tool-calling backends that -am pulls
+         into the build: their just recipes pass -Dtoolcalling.exec.skip=true. Default false: the tool-calling recipes run as before. -->
+    <toolcalling.exec.skip>false</toolcalling.exec.skip>
   </properties>
 
   <build>
@@ -48,5 +51,6 @@
     <module>rag-retrieval/handWritten</module>
     <module>rag-retrieval/withSpringAi</module>
     <module>rag-retrieval/withLangchain4j</module>
+    <module>observability/handWritten</module>
   </modules>
 </project>

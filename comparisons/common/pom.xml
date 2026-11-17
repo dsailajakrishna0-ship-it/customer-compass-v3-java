@@ -17,6 +17,20 @@
       <groupId>tools.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
+    <!-- J8.4: OpenTelemetry (versions come from Spring Boot's BOM, as in apps/api-java). The testing module is on the
+         compile scope on purpose: its in-memory metric reader is what the recent-signals route reads (ADR 0039). -->
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-sdk</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-sdk-testing</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>

@@ -67,7 +67,7 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <configuration>
-          <skip>false</skip>
+          <skip>${toolcalling.exec.skip}</skip>
           <mainClass>com.customercompass.comparisons.toolcalling.withspringai.WithSpringAiMain</mainClass>
         </configuration>
       </plugin>
