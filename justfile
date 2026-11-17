@@ -78,6 +78,10 @@ comparisons-observe-with-langchain4j:
 comparisons-agent-hand-written:
     ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl agent-graph/handWritten -am compile exec:java
 
+# J8.5b: the withLangGraph4j agent backend with an approval pause on port 18142 (needs OPENROUTER_API_KEY and the application up; CRM_BASE_URL, MODEL, PORT optional)
+comparisons-agent-with-langgraph4j:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl agent-graph/withLangGraph4j -am compile exec:java
+
 # web app: lint, types, tests, production build (copied from the Python edition)
 test-web:
     npm run lint

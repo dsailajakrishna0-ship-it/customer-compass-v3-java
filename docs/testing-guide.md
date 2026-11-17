@@ -19,6 +19,15 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 5 | `curl -s localhost:8001/v3/api-docs` | The same description as JSON (the Python edition's `/docs` is the counterpart) | A machine-readable contract |
 | 6 | Start with `OPENAPI_ENABLED=false` | Both addresses answer 404 | The switch |
 
+## J8.5b: a simple agent with an approval pause, with LangGraph4j (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; the new module has the agent tests (the same expectations as the hand-written agent) and `LangGraph4jBehaviourTests` (what the library does alone); no keys, no network | The pause, the resume and the contract rules, and the library's own behaviour |
+| 2 | With the application up (`just db`, `just run`): `OPENROUTER_API_KEY=... just comparisons-agent-with-langgraph4j`, then `curl -s localhost:18142/health` | `{"status":"ok","approach":"withLangGraph4j"}` | The backend is running |
+| 3 | The same `start` and `resume` calls as on 18141, on 18142 (see J8.5a) | The same answers: `awaiting_approval` with four steps, then `completed` with a dry-run message | The same contract, with the pause taken from the library |
+| 4 | Answer the same run twice, or resume a made-up id | HTTP 409 and HTTP 404 | These come from our run map: the library's own error is the same for both |
+
 ## J8.5a: a simple agent with an approval pause, by hand (Java extension)
 
 | # | Do | Expect | What it shows |
