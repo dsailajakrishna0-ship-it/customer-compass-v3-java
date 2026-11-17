@@ -102,6 +102,65 @@ flowchart TD
 
 **Rule to remember.** *The model proposes, code decides: the supervisor is only as safe as the allowed list around it.*
 
+## J8.7c: the hierarchical pattern
+
+Supervisors of supervisors. The same account review and the same four specialists as the supervisor pattern, organised in **two teams**: a top supervisor chooses between them, and each team is a LangGraph4j **child graph** with a sub-supervisor of its own. Port 18152; decisions: [ADR 0047](../adr/0047-hierarchical-pattern-on-langgraph4j-with-spring-ai.md); code: `comparisons/multi-agent/hierarchical/withLangGraph4jSpringAi`.
+
+```mermaid
+flowchart TD
+  top{"top supervisor<br/>research_team | answer_team | FINISH"}
+  subgraph research ["research_team (child graph)"]
+    rs{"research sub-supervisor<br/>FINISH | deals"}
+    f["crm_facts"]
+    d["deals"]
+    rs --> f --> rs
+    rs --> d --> rs
+  end
+  subgraph answer ["answer_team (child graph)"]
+    as{"answer sub-supervisor<br/>(never a choice)"}
+    a["analyst"]
+    r["reviewer"]
+    as --> a --> as
+    as --> r --> as
+  end
+  top --> rs
+  rs -->|"FINISH"| top
+  top --> as
+  as -->|"FINISH"| top
+  top -->|"FINISH"| done(["done"])
+```
+
+**The allowed lists, by level** (code builds them; the first entry is the fallback):
+
+| Level | State | Allowed |
+| --- | --- | --- |
+| Top | no research yet | `research_team` |
+| Top | researched, no answer yet | `answer_team`, and `research_team` once more if fewer than 2 lookups and fewer than 2 rounds |
+| Top | answer done, or company not found | `FINISH` |
+| Research team | facts not loaded | `crm_facts` |
+| Research team | facts loaded | `FINISH`, and `deals` while fewer than 2 lookups |
+| Answer team | no recommendation | `analyst` |
+| Answer team | not reviewed | `reviewer` |
+| Answer team | approved, or one revision used | `FINISH` |
+| Answer team | review asked for a revision | `analyst` |
+
+**What crosses a team boundary** is the graph's state, a bundle of plain strings, numbers and booleans (facts, deals, the recommendation, the review, counters): a child is given the parent's whole state, and its final state is merged back, **the child's value winning on a collision**. That is why each level has its own "who is next" key.
+
+**What the extra level costs** (the same scripted happy path, measured):
+
+| | Supervisor | Hierarchical |
+| --- | --- | --- |
+| Decisions | 5 | **9** (3 + 3 + 3) |
+| Model calls | 4 | **5** (3 for routing: 2 in the research team, 1 at the top, none in the answer team) |
+| Graphs | 1 | 3 |
+
+Three of the four extra decisions are made by code: here the second level is a fixed order. **A hierarchy pays off when each level has real choices or when teams are owned separately; for fixed phases it is a pipeline with more bookkeeping.**
+
+**Measured about LangGraph4j child graphs:** the child gets the parent's whole state; the library's limit of 25 iterations is **per graph**, and a child team counts as **one node** of the parent; a node's exception inside a child arrives with the same layers as a direct one; nodes run on the library's own platform threads.
+
+**Rules, each tested:** the model chooses only from the allowed list; no model call when there is one option; an unreadable or disallowed answer is replaced and recorded; **no CRM text in any supervisor prompt at any level**; a team's turn limit ends the team (the run is marked `stopped`), the top has a limit, and 12 specialist runs is the last net; company not found is a 404 with no model call; errors by status only; no content in any signal.
+
+**Not measured:** a live model, real latencies, the cost in money; information lost at a boundary (the bundle here carries everything whole).
 ## J8.7d: the network pattern
 
 Code: `comparisons/multi-agent/network/withLangGraph4jSpringAi` (port 18153). Decisions and the measured tables: [ADR 0048](../adr/0048-network-pattern-on-langgraph4j-with-spring-ai.md). The folder name says the concept (multi-agent), the pattern (network) and the framework (LangGraph4j for the graph, Spring AI for the model calls). The same scenario and the same four specialists as the supervisor.
