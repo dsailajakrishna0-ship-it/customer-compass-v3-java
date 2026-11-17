@@ -102,6 +102,43 @@ flowchart TD
 
 **Rule to remember.** *The model proposes, code decides: the supervisor is only as safe as the allowed list around it.*
 
+## J8.7d: the network pattern
+
+Code: `comparisons/multi-agent/network/withLangGraph4jSpringAi` (port 18153). Decisions and the measured tables: [ADR 0048](../adr/0048-network-pattern-on-langgraph4j-with-spring-ai.md). The folder name says the concept (multi-agent), the pattern (network) and the framework (LangGraph4j for the graph, Spring AI for the model calls). The same scenario and the same four specialists as the supervisor.
+
+**The picture.** A group chat of specialists with **no manager**. When a peer has done its part, *it* says who should go next, and it may pick anyone, itself included. Nobody builds a list of who is allowed; each peer only checks that it has what it needs, and a few blunt limits stop the chat from running away.
+
+```mermaid
+flowchart LR
+  start(["POST /api/v1/multi-agent/run"]) --> crm["crm_facts<br/>entry peer"]
+  crm <--> deals["deals"]
+  crm <--> ana["analyst"]
+  crm <--> rev["reviewer"]
+  deals <--> ana
+  deals <--> rev
+  ana <--> rev
+  crm --> done(["FINISH: whoever names it"])
+  deals --> done
+  ana --> done
+  rev --> done
+```
+
+| | Supervisor (J8.7b) | Network (J8.7d) |
+| --- | --- | --- |
+| Who decides who works next | One supervisor, after every specialist | Each peer, after its own work |
+| What limits the choice | **An allowed list built by code from the state** | Only the peer's own inputs, a cap of turns, a cap of calls per peer and a loop guard |
+| When is a model asked | Only if more than one specialist is allowed | After every peer's turn, except when the choice is forced |
+| Where is the decision log | One place | Scattered over four peers |
+| Who checks the job is done | The allowed list: FINISH only after approval or the last revision | **Nobody** |
+
+**What was measured** (the numbers are asserted by tests, a scripted model): the happy path costs **6 model calls against 4 for the supervisor** (every peer decides); a peer that names itself is caught after **3 turns**; two peers naming each other with nothing new, after **4**; and a pair that keeps changing the board (the analyst and a reviewer who always asks for a revision) **slips past the loop guard** and is stopped only by the cap of 3 calls per peer, after **7 turns and 13 model calls**. A peer called out of order (the reviewer with nothing to review) costs one wasted turn and no model call. A peer may name FINISH too early, and the run ends `stopped`: no one checks the job.
+
+**What the libraries gave, and what was added** (full tables in the ADR): a fully connected graph is just one conditional edge from every node to every node; **the library's only brake is its limit of 25 iterations**, after 24 turns, with no notion of a loop; the exception layers and Spring AI's error text are handled as in the supervisor. **Everything that keeps a network from wandering (the peers' own checks, the caps, the loop guard, the defaults for a bad answer) was added by us**, and the guards stay blunt.
+
+**Measured here:** the routing, the guards and the failures against a scripted model and a stub CRM. **Not measured:** a live model, real latencies and cost in money.
+
+**Rule to remember.** *A network trades control for freedom: it costs more calls, leaves no single decision log, and stops only where you drew a line.*
+
 ## The plan
 
 | Slice | What | ETA |
