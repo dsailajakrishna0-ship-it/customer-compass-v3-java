@@ -82,6 +82,10 @@ comparisons-agent-hand-written:
 comparisons-agent-with-langgraph4j:
     ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl agent-graph/withLangGraph4j -am compile exec:java
 
+# J8.5c: the withLangchain4jAgentic agent backend (LangChain4j's agentic module) on port 18143 (needs OPENROUTER_API_KEY and the application up; CRM_BASE_URL, MODEL, PORT optional)
+comparisons-agent-with-langchain4j-agentic:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl agent-graph/withLangchain4jAgentic -am compile exec:java
+
 # web app: lint, types, tests, production build (copied from the Python edition)
 test-web:
     npm run lint

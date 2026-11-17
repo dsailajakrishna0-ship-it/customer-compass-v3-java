@@ -70,6 +70,26 @@ flowchart LR
 **Measured here:** the library's behaviour and the agent's, against a scripted model and a stub CRM. **Not measured:** a live model, and a durable saver (the application's `langgraph4j-postgres-saver` is not used here).
 
 **Rule to remember.** *A checkpoint is not a record of runs. The library keeps the state; knowing which runs exist, which are answered and how many to keep is still yours.*
+## J8.5c: the agent with LangChain4j's agentic module
+
+The same four-step agent with LangChain4j's **agentic** module (`langchain4j-agentic`, a **beta**, 1.23.0-beta33, mapped by the stable BOM): one **sequence** of five agents over a shared scope. Port 18143. Decisions and the measured tables: [ADR 0044](../adr/0044-agent-with-langchain4j-agentic.md).
+
+```mermaid
+flowchart LR
+  gather["gather<br/>plain code"] --> recommend["recommend<br/>AI agent"] --> validate["validate<br/>plain code"] --> approval{{"approval<br/>human-in-the-loop<br/>(suspends)"}}
+  approval -->|"resume: approved"| act["act<br/>dry run"]
+  approval -->|"resume: declined"| skip["act skipped<br/>(activation condition)"]
+```
+
+**The answer to the key question: yes, its pause does not hold a thread.** The approval agent's response provider returns a `SuspendedResponse`: the library stops the sequence, **releases the calling thread** and returns a *suspended result* with a resume callback. `resume` completes the pending response and the library carries on from where it stopped (earlier steps do not run again). The other kind of response, a provider that waits on a future, **does** park the thread (measured), so the choice of response type decides.
+
+**What the module gave for free:** the sequence and the shared scope, the suspension and the resume, the skip of a step by an activation condition, independent runs by memory id. **What had to be added:** the bounded run store with eviction (**the library keeps every scope in memory, finished runs too**), the 404 and 409 answers, status-only error text (the library wraps exceptions three deep), the key check, and the answers in the contract's fixed shape.
+
+**Found by running it:** the agent interfaces must be **public** (the library calls them by reflection, and a package-private interface fails with `IllegalAccessException`).
+
+**Measured here:** the library's behaviour and ours against a scripted model and a stub CRM. **Not measured:** a live model, a durable pause across a restart (the module has a scope store that was not used), the loop and supervisor workflows.
+
+**Rule to remember.** *Ask a framework's pause two questions: does it hold a thread, and does it survive a restart? Here the answers are no, and not unless you add a store.*
 
 ## Code tour
 
@@ -79,6 +99,7 @@ flowchart LR
 | new | `comparisons/agent-graph/handWritten/` | `HandWrittenAgent` (the steps, the run store, the resume), `HandWrittenAgentMain` (port 18141) |
 | new | `justfile` | `comparisons-agent-hand-written` |
 | new (J8.5b) | `comparisons/agent-graph/withLangGraph4j/` | `LangGraph4jAgent` (the graph, the run map), `LangGraph4jAgentMain` (port 18142); `justfile` `comparisons-agent-with-langgraph4j` |
+| new (J8.5c) | `comparisons/agent-graph/withLangchain4jAgentic/` | `LangChain4jAgenticAgent` (the sequence, the run store, the resume), `LangChain4jAgenticMain` (port 18143); two members of `OpenRouterRecommender` made public; justfile `comparisons-agent-with-langchain4j-agentic` |
 
 ## Questions to try
 

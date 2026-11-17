@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.customercompass.comparisons</groupId>
+    <artifactId>comparisons</artifactId>
+    <version>0.1.0</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>agent-graph-with-langchain4j-agentic</artifactId>
+  <name>agent-graph-with-langchain4j-agentic</name>
+  <description>A simple agent with an approval pause built with LangChain4j's agentic module: a sequence of agents with a human-in-the-loop step that suspends instead of blocking (core library, no Spring Boot starter)</description>
+
+  <properties>
+    <!-- the newest stable release; the agentic module is published only as a beta (1.23.0-beta33), which this BOM maps -->
+    <langchain4j.version>1.23.0</langchain4j.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>dev.langchain4j</groupId>
+        <artifactId>langchain4j-bom</artifactId>
+        <version>${langchain4j.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.customercompass.comparisons</groupId>
+      <artifactId>comparisons-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <!-- the agentic module: @Agent interfaces, workflow builders, human-in-the-loop (a BETA: the BOM maps it to 1.23.0-beta33) -->
+    <dependency>
+      <groupId>dev.langchain4j</groupId>
+      <artifactId>langchain4j-agentic</artifactId>
+    </dependency>
+    <!-- AiServices, @Tool, chat memory -->
+    <dependency>
+      <groupId>dev.langchain4j</groupId>
+      <artifactId>langchain4j</artifactId>
+    </dependency>
+    <!-- the OpenAI-compatible chat model (pointed at OpenRouter) and its default JDK http client -->
+    <dependency>
+      <groupId>dev.langchain4j</groupId>
+      <artifactId>langchain4j-open-ai</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>tools.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <configuration>
+          <skip>false</skip>
+          <mainClass>com.customercompass.comparisons.agentgraph.withlangchain4jagentic.LangChain4jAgenticMain</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
