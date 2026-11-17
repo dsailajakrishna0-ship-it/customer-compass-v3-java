@@ -19,6 +19,15 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 5 | `curl -s localhost:8001/v3/api-docs` | The same description as JSON (the Python edition's `/docs` is the counterpart) | A machine-readable contract |
 | 6 | Start with `OPENAPI_ENABLED=false` | Both addresses answer 404 | The switch |
 
+## J8.7e: the handoff pattern (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; new tests in `multi-agent/handoff/withLangGraph4jSpringAi` (the handoff lists, the limits, the library measurements, the signals); no keys, no network, no Docker | Every rule runs against a scripted model and a stub CRM |
+| 2 | With the application up (`just db`, `just run`): `TELEMETRY_ENABLED=true OPENROUTER_API_KEY=... just comparisons-multi-agent-handoff`, then `curl -s localhost:18154/health` | `{"status":"ok","approach":"withLangGraph4jSpringAi","pattern":"handoff"}` | The backend is running |
+| 3 | `curl -s -X POST localhost:18154/api/v1/multi-agent/run -H 'Content-Type: application/json' -d '{"company":"Acme"}'` | `status: completed`, the agents in the order they ran (`triage`, `researcher`, ...), and a `decisions` list in which each entry is one **handoff**: `decidedBy` is `code` (only one handoff was allowed) or `agent:<name>` (that agent chose), with what was allowed and what was chosen | The handoff pattern: no supervisor, each agent names the next one from its own list |
+| 4 | Compare `decisions` with the same company on port 18151 (the supervisor) | The supervisor's list says `supervisor` for model choices; here the agent that had just worked chose | Who decides is the difference between the patterns |
+| 5 | `curl -s localhost:18154/api/v1/observability/recent` | A trace with `agent.handoff`, `agent.researcher`, `llm.generate` and `tool.*` spans and metrics; **no company or CRM text** | The J8.4 signals for a team |
 ## J8.7d: the network pattern (Java extension)
 
 | # | Do | Expect | What it shows |

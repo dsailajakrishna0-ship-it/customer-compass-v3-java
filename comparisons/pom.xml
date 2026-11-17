@@ -60,5 +60,6 @@
     <module>multi-agent/supervisor/withLangGraph4jSpringAi</module>
     <module>multi-agent/hierarchical/withLangGraph4jSpringAi</module>
     <module>multi-agent/network/withLangGraph4jSpringAi</module>
+    <module>multi-agent/handoff/withLangGraph4jSpringAi</module>
   </modules>
 </project>

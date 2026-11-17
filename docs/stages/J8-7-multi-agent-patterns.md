@@ -197,6 +197,36 @@ flowchart LR
 **Measured here:** the routing, the guards and the failures against a scripted model and a stub CRM. **Not measured:** a live model, real latencies and cost in money.
 
 **Rule to remember.** *A network trades control for freedom: it costs more calls, leaves no single decision log, and stops only where you drew a line.*
+## J8.7e: the handoff pattern
+
+Decisions and measurements: [ADR 0049](../adr/0049-handoff-pattern-on-langgraph4j-with-spring-ai.md). Code: `comparisons/multi-agent/handoff/withLangGraph4jSpringAi` (port 18154).
+
+**The idea.** There is **no supervisor**. Each agent works, then **names the next agent** from **its own list**, and control passes on: a relay, not a manager. The agent that receives the work owns the next decision. The lists are code; the model may only pick from them.
+
+```mermaid
+flowchart LR
+  triage["triage<br/>(code)"] --> researcher
+  researcher["researcher<br/>facts + deals lookup"] -->|"analyst, or itself once more"| analyst
+  researcher -.->|"second lookup"| researcher
+  analyst --> reviewer
+  reviewer -->|"revise (once)"| analyst
+  reviewer -->|"approve, or no revisions left"| finish(["FINISH"])
+```
+
+| Agent | May hand off to | Who decides |
+| --- | --- | --- |
+| `triage` | `researcher` | code (one entry) |
+| `researcher` | `analyst`, and `researcher` while fewer than two lookups were done | the **researcher itself**, by a model call in which each target is a tool (`transfer_to_analyst`); code when there is one entry |
+| `analyst` | `reviewer` | code |
+| `reviewer` | `analyst` (once), otherwise `FINISH` | the reviewer's own verdict |
+
+**What was measured.** Through a Spring AI `ChatClient` an offered tool is **run** and the model is **asked again** (two requests); on the **ChatModel directly** the tool call comes back **unexecuted**, with its reason and token usage, in one request. Spring AI 2.0.2 has **no switch** to turn its own tool execution off. A model may answer in text, call a tool that was never offered, or call several, so the answer is **checked against the list**; one that is not on it is replaced by the first entry and recorded. LangGraph4j's published **handoff modules** stop at 1.5.12 (May 2025) while the core is 1.9.9; they were not used.
+
+**Cost against the supervisor, for the same scripted scenario:** 3 model calls against 4 when the researcher does a second lookup, and 3 against 3 when the analyst follows straight away. One scenario, no live model.
+
+**The same limits as the other patterns, in other words:** at most 10 handoffs, at most 3 visits to one agent, a repeated pair of agents is a loop; every run that hits one ends with status `stopped` and a recorded reason. The routing prompts never contain CRM text.
+
+**When handoff fits.** Triage and routing to specialists, customer-facing flows. **When it does not:** a rule that must hold across the whole run, which a supervisor enforces in one allowed-list function and a handoff team spreads over the lists and the shared state.
 
 ## The plan
 
