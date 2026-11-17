@@ -54,15 +54,19 @@ public final class CrmToolMethods {
   private String run(String tool, String companyName) {
     if (state.rounds() > maxRounds) {
       // the model asked for tools after the last allowed round: stop the library's loop
+      // (the library still reports this call as an executed tool, so say why it was not run)
+      state.outcomes().record("skipped");
       throw new RoundLimitReached();
     }
     if (state.countCall() > MAX_CALLS_PER_REPLY) {
+      state.outcomes().record("skipped");
       return Untrusted.error("Too many tool calls in one reply: at most " + MAX_CALLS_PER_REPLY + " are run.");
     }
     Map<String, Object> clean;
     try {
       clean = CrmTools.validate(tool, JSON.createObjectNode().put("company_name", companyName));
     } catch (IllegalArgumentException e) {
+      state.outcomes().record("invalid_arguments");
       return Untrusted.error(e.getMessage());
     }
     state.used(new Chat.ToolUse(tool, clean));

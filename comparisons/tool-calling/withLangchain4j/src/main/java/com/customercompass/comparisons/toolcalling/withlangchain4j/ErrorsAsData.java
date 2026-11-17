@@ -25,6 +25,12 @@ import dev.langchain4j.service.tool.ToolExecutionErrorHandler;
  */
 final class ErrorsAsData implements ToolExecutionErrorHandler {
 
+  private final ToolOutcomes outcomes;
+
+  ErrorsAsData(ToolOutcomes outcomes) {
+    this.outcomes = outcomes;
+  }
+
   /** A tool that threw: its message becomes an error text for the model, wrapped as untrusted data. */
   @Override
   public ToolErrorHandlerResult handle(Throwable error, ToolErrorContext context) {
@@ -34,6 +40,7 @@ final class ErrorsAsData implements ToolExecutionErrorHandler {
     if (error instanceof RoundLimitReached limit) {
       throw limit;
     }
+    outcomes.record("tool_error");
     String message = error.getMessage();
     if (message == null || message.isBlank()) {
       message = "The tool " + context.toolExecutionRequest().name() + " failed.";
@@ -48,6 +55,7 @@ final class ErrorsAsData implements ToolExecutionErrorHandler {
    */
   ToolArgumentsErrorHandler arguments() {
     return (error, context) -> {
+      outcomes.record("invalid_call");
       for (Throwable cause = error; cause != null; cause = cause.getCause()) {
         if (cause instanceof com.fasterxml.jackson.core.JsonProcessingException) {
           return ToolErrorHandlerResult.text(
@@ -59,6 +67,8 @@ final class ErrorsAsData implements ToolExecutionErrorHandler {
   }
 
   ToolExecutionResultMessage unknownTool(ToolExecutionRequest request) {
+    // as in the hand-written path: a tool that is not offered is a call with arguments that cannot be valid
+    outcomes.record("invalid_arguments");
     return ToolExecutionResultMessage.from(request, Untrusted.error("Unknown tool: " + request.name() + "."));
   }
 }

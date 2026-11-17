@@ -1,6 +1,7 @@
 package com.customercompass.comparisons.toolcalling.withlangchain4j;
 
 import com.customercompass.comparisons.common.Chat;
+import com.customercompass.comparisons.common.ChatObserver;
 import com.customercompass.comparisons.common.CrmTools;
 import dev.langchain4j.agent.tool.ToolSpecifications;
 import dev.langchain4j.data.message.AiMessage;
@@ -75,12 +76,25 @@ public final class LangChain4jToolChat implements Chat.ToolChat {
   private final String apiKey;
   private final String defaultModel;
   private final CrmTools tools;
+  private ChatObserver observer = ChatObserver.NONE;
+  private TurnInstrumentation instrumentation = TurnInstrumentation.NONE;
 
   public LangChain4jToolChat(String llmBaseUrl, String apiKey, String defaultModel, CrmTools tools) {
     this.llmBaseUrl = llmBaseUrl.endsWith("/") ? llmBaseUrl.substring(0, llmBaseUrl.length() - 1) : llmBaseUrl;
     this.apiKey = apiKey;
     this.defaultModel = defaultModel;
     this.tools = tools;
+  }
+
+  /**
+   * Observes every question (J8.4c, ADR 0041): the chat opens and closes the request and marks it
+   * failed, and the instrumentation supplies LangChain4j's own listeners, which report each model
+   * call and each tool. The defaults do nothing and change no behaviour.
+   */
+  public LangChain4jToolChat withObservation(ChatObserver observer, TurnInstrumentation instrumentation) {
+    this.observer = observer == null ? ChatObserver.NONE : observer;
+    this.instrumentation = instrumentation == null ? TurnInstrumentation.NONE : instrumentation;
+    return this;
   }
 
   @Override
@@ -90,13 +104,31 @@ public final class LangChain4jToolChat implements Chat.ToolChat {
 
   @Override
   public Chat.Result answer(List<Chat.Message> messages, String model) {
+    String useModel = model == null ? defaultModel : model;
+    try (ChatObserver.Request observed = observer.begin(approach(), useModel)) {
+      try {
+        return answer(messages, useModel, observed);
+      } catch (Chat.UnavailableException e) {
+        observed.fail("unavailable");
+        throw e;
+      } catch (RuntimeException e) {
+        observed.fail("error");
+        throw e;
+      }
+    }
+  }
+
+  private Chat.Result answer(List<Chat.Message> messages, String useModel, ChatObserver.Request observed) {
     if (apiKey == null || apiKey.isBlank()) {
       throw new Chat.UnavailableException("OPENROUTER_API_KEY is not set. Put it in the environment.");
     }
-    String useModel = model == null ? defaultModel : model;
     var state = new TurnState();
     var methods = new CrmToolMethods(tools, state, MAX_TOOL_ITERATIONS);
-    var errors = new ErrorsAsData();
+    var errors = new ErrorsAsData(state.outcomes());
+    TurnInstrumentation.Hooks hooks = instrumentation.forQuestion(observed, state.outcomes());
+    var modelListeners = new ArrayList<dev.langchain4j.model.chat.listener.ChatModelListener>();
+    modelListeners.add(new TurnListener(state));
+    modelListeners.addAll(hooks.modelListeners());
     // the model carries a listener for this question, so it is built per question (a cached
     // model would need the listener to find the question's state some other way)
     OpenAiChatModel chatModel =
@@ -106,7 +138,7 @@ public final class LangChain4jToolChat implements Chat.ToolChat {
             .modelName(useModel)
             .timeout(Duration.ofSeconds(120))
             .maxRetries(0)
-            .listeners(List.of(new TurnListener(state)))
+            .listeners(modelListeners)
             .build();
     // the conversation so far goes into the assistant's memory; the last user message is the question
     var memory = MessageWindowChatMemory.withMaxMessages(100);
@@ -121,6 +153,7 @@ public final class LangChain4jToolChat implements Chat.ToolChat {
             .toolArgumentsErrorHandler(errors.arguments())
             .toolExecutionErrorHandler(errors)
             .hallucinatedToolNameStrategy(errors::unknownTool)
+            .registerListeners(hooks.serviceListeners())
             .build();
     long started = System.nanoTime();
     String content;

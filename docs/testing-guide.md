@@ -19,6 +19,15 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 5 | `curl -s localhost:8001/v3/api-docs` | The same description as JSON (the Python edition's `/docs` is the counterpart) | A machine-readable contract |
 | 6 | Start with `OPENAPI_ENABLED=false` | Both addresses answer 404 | The switch |
 
+## J8.4c: observation with LangChain4j (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; new tests in `observability/withLangchain4j`: the library's hooks (`LangChain4jObservabilityBehaviourTests`) and the signals the backend produces (`ObservedLangChain4jTests`); no keys, no network | What LangChain4j's listeners and events give on their own, and that the same signals as the hand-written path come out |
+| 2 | With the application up (`just db`, `just run`): `TELEMETRY_ENABLED=true OPENROUTER_API_KEY=... just comparisons-observe-with-langchain4j`, then `curl -s localhost:18133/health` | `{"status":"ok","approach":"withLangchain4j"}` | The backend is running with observation on |
+| 3 | `curl -s -X POST localhost:18133/api/v1/chat/tools -H 'Content-Type: application/json' -d '{"messages":[{"role":"user","content":"What open deals does Acme Fabrication have?"}]}'` | An answer, as on 18103 | A normal question |
+| 4 | `curl -s localhost:18133/api/v1/observability/recent` | A trace with `chat.request`, two `llm.generate` and a `tool.get_open_deals` span, their durations and attributes, and metrics; **no question or answer text anywhere**; `cc.approach` is `withLangchain4j` | The signals of the question you just asked, taken from LangChain4j's hooks |
+| 5 | Compare with the same question on 18131 (`handWritten`) | The same span names, attributes and metric names | The same signals, three ways of getting them |
 ## J8.4b: observation with Spring AI (Java extension)
 
 | # | Do | Expect | What it shows |

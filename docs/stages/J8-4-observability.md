@@ -68,6 +68,35 @@ flowchart LR
 **Measured here:** the library's observations and our signals against a scripted model and CRM, including two questions at once. **Not measured:** a live model, real latencies, Spring AI's own meter handlers, export to a receiver.
 
 **Rule to remember.** *A framework observes what it does, not what you decided. Anything your own rules refuse or catch looks like a success to it, so say so where the rule runs.*
+## J8.4c: observation with LangChain4j
+
+The same tool-calling backend and the same sink, with the events taken from **LangChain4j's own hooks** instead of calls written in the loop. Port 18133. Decisions and the measured tables: [ADR 0041](../adr/0041-observability-with-langchain4j.md).
+
+```mermaid
+flowchart LR
+  chat["LangChain4jToolChat<br/>(request open, fail, close)"] --> sink["ChatObserver / Telemetry"]
+  model["ChatModelListener<br/>(every model call)"] --> sink
+  tool["ToolExecutedEvent<br/>(every tool)"] --> sink
+  outcomes["ToolOutcomes<br/>(our words)"] -.-> tool
+```
+
+**What LangChain4j gave for free** (measured in `LangChain4jObservabilityBehaviourTests`): a hook on every model call with the model that answered, the tokens, the finish reason and an `attributes()` map that carries a start time; an event for every tool with its name; events that carry the invocation id of their question; and everything on the thread that asked.
+
+**What it did not give, and what that took:**
+
+| The signal | What LangChain4j gives | In `withLangchain4j` |
+| --- | --- | --- |
+| Why a tool ended as it did | Only `isError()` (a tool that threw and arguments that were not JSON are both `true`) | Our handlers record the word (`invalid_call`, `tool_error`, `invalid_arguments`) in `ToolOutcomes`; the listener takes it |
+| A tool's name | The name the model asked for, **also when the model made it up** | Checked against the tools we offer; otherwise `unknown` |
+| A tool's duration | None | The time since the previous event |
+| The forced final answer | Seen by the model hook, **not by any service event** | Model calls come from the model hook |
+| No content | The contexts and events hold the whole conversation, the tool arguments and the results | The listeners copy only names, numbers and the error flag |
+
+**Two questions at once** each get their own trace: the listeners are built per question, and the invocation id on every service event would separate them on a shared assistant too (measured).
+
+**Measured here:** the library's hooks against a scripted model, and the signals the backend produces for scripted questions. **Not measured:** a live model, real timings, export to Langfuse or another OTLP receiver. The two optional LangChain4j modules for Micrometer exist only as betas and were not used.
+
+**Rule to remember.** *A framework's hooks tell you that something happened. Why it failed, how long it took and what must not be written down are still yours.*
 
 ## Code tour
 
@@ -80,6 +109,9 @@ flowchart LR
 | new | `justfile` | `comparisons-observe-hand-written` |
 | new (J8.4b) | `comparisons/observability/withSpringAi/` | `SpringAiObservationHandler` (Spring AI's observations to the shared signals), `ObservedSpringAiToolChat` (the question's request and observation), `ObservedSpringAiMain` (port 18132); justfile `comparisons-observe-with-spring-ai` |
 | changed (J8.4b) | `comparisons/tool-calling/withSpringAi/` | `SpringAiToolChat.withObservationRegistry(...)`; `CrmToolMethods` and `ErrorsAsData` add `cc.outcome` to the current tool observation (off by default) |
+| new (J8.4c) | `comparisons/observability/withLangchain4j/` | `LangChain4jInstrumentation` (the model listener and the tool-event listeners), `ObservedLangChain4jMain` (port 18133) and the tests |
+| changed (J8.4c) | `comparisons/tool-calling/withLangchain4j/` | `withObservation(...)`, `TurnInstrumentation`, `ToolOutcomes`; the tool method and the error handlers record the outcome word (default does nothing) |
+| new (J8.4c) | `justfile` | `comparisons-observe-with-langchain4j` |
 
 ## Questions to try
 
