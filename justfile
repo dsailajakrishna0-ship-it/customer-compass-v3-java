@@ -74,6 +74,10 @@ comparisons-observe-with-spring-ai:
 comparisons-observe-with-langchain4j:
     ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl observability/withLangchain4j -am -Dtoolcalling.exec.skip=true compile exec:java
 
+# J8.5a: the handWritten agent backend with an approval pause on port 18141 (needs OPENROUTER_API_KEY and the application up; CRM_BASE_URL, MODEL, PORT optional)
+comparisons-agent-hand-written:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl agent-graph/handWritten -am compile exec:java
+
 # web app: lint, types, tests, production build (copied from the Python edition)
 test-web:
     npm run lint

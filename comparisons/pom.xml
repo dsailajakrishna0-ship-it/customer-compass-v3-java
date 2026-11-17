@@ -54,5 +54,6 @@
     <module>observability/handWritten</module>
     <module>observability/withSpringAi</module>
     <module>observability/withLangchain4j</module>
+    <module>agent-graph/handWritten</module>
   </modules>
 </project>
