@@ -13,6 +13,8 @@ comparisons/
   multi-agent/
     supervisor/
       withLangGraph4jSpringAi/  J8.7b: the supervisor pattern: LangGraph4j routes, Spring AI makes the model calls (port 18151)
+    hierarchical/
+      withLangGraph4jSpringAi/  J8.7c: the hierarchical pattern: a top supervisor over two teams, each a LangGraph4j child graph (port 18152)
     network/
       withLangGraph4jSpringAi/  J8.7d: the network pattern: fully connected peers, each names who works next (port 18153)
   agent-graph/
@@ -49,6 +51,7 @@ Every backend serves the same route as the application's tool-calling chat, `POS
 | `just comparisons-observe-with-langchain4j` | Starts the withLangchain4j tool-calling backend with observation on port 18133 (`TELEMETRY_ENABLED=true`; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-agent-with-langgraph4j` | Starts the withLangGraph4j agent backend on port 18142 (needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-agent-with-langchain4j-agentic` | Starts the withLangchain4jAgentic agent backend on port 18143 (needs `OPENROUTER_API_KEY` and the application up) |
+| `just comparisons-multi-agent-hierarchical` | Starts the hierarchical-pattern backend on port 18152 (`TELEMETRY_ENABLED=true` to record signals; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-multi-agent-supervisor` | Starts the supervisor-pattern backend on port 18151 (`TELEMETRY_ENABLED=true` to record signals; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-multi-agent-network` | Starts the network-pattern backend on port 18153 (`TELEMETRY_ENABLED=true` to record signals; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-agent-hand-written` | Starts the handWritten agent backend on port 18141 (needs `OPENROUTER_API_KEY` and the application up) |

@@ -28,6 +28,16 @@ For a quick, ordered walk through everything the Java edition does today, use th
 | 3 | `curl -s -X POST localhost:18153/api/v1/multi-agent/run -H 'Content-Type: application/json' -d '{"company":"Acme"}'` | `status`, the `specialists` that ran, and `decisions` whose `decidedBy` is `peer:<name>` for each peer (or `code` when a choice was forced), plus the recommendation | The decision log of a network is the sum of four peers' choices |
 | 4 | Compare with the supervisor on the same question: `curl -s -X POST localhost:18151/api/v1/multi-agent/run ...` | The supervisor's decisions are `supervisor` or `code`; count the model calls in `curl -s localhost:18153/api/v1/observability/recent` (the `llm.generate` spans): about 6 here against about 4 there | What it costs to let every peer decide |
 | 5 | `curl -s -X POST localhost:18153/api/v1/multi-agent/run -H 'Content-Type: application/json' -d '{"company":"Zephyr Holdings"}'` | HTTP 404 "No company matching ... was found." with no model call | The forced choice for a company that is not there |
+## J8.7c: the hierarchical pattern (Java extension)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; 42 new tests in `multi-agent/hierarchical/withLangGraph4jSpringAi` (the three levels of rails, the limits, the child-graph measurements, the cost against the supervisor, the signals); no keys, no network, no Docker | Every rule runs against a scripted model and a stub CRM |
+| 2 | With the application up (`just db`, `just run`): `TELEMETRY_ENABLED=true OPENROUTER_API_KEY=... just comparisons-multi-agent-hierarchical`, then `curl -s localhost:18152/health` | `{"status":"ok","approach":"withLangGraph4jSpringAi","pattern":"hierarchical"}` | The backend is running |
+| 3 | `curl -s -X POST localhost:18152/api/v1/multi-agent/run -H 'Content-Type: application/json' -d '{"company":"Acme"}'` | `status: completed`, the `specialists` in order, and a `decisions` list whose `chosen` shows the level: `research_team`, `research_team>crm_facts`, ..., `answer_team>reviewer`, `FINISH` | The hierarchy: a top decision, then a team's own decisions |
+| 4 | Count the decisions and compare with `localhost:18151` for the same company | About 9 here against 5 for the supervisor | What the extra level costs |
+| 5 | `curl -s localhost:18152/api/v1/observability/recent` | `agent.supervisor`, `agent.research_supervisor` and `agent.answer_supervisor` spans, `llm.generate`, `tool.*`; **no company or CRM text** | The J8.4 signals for a hierarchy |
+| 6 | `{"company":"Zephyr Holdings"}` | HTTP 404 "No company matching ..." | The model is never asked for a company that is not there |
 
 ## J8.7b: the supervisor pattern (Java extension)
 
