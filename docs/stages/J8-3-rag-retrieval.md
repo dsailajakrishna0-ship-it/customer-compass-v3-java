@@ -1,6 +1,6 @@
 # Stage J8.3: RAG retrieval, built several ways
 
-Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0036](../adr/0036-rag-retrieval-comparison.md) (the contract). Code: [`comparisons/rag-retrieval/`](../../comparisons/README.md). One section per approach, added as each is built: **J8.3a `handWritten`** (here), J8.3b `withSpringAi`, J8.3c `withLangchain4j`, and J8.3d the three side by side.
+Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0036](../adr/0036-rag-retrieval-comparison.md) (the contract). Code: [`comparisons/rag-retrieval/`](../../comparisons/README.md). One section per approach (J8.3a `handWritten`, J8.3b `withSpringAi`, J8.3c `withLangchain4j`) and, last, J8.3d, the three side by side. The per-approach decisions: [ADR 0037](../adr/0037-rag-retrieval-with-spring-ai.md), [ADR 0038](../adr/0038-rag-retrieval-with-langchain4j.md).
 
 ## In one minute
 
@@ -79,6 +79,52 @@ The same backend with LangChain4j 1.23.0: its Gemini embedding model embeds the 
 **Measured here:** the library's behaviour against a fake Gemini, and the store and the whole search against a real throw-away Qdrant with vectors of known cosine (those tests are skipped unless `QDRANT_GRPC_PORT` is set). **Not measured:** a live Gemini call, search quality, speed, quota.
 
 **Rule to remember.** *A threshold is only as good as the scale it is on. Find out what scale a library's score is on before you hand it a number that was calibrated on another.*
+
+## J8.3d: the three side by side
+
+The same step, the same HTTP contract and the same floor, written three ways. Everything here comes from the code, the tests and ADRs 0036 to 0038. **Not measured:** a live search against the real Gemini service, search quality on the real documents, whether the query task type changes scores, speed or cost. So nothing below says which approach finds better chunks.
+
+**Size.** Lines of Java that are not blank, not comments, not `import` or `package` lines, in each approach's folder only (`comparisons/common` is shared and not counted):
+
+| | handWritten | withSpringAi | withLangchain4j |
+| --- | --- | --- | --- |
+| Main files | 4 | 5 | 3 |
+| Main code lines | 186 | 203 | 183 |
+| Test files | 4 | 5 | 5 |
+| Test code lines | 278 | 425 | 495 |
+| Libraries besides Jackson | none | `spring-ai-google-genai-embedding`, `spring-ai-qdrant-store` | `langchain4j`, `langchain4j-google-ai-gemini`, `langchain4j-qdrant` (a beta) |
+
+**Read this table carefully.** The main code is again **about the same size** (183 to 203 lines): a library call replaces an HTTP call, and the rules around the call (the floor, error text, checks) take its place. The framework approaches have **53% and 78% more test code**, because each needed a class that measures what the library does on its own.
+
+**The floor is where the three really differ.** All three must answer "keep a chunk if its cosine similarity is at or above 0.60", and each library has its own idea of what a score and a threshold are:
+
+| | handWritten | withSpringAi | withLangchain4j |
+| --- | --- | --- | --- |
+| What the score is | Qdrant's cosine similarity | Qdrant's cosine similarity, as a float widened to a double (a stored 0.6 comes back as 0.6000000238418579) | **A relevance score, `(cosine + 1) / 2`**: identical 1.0, orthogonal 0.5, opposite 0.0 |
+| The library's own threshold | not used | `similarityThreshold`: applied inside the store, **strict (`>`)**, range 0 to 1; 0.0 ("accept all") **still drops chunks of cosine 0 or below** | `minScore`: compared with the relevance score, so **0.60 passed straight in is a cosine of only 0.20**, with no error |
+| What the approach does | Applies the floor itself, at or above | Searches with **no threshold** and applies the floor itself, at or above | Searches with `minScore` 0, **converts back (`2 * score - 1`)** and applies the floor itself, at or above |
+| Can it report `considered`? | Yes | Yes, but chunks of cosine 0 or below are never returned | Yes |
+| Query task type | `RETRIEVAL_QUERY` | **Cannot be sent** (the model never sends one) | `RETRIEVAL_QUERY`, configured |
+
+**The same lesson, three times.** A calibrated number (0.60, from ADR 0024) is only portable if you know the scale of the score it was calibrated on. In every approach the floor is applied by our own code, on a cosine, because no library's threshold meant the same thing: one is strict, one is on another scale, and one is only right if you ignore its own parameter.
+
+**The other rules, per approach** (the framework columns show what the library does on its own, measured):
+
+| | handWritten | withSpringAi | withLangchain4j |
+| --- | --- | --- | --- |
+| Who embeds the question | Our REST call, key in a header | The store does, in one `batchEmbedContents` request | We do, one `embedContent` request |
+| A refusal from Gemini | Status only, by construction | Exception text **contains the service's reply** | Exception message **is the service's reply** |
+| A wrong-length vector | Checked | Returned as it is | Not detected |
+| A blank key | Nothing is called | (checked by us before anything is built) | **The library calls anyway** (we check first) |
+| A missing collection | HTTP 404 mapped to "run the ingestion first" | gRPC `NOT_FOUND` mapped to the same sentence | gRPC `NOT_FOUND` mapped to the same sentence |
+
+**When to pick which** (a judgement from this exercise, not a measurement):
+- **Hand-written** when the score scale and the floor must be obvious to every reader; you keep one small HTTP client for Gemini and one for Qdrant.
+- **Spring AI** when the application already uses its vector store, and you accept that the store embeds the question itself and cannot ask for the query task type.
+- **LangChain4j** when you want its search call and metadata, and will always convert its score before comparing it with a calibrated threshold.
+- In all three cases, **test the threshold with vectors of a known cosine** (identical, orthogonal, opposite, and one exactly at the floor), as the behaviour tests do.
+
+**Rule to remember.** *A threshold is a number on somebody's scale. Before you reuse a calibrated number, prove with known vectors which scale the library compares it on.*
 
 ## Code tour
 
