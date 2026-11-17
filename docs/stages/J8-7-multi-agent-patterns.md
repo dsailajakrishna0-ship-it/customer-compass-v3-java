@@ -57,6 +57,51 @@ Spring AI's own documentation ("Building Effective Agents") lists five patterns:
 - **Spring AI is not an orchestration engine.** Orchestrator-Workers and Routing are the closest to a supervisor, and you write the loop, the limits and the state yourself. **Hierarchical, network and handoff are not documented as Spring AI features.**
 - **Spring AI is the model and tool layer, and it is used inside the engine.** LangGraph4j publishes `langgraph4j-spring-ai` (1.9.9: streaming chat, tool-execution helpers and message serializers) and an agent executor on Spring AI's `ChatModel` with tool callbacks, **approval gates and sub-agents**. The layering the sources describe, **a model layer (Spring AI or LangChain4j) under an orchestration layer (LangGraph4j, Embabel, ADK)**, is what J8.7 will use: LangGraph4j for the pattern, Spring AI for the model calls.
 
+## J8.7b: the supervisor pattern
+
+Code: `comparisons/multi-agent/supervisor/withLangGraph4jSpringAi` (port 18151). Decisions and the measured tables: [ADR 0046](../adr/0046-supervisor-on-langgraph4j-with-spring-ai.md). The folder name says the concept, the pattern and the framework: **LangGraph4j** runs the graph, **Spring AI** makes the model calls.
+
+**The picture.** A manager who hands each job to a specialist and gets it back. After every job the manager looks at the state and decides who is next, but **the rule book (which specialists may be called now) is code**, and the manager (a model) only picks from the list that code gives. When only one specialist is allowed, nobody is asked.
+
+```mermaid
+flowchart TD
+  start(["POST /api/v1/multi-agent/run"]) --> sup{"supervisor<br/>code builds the allowed list<br/>the model picks from it"}
+  sup -->|crm_facts| crm["crm_facts<br/>plain code"]
+  sup -->|deals| deals["deals<br/>plain code"]
+  sup -->|analyst| ana["analyst<br/>model"]
+  sup -->|reviewer| rev["reviewer<br/>model"]
+  crm --> sup
+  deals --> sup
+  ana --> sup
+  rev --> sup
+  sup -->|FINISH| done(["outcome: specialists, every decision, the recommendation"])
+```
+
+| State | Allowed this turn |
+| --- | --- |
+| Facts not loaded | `crm_facts` |
+| Company not found | `FINISH` (the run ends as a 404) |
+| Facts loaded, no recommendation | `deals` (if fewer than 2 lookups), `analyst` |
+| A recommendation, not reviewed | `reviewer` |
+| Approved, or one revision already used | `FINISH` |
+| Reviewed and sent back, a revision left | `analyst`, `deals` (if fewer than 2 lookups) |
+
+**The rules the code enforces** (each has a test):
+- **No model call when there is no choice;** the decision is recorded as `decidedBy: code`.
+- **An unreadable or disallowed answer is replaced by the first allowed entry** and recorded with what the model proposed (a plain word, or `unreadable`: model text is never echoed).
+- **The supervisor's prompt holds no CRM text,** only flags and the allowed list, so text in the data cannot steer the routing; the analyst and the reviewer see the facts wrapped as untrusted data.
+- **At most 10 turns** (then status `stopped`), at most 2 deals lookups, at most 1 revision; an unreadable review counts as a request to revise.
+- Errors say the status only; no key means no model call; **no content is ever recorded** in the signals (a span per decision and per specialist, tokens, outcomes).
+
+**What the libraries gave, and what was added** (measured; the full tables are in the ADR):
+- LangGraph4j **stops a looping graph at its own limit of 25 iterations**, reports a conditional edge with an unmapped key as a `GraphRunnerException`, wraps a node's exception in three layers and runs nodes on its own platform thread.
+- Spring AI's response carries the tokens and the answering model, but **its HTTP error message holds the service's own reply**.
+- **Neither library gives the rules:** the allowed lists, the turn limit, the 404, the status-only errors and the never-content signals were added by us.
+
+**Measured here:** the routing, the limits and the failures against a scripted model and a stub CRM. **Not measured:** a live model, real latencies and cost.
+
+**Rule to remember.** *The model proposes, code decides: the supervisor is only as safe as the allowed list around it.*
+
 ## The plan
 
 | Slice | What | ETA |

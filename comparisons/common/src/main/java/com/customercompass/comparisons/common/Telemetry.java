@@ -50,6 +50,8 @@ public final class Telemetry implements ChatObserver {
   private static final AttributeKey<Long> TOKENS_OUT = AttributeKey.longKey("gen_ai.usage.output_tokens");
   private static final AttributeKey<String> TOOL = AttributeKey.stringKey("gen_ai.tool.name");
   private static final AttributeKey<String> TOKEN_TYPE = AttributeKey.stringKey("gen_ai.token.type");
+  private static final AttributeKey<String> AGENT = AttributeKey.stringKey("cc.agent");
+  private static final java.util.regex.Pattern AGENT_NAME = java.util.regex.Pattern.compile("[a-z_]{1,40}");
 
   private static final JsonMapper JSON = JsonMapper.builder().build();
 
@@ -62,6 +64,7 @@ public final class Telemetry implements ChatObserver {
   private final LongCounter modelCalls;
   private final LongCounter toolCalls;
   private final LongCounter tokens;
+  private final LongCounter steps;
   private final LongHistogram requestMillis;
 
   private Telemetry(SpanExporter exporter, RecentSpans recent) {
@@ -75,6 +78,7 @@ public final class Telemetry implements ChatObserver {
     this.modelCalls = meter.counterBuilder("cc.chat.model_calls").setDescription("Calls to the model").build();
     this.toolCalls = meter.counterBuilder("cc.chat.tool_calls").setDescription("Tools the model asked for").build();
     this.tokens = meter.counterBuilder("gen_ai.client.token.usage").setUnit("{token}").build();
+    this.steps = meter.counterBuilder("cc.agent.steps").setDescription("Steps of a multi-agent run").build();
     this.requestMillis =
         meter.histogramBuilder("cc.chat.request.duration").setUnit("ms").ofLongs().build();
   }
@@ -160,6 +164,16 @@ public final class Telemetry implements ChatObserver {
       }
       span.end();
       toolCalls.add(1, Attributes.of(APPROACH, approach, TOOL, tool, OUTCOME, outcome));
+    }
+
+    @Override
+    public synchronized void step(String agent, String outcome, long millis) {
+      // only fixed names go in: anything else is recorded as "unknown", never as given
+      String name = agent != null && AGENT_NAME.matcher(agent).matches() ? agent : "unknown";
+      String word = outcome != null && AGENT_NAME.matcher(outcome).matches() ? outcome : "unknown";
+      Span span = child("agent." + name, millis).setAttribute(AGENT, name).setAttribute(OUTCOME, word).startSpan();
+      span.end();
+      steps.add(1, Attributes.of(APPROACH, approach, AGENT, name, OUTCOME, word));
     }
 
     @Override

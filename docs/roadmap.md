@@ -99,7 +99,7 @@ comparisons/
   observability/{handWritten, withSpringAi, withLangchain4j}
   agent-graph/{handWritten, withLangGraph4j, ...}
   memory/{handWritten, withSpringAi, withLangchain4j}
-  multi-agent/{supervisor, hierarchical, network, handoff}   (J8.7: patterns on LangGraph4j, ADR 0045)
+  multi-agent/{supervisor, hierarchical, network, handoff}/withLangGraph4jSpringAi   (J8.7: patterns on LangGraph4j with Spring AI as the model layer, ADR 0045; the folder names the concept, the pattern and the framework)
 ```
 
 Rules: every comparison module is separate from the main app and holds its own dependencies, so the app never gains a second AI framework. Each module gets a short write-up with lines of code, what the approach hides and what it lets you control (turn limits, a guard on every tool result, failure behaviour). Library versions are checked on each project's own page before a dependency is added. Any live recording needs the owner's approval. Folder names are fixed so every slice follows them.

@@ -86,6 +86,10 @@ comparisons-agent-with-langgraph4j:
 comparisons-agent-with-langchain4j-agentic:
     ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl agent-graph/withLangchain4jAgentic -am compile exec:java
 
+# J8.7b: the supervisor-pattern backend on port 18151 (needs OPENROUTER_API_KEY and the application up; TELEMETRY_ENABLED=true records signals; CRM_BASE_URL, MODEL, MAX_TURNS, PORT optional)
+comparisons-multi-agent-supervisor:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl multi-agent/supervisor/withLangGraph4jSpringAi -am compile exec:java
+
 # web app: lint, types, tests, production build (copied from the Python edition)
 test-web:
     npm run lint
