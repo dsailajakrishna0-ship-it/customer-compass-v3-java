@@ -1,6 +1,6 @@
 # Stage J8.6: conversation memory, built several ways
 
-Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0050](../adr/0050-conversation-memory-comparison.md) (the contract and the hand-written path). Code: [`comparisons/memory/`](../../comparisons/README.md). One section per approach (J8.6a `handWritten`; `withSpringAi` and `withLangchain4j` follow) and, last, the three side by side.
+Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0050](../adr/0050-conversation-memory-comparison.md) (the contract and the hand-written path), [ADR 0051](../adr/0051-conversation-memory-with-spring-ai.md) (Spring AI). Code: [`comparisons/memory/`](../../comparisons/README.md). One section per approach (J8.6a `handWritten`, J8.6b `withSpringAi`; `withLangchain4j` follows) and, last, the three side by side.
 
 ## In one minute
 
@@ -41,6 +41,28 @@ flowchart LR
 **Measured vs not measured.** Measured: every rule above, against a scripted model and a movable clock, plus a real start of the backend. **Not measured:** a live model, answer quality, token cost (they need the owner's go).
 
 **Rule to remember:** **the model remembers nothing; whoever keeps the history decides what it sees, so the window, the time limit and the lock are your code's job.**
+
+## J8.6b: memory with Spring AI
+
+Spring AI ships memory classes, so the question is how much of the contract they cover. Port 18162, the same HTTP face. Think of the folder cabinet again: the library gives you folders that keep their newest pages and a clerk (the **advisor**) who clips the pages in front of the doctor. It does not give you the label with the date, the 1,000-folder rule, a lock on the folder, or a promise that a visit that failed leaves no notes.
+
+| Rule | Library | Us |
+| --- | --- | --- |
+| Newest 20 and at most 16,000 characters | count only, trims on write not read | `TurnMemory.get` |
+| At most 200 stored | **free** (`MessageWindowChatMemory(200)`) | pass the number |
+| 24 hours and 1,000 cap | nothing | registry, clock, eviction |
+| Concurrency, no lock in the call | no lock; pairs get split under a race | one lock for the store only |
+| Delete during a turn | the advisor writes the answer back | `removed` flag |
+| Failed call stores nothing; all new messages stored | user message stored first; only the last one | the advisor only reads; we store the turn after success |
+| Unknown id is 404 | an empty conversation, model called | registry check first |
+| Observation, counts only | not part of it | `ChatObserver` |
+| History before new messages | **free** | nothing |
+
+The surprise: **the Spring AI class is longer (301 lines) than the hand-written one (237)**, because the registry and the rules are the same code and the library adds translation. `SpringAiLibraryBehaviourTests` (12 tests) shows each library behaviour alone; `SpringAiMemoryChatTests` (25) and `ObservedAndServedTests` (5) show the contract met. Full table and reasoning: [ADR 0051](../adr/0051-conversation-memory-with-spring-ai.md). The cross-approach write-up is J8.6d.
+
+**Rule to remember:** **a library memory stores messages; it does not own a conversation's life, so read what the advisor writes, and when, before trusting it.**
+
+Code: `comparisons/memory/withSpringAi/.../SpringAiMemoryChat.java` and `WithSpringAiMemoryMain.java`.
 
 ## Code tour
 
