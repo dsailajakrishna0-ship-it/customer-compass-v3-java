@@ -29,6 +29,7 @@ comparisons/
   memory/
     handWritten/                J8.6a: conversation memory by hand: a store with a window, a time limit and a cap, no AI framework (port 18161)
     withSpringAi/               J8.6b: Spring AI ChatMemory, MessageWindowChatMemory and MessageChatMemoryAdvisor, with the contract's other rules written around them (port 18162)
+    withLangchain4j/            J8.6c: conversation memory with LangChain4j ChatMemory and AiServices, the limits still ours (port 18163)
   rag-retrieval/
     handWritten/                J8.3a: no AI framework, REST calls to Gemini and Qdrant, the floor in our code (port 18121)
     withSpringAi/               J8.3b: Spring AI QdrantVectorStore search over the Gemini embedding model (port 18122)
@@ -61,6 +62,7 @@ Every backend serves the same route as the application's tool-calling chat, `POS
 | `just comparisons-multi-agent-handoff` | Starts the handoff-pattern backend on port 18154 (`TELEMETRY_ENABLED=true` to record signals; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-memory-hand-written` | Starts the handWritten conversation-memory backend on port 18161 (needs `OPENROUTER_API_KEY`; `TELEMETRY_ENABLED=true` to record signals) |
 | `just comparisons-memory-spring-ai` | Starts the withSpringAi conversation-memory backend on port 18162 (needs `OPENROUTER_API_KEY`; `TELEMETRY_ENABLED=true` to record signals) |
+| `just comparisons-memory-langchain4j` | Starts the withLangchain4j conversation-memory backend on port 18163 (same settings) |
 | `just comparisons-agent-hand-written` | Starts the handWritten agent backend on port 18141 (needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-observe-hand-written` | Starts the handWritten tool-calling backend with observation on port 18131 (`TELEMETRY_ENABLED=true`; needs `OPENROUTER_API_KEY` and the application up) |
 | `just comparisons-retrieve-hand-written` | Starts the handWritten retrieval backend on port 18121 (needs `GOOGLE_API_KEY`, `just qdrant` and a prior handWritten ingestion) |
