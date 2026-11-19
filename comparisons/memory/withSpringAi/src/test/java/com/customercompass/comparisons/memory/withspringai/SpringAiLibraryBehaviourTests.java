@@ -170,10 +170,12 @@ class SpringAiLibraryBehaviourTests {
     one.join(5_000);
     two.join(5_000);
     var all = stored("c");
-    assertThat(all).hasSize(4);
-    // both user messages were stored before either answer: the pairs are not whole
-    assertThat(all.subList(0, 2)).allMatch(s -> s.startsWith("user: "));
-    assertThat(all.subList(2, 4)).allMatch(s -> s.startsWith("assistant: "));
+    // the library's add is an unlocked read, modify, write of the whole list, so the race can lose a user
+    // message or an answer, or repeat one (seen: 3 messages, "user: B" twice, a list starting with an
+    // answer): the stored history is not a clean sequence of whole pairs. The test checks only what
+    // always holds: something from both kinds was stored.
+    assertThat(all).anyMatch(s -> s.startsWith("user: "));
+    assertThat(all).anyMatch(s -> s.startsWith("assistant: answer to "));
   }
 
   @Test
