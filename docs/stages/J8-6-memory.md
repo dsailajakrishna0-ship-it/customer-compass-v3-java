@@ -1,6 +1,6 @@
 # Stage J8.6: conversation memory, built several ways
 
-Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0050](../adr/0050-conversation-memory-comparison.md) (the contract and the hand-written path), [ADR 0051](../adr/0051-conversation-memory-with-spring-ai.md) (Spring AI), [ADR 0052](../adr/0052-conversation-memory-with-langchain4j.md) (LangChain4j). Code: [`comparisons/memory/`](../../comparisons/README.md). One section per approach (J8.6a `handWritten`, J8.6b `withSpringAi`, J8.6c `withLangchain4j`) and, last, the three side by side.
+Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0050](../adr/0050-conversation-memory-comparison.md) (the contract and the hand-written path), [ADR 0051](../adr/0051-conversation-memory-with-spring-ai.md) (Spring AI), [ADR 0052](../adr/0052-conversation-memory-with-langchain4j.md) (LangChain4j). Code: [`comparisons/memory/`](../../comparisons/README.md). One section per approach (J8.6a `handWritten`, J8.6b `withSpringAi`, J8.6c `withLangchain4j`, J8.6d the three side by side) and, last, the three side by side.
 
 ## In one minute
 
@@ -83,6 +83,47 @@ In shop terms: LangChain4j sells a **folder cabinet** (`InMemoryChatMemoryStore`
 `LangChain4jMemoryChat` is 330 lines, against 237 by hand. **Rule to remember:** **a library memory is a storage and a count, not a conversation policy; time limits, caps, atomic turns and locks stay your code.**
 
 Measured by `LibraryMeasurementsTests` (the library alone, the "textbook wiring") and `LangChain4jMemoryChatTests` / `ObservedAndServedTests` (the contract, the same tests as the hand-written path). Not measured: a live model, answer quality, token cost.
+
+## J8.6d: the three side by side
+
+The same contract (ADR 0050), the same HTTP face and the same tests, built three ways. Everything here comes from the code, the tests and ADRs 0050 to 0052. **Not measured:** a live model, answer quality, token cost, and a memory that survives a restart (all three keep conversations in memory on purpose).
+
+**Size.** Lines of Java that are not blank, not comments, not `import` or `package` lines. The shared pieces in `comparisons/common` (`MemoryChat`, `MemoryLimits`, `MemoryChatBackendServer`, `OpenRouterChat`, **317 lines**) are used by all three and counted once:
+
+| | handWritten | withSpringAi | withLangchain4j |
+| --- | --- | --- | --- |
+| **The memory class** | **171** | **224** | **246** |
+| Module main code (the class and its main) | 192 | 247 | 269 |
+| Module test code | 517 | 669 | 738 |
+| Test files | 4 | 5 | 5 |
+| Tests | 30 | 42 | 43 |
+| Library | none | Spring AI memory and advisor classes (`spring-ai-client-chat`, Spring AI 2.0.x) | LangChain4j memory classes (`langchain4j`, 1.23.0) |
+
+**Read this table carefully.** As in the other stages, the hand-written path is the **smallest**: the libraries add **31% and 44%** to the memory class. The contract is mostly **policy** (a time limit, a cap, a lock, whole turns, a 404), and a library memory is a **store and a count**, so the policy is the same code in all three and the library adds the code that fits it to the contract. The libraries also needed **29% and 43%** more test code, because each library behaviour had to be measured on its own (12 and 13 tests).
+
+**What each library gave for free, and what we wrote** (measured by the library-alone tests, then by the contract tests):
+
+| Rule of the contract | handWritten | withSpringAi | withLangchain4j |
+| --- | --- | --- | --- |
+| **Newest 20 messages and at most 16,000 characters** | Our `window` function | Count only, **trimmed on write, not on read**: we wrote the character rule in `TurnMemory.get` | `MessageWindowChatMemory` by **message count** (the window **is** the storage); `TokenWindowChatMemory` by **tokens** needs an estimator and cannot say "16,000 characters": we wrote the character window |
+| **At most 200 stored messages** | One line | **Free** (`MessageWindowChatMemory(200)`) | **Free** (`MessageWindowChatMemory(maxMessages = 200)` over the store) |
+| **24 hours and 1,000 conversations (LRU)** | Our map, clock and use counter | **Nothing**: the repository has four methods; 1,500 conversations stayed | **Nothing**: the store is a bare map with no expiry, size or list of ids |
+| **Two turns at once, no lock across the model call** | One lock per conversation around the store only; each pair stored whole | **No lock**: both turns are in the model at once, but the race can **lose or repeat a message** | **No lock**: model calls overlap; memory classes are not thread-safe; we use a per-turn memory and a lock around the commit |
+| **Delete, also during a turn** | A `removed` flag | The advisor **writes the answer back** into the cleared conversation | `deleteMessages` works, but a finishing turn **writes it back** |
+| **A failed call stores nothing** | Store the turn after success | The user message is stored **before** the call and stays | The user message is stored **before** the answer and stays |
+| **Unknown id is 404, model not asked** | Our map | **Not an error**: an empty conversation, and the model is called | **Not an error**: any id gets a fresh memory |
+| **History before the new messages, system first** | Our code | **Free** | Free, but `AiServices` puts its `@SystemMessage` **after** the history: we seed the system message first |
+| **Observation, counts only** | `ChatObserver` | Not part of the memory classes: `ChatObserver` | Not part of the memory classes: `ChatObserver` |
+
+**The same lesson, three times.** The libraries give you the **storing and the counting**. They do **not** give you the **life of a conversation**: the **time limit, the cap, the 404, the lock and the "a failed call stores nothing" rule came from our own code in all three**. Both libraries even **store the user's question before the model has answered**, so a failed call leaves a half turn behind unless you stop it. **A library memory is only as safe as the code around it.**
+
+**When to pick which** (a judgement from this exercise, not a measurement):
+- **Hand-written** when the contract is mostly policy: the code is the smallest and every rule is in one place. The cost: you own the store and every edge case.
+- **Spring AI** when you already build on `ChatClient` and want the **advisor** to put history into the prompt. Give it a memory that only **reads** and store the turn yourself after the model answered.
+- **LangChain4j** when you build on `AiServices` and `@MemoryId`. Use a **throw-away memory per turn** and commit after the answer. Know that its window is also its storage.
+- In all three cases, **write the contract's rules first** (an unknown id, a bound on stored messages, a time limit, two turns at once, a failed call) and test each against the library, including two turns at once on one id.
+
+**Rule to remember.** *A framework gives you the storing and the counting. The time limit, the cap, the lock and the half-turn on failure are still yours.*
 
 ## Code tour
 
