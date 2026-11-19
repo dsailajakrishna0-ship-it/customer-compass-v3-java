@@ -8,6 +8,16 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## J8.6d: the memory approaches side by side (Java lab, docs only)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | Open `docs/stages/J8-6-memory.md` and read the section **J8.6d: the three side by side** | A size table (memory class 171, 224 and 246 lines), a table of what each library gave for free and what we wrote, and the rule to remember | The libraries store and count; the life of a conversation is still your code |
+| 2 | Check one number: `wc -l` on the three memory classes (`HandWrittenMemoryChat`, `SpringAiMemoryChat`, `LangChain4jMemoryChat`) | 237, 301 and 330 lines in total (the page counts only code lines) | The page and the code agree |
+| 3 | Run `just comparisons-test` | `BUILD SUCCESS` | Nothing in the code changed in this slice |
+
+There is no "with a key" step: this slice changes only documentation.
+
 ## J8.6c: conversation memory with LangChain4j (Java lab)
 
 | # | Do | Expect | What it shows |
