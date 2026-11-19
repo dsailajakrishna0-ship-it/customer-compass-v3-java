@@ -51,7 +51,7 @@ Spring AI ships memory classes, so the question is how much of the contract they
 | Newest 20 and at most 16,000 characters | count only, trims on write not read | `TurnMemory.get` |
 | At most 200 stored | **free** (`MessageWindowChatMemory(200)`) | pass the number |
 | 24 hours and 1,000 cap | nothing | registry, clock, eviction |
-| Concurrency, no lock in the call | no lock; pairs get split under a race | one lock for the store only |
+| Concurrency, no lock in the call | no lock; pairs get split under a race, and a message can be lost or repeated | one lock for the store only |
 | Delete during a turn | the advisor writes the answer back | `removed` flag |
 | Failed call stores nothing; all new messages stored | user message stored first; only the last one | the advisor only reads; we store the turn after success |
 | Unknown id is 404 | an empty conversation, model called | registry check first |
