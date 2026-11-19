@@ -8,6 +8,19 @@ For a quick, ordered walk through everything the Java edition does today, use th
 
 > **If `just db` or `just test` fails with a crashing Postgres** (`Segmentation fault`, "general protection fault" in the kernel log): the Debian image `postgres:17.11` crashes on some AVX-512 laptops. The scratch database and the tests use `postgres:17.11-alpine` (same version, Alpine build). Pull this change and run `just db-stop` (if one is running), then `just db` again. The data in `just db` is throw-away, so nothing is lost.
 
+## J8.6c: conversation memory with LangChain4j (Java lab)
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | **Without a key:** `just comparisons-test` | `BUILD SUCCESS`; 43 tests in `memory/withLangchain4j`: the contract (`LangChain4jMemoryChatTests`, `ObservedAndServedTests`, the same rules as the hand-written path) and what the library does alone (`LibraryMeasurementsTests`); no keys, no network, no Docker | Every rule runs against a scripted model and a movable clock |
+| 2 | Open `LibraryMeasurementsTests` and read the test names | One finding per test: the window is also the storage, no characters, the store has no limit, a failed call keeps the question, a delete is undone by a finishing turn | What LangChain4j gives and does not give |
+| 3 | **With a key:** `OPENROUTER_API_KEY=... just comparisons-memory-langchain4j`, then `curl -s localhost:18163/health` | `{"status":"ok","approach":"withLangchain4j"}`; the log shows `withLangchain4j memory backend on http://localhost:18163` and one harmless `SLF4J: No providers` warning | The backend is running (same settings as the hand-written one) |
+| 4 | `curl -s -X POST localhost:18163/api/v1/conversations`, then two turns as in the J8.6a guide, step 4, on port 18163 | The second answer uses the first; `memory.messagesUsed` is 2 and `messagesStored` is 4 | The server, not the client, remembers |
+| 5 | `GET`, then `DELETE` the conversation, then `GET` again | The four messages; 204; 404 "Conversation not found or expired." | Same contract as port 18161 |
+| 6 | Send the same turns to 18161 and 18163 and compare the answers' `memory` counts | Identical counts | Same behaviour, different author |
+
+**Stop:** end the backend with Ctrl+C.
+
 ## API description: Swagger UI (Java extension)
 
 | # | Do | Expect | What it shows |

@@ -1,6 +1,6 @@
 # Stage J8.6: conversation memory, built several ways
 
-Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0050](../adr/0050-conversation-memory-comparison.md) (the contract and the hand-written path), [ADR 0051](../adr/0051-conversation-memory-with-spring-ai.md) (Spring AI). Code: [`comparisons/memory/`](../../comparisons/README.md). One section per approach (J8.6a `handWritten`, J8.6b `withSpringAi`; `withLangchain4j` follows) and, last, the three side by side.
+Plan: [`docs/roadmap.md`](../roadmap.md) ("Stage J8"). Decisions: [ADR 0050](../adr/0050-conversation-memory-comparison.md) (the contract and the hand-written path), [ADR 0051](../adr/0051-conversation-memory-with-spring-ai.md) (Spring AI), [ADR 0052](../adr/0052-conversation-memory-with-langchain4j.md) (LangChain4j). Code: [`comparisons/memory/`](../../comparisons/README.md). One section per approach (J8.6a `handWritten`, J8.6b `withSpringAi`, J8.6c `withLangchain4j`) and, last, the three side by side.
 
 ## In one minute
 
@@ -64,10 +64,31 @@ The surprise: **the Spring AI class is longer (301 lines) than the hand-written 
 
 Code: `comparisons/memory/withSpringAi/.../SpringAiMemoryChat.java` and `WithSpringAiMemoryMain.java`.
 
+## J8.6c: memory with LangChain4j
+
+Decisions: [ADR 0052](../adr/0052-conversation-memory-with-langchain4j.md). Port 18163, `just comparisons-memory-langchain4j`. Same HTTP face, same limits, same tests as the hand-written path; the question is what the **library's memory classes** do for free.
+
+In shop terms: LangChain4j sells a **folder cabinet** (`InMemoryChatMemoryStore`) and a **page counter** (`MessageWindowChatMemory`) that throws away the oldest pages when the folder is too thick. It does not shred old folders, does not limit the cabinet, counts pages not letters, and its receptionist (`AiServices`) files the visitor's question **before** the doctor has answered. So we hand the doctor a photocopy for each visit and file the real pages afterwards.
+
+| Rule | LangChain4j gives | We still write |
+| --- | --- | --- |
+| Window of 20 messages **and** 16,000 characters | A window by **message count** (`MessageWindowChatMemory`) or by **tokens** (`TokenWindowChatMemory`); the window also **is** the storage | The character window |
+| 200 stored messages | `MessageWindowChatMemory(maxMessages = 200)` over the store | One line |
+| 24 h time limit, 1,000-conversation cap | Nothing | All of it, plus an index of ids |
+| Concurrent turns, no lock across the model call | Nothing (no lock, memory not thread-safe) | A per-turn memory and a lock around the commit |
+| Delete, also during a turn | `deleteMessages` (a finished turn writes it back) | The `removed` flag under the lock |
+| A failed call stores nothing | The question is stored **before** the answer | A throw-away memory per turn, committed after the answer |
+| Unknown id is 404 | Any id gets a fresh memory | The index lookup first |
+
+`LangChain4jMemoryChat` is 330 lines, against 237 by hand. **Rule to remember:** **a library memory is a storage and a count, not a conversation policy; time limits, caps, atomic turns and locks stay your code.**
+
+Measured by `LibraryMeasurementsTests` (the library alone, the "textbook wiring") and `LangChain4jMemoryChatTests` / `ObservedAndServedTests` (the contract, the same tests as the hand-written path). Not measured: a live model, answer quality, token cost.
+
 ## Code tour
 
 - Shared: `comparisons/common` has `MemoryChat` (the contract), `MemoryLimits`, `OpenRouterChat` and `MemoryChatBackendServer`.
 - By hand: `comparisons/memory/handWritten/.../HandWrittenMemoryChat.java` (the store and the turn) and `HandWrittenMemoryMain.java` (start-up).
+- LangChain4j: `comparisons/memory/withLangchain4j/.../LangChain4jMemoryChat.java` and `WithLangchain4jMemoryMain.java`; tests `LangChain4jMemoryChatTests`, `LibraryMeasurementsTests`, `ObservedAndServedTests`.
 - Tests: `HandWrittenMemoryChatTests` (the rules), `ObservedAndServedTests` (HTTP and signals), with `FakeModel` and `MutableClock`.
 
 ## Questions to try

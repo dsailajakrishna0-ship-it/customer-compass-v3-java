@@ -287,3 +287,7 @@ comparisons-memory-hand-written:
 # J8.6b: the withSpringAi conversation-memory backend on port 18162 (needs OPENROUTER_API_KEY; TELEMETRY_ENABLED=true records signals; same optional settings as the handWritten one)
 comparisons-memory-spring-ai:
     ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl memory/withSpringAi -am compile exec:java
+
+# J8.6c: the withLangchain4j conversation-memory backend on port 18163 (same settings as the handWritten one; needs OPENROUTER_API_KEY)
+comparisons-memory-langchain4j:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl memory/withLangchain4j -am compile exec:java
