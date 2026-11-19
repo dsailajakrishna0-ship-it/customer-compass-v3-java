@@ -283,3 +283,7 @@ eval-adversarial-baseline:
 # J8.6a: the handWritten conversation-memory backend on port 18161 (needs OPENROUTER_API_KEY; TELEMETRY_ENABLED=true records signals; LLM_BASE_URL, MODEL, PORT, MEMORY_MAX_MESSAGES, MEMORY_MAX_CHARS, MEMORY_TTL_HOURS, MEMORY_MAX_CONVERSATIONS optional)
 comparisons-memory-hand-written:
     ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl memory/handWritten -am compile exec:java
+
+# J8.6b: the withSpringAi conversation-memory backend on port 18162 (needs OPENROUTER_API_KEY; TELEMETRY_ENABLED=true records signals; same optional settings as the handWritten one)
+comparisons-memory-spring-ai:
+    ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml -pl memory/withSpringAi -am compile exec:java

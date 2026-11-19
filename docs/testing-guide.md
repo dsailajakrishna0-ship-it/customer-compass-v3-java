@@ -702,6 +702,25 @@ just test-web        # web app: lint, types, 16 tests, build
 
 **Stop:** nothing is left running.
 
+## J8.6b: conversation memory with Spring AI (Java lab)
+
+Without a key:
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 1 | `just comparisons-test` | `BUILD SUCCESS`; 42 new tests in `memory/withSpringAi`: 25 contract tests (the same rules as handWritten), 12 in `SpringAiLibraryBehaviourTests` (the Spring AI classes alone), 5 over HTTP and for the signals; no keys, no network | What the library does on its own, and the rules we wrote around it |
+| 2 | Read the test names in `SpringAiLibraryBehaviourTests` | Each name is a finding: window by count only, trims on write not read, user message stored before the answer, only the last user message, unknown id is not an error, no cap or time limit, pairs split under a race, a clear is undone by the advisor | The gap between the library and the contract |
+
+With a key:
+
+| # | Do | Expect | What it shows |
+| --- | --- | --- | --- |
+| 3 | `OPENROUTER_API_KEY=... just comparisons-memory-spring-ai`, then `curl -s localhost:18162/health` | `{"status":"ok","approach":"withSpringAi"}`; the start-up log has no warnings | The backend is running |
+| 4 | `curl -s -X POST localhost:18162/api/v1/conversations`, then chat twice with `"My company is Acme."` and `"What did I just tell you?"` (same body as J8.6a, port 18162) | The second answer mentions Acme; `messagesUsed` 2, `messagesStored` 4 | The advisor put the history in front of the new message |
+| 5 | `GET`, then `DELETE` the conversation, then `GET` again, and chat with a made-up id | 4 messages; 204; 404; 404 and no model call | Same contract as handWritten |
+
+**Stop:** end the backend with Ctrl+C.
+
 ## J8.6a: conversation memory by hand (Java lab)
 
 | # | Do | Expect | What it shows |
