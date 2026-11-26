@@ -26,7 +26,7 @@ jobs:
           cache-dependency-path: apps/api-java/pom.xml
       - name: Build, test, Spotless and Checkstyle
         run: cd apps/api-java && ./mvnw -B -ntp verify
-      - name: Comparison modules (J8): build and test, no keys, no network
+      - name: Comparison modules (J8), build and test, no keys, no network
         run: ./apps/api-java/mvnw -B -ntp -f comparisons/pom.xml verify
 
   contract:
