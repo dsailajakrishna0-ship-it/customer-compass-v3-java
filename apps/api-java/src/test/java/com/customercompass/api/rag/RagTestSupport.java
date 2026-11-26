@@ -44,6 +44,11 @@ public final class RagTestSupport {
     }
   }
 
+  /** A vector index over the given embedding model and the Qdrant the settings point at. */
+  public static VectorIndex indexWith(RagProperties properties, EmbeddingModel model) {
+    return new VectorIndex(properties, () -> model, null);
+  }
+
   /** A vector index that uses {@link FakeEmbeddings} and the Qdrant the settings point at. */
   public static VectorIndex fakeIndex(RagProperties properties) {
     return new VectorIndex(properties, FakeEmbeddings::new, null);

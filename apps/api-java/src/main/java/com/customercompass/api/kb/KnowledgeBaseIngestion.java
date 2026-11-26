@@ -50,11 +50,23 @@ public class KnowledgeBaseIngestion {
     int chunks = 0;
     try {
       List<ParsedDocument> parsed = load(kb);
-      kb.index().recreate();
-      int documentId = 0;
+      // Read-only phase first: embed every chunk BEFORE the collections are replaced, so a failed
+      // embedding call leaves the previous knowledge base as it was.
+      var prepared = new ArrayList<List<SegmentChunk>>();
+      var texts = new ArrayList<String>();
       for (ParsedDocument document : parsed) {
-        documentId++;
         List<SegmentChunk> pieces = Chunker.chunkSegments(document.segments());
+        prepared.add(pieces);
+        pieces.forEach(piece -> texts.add(piece.chunk().content()));
+      }
+      List<float[]> vectors = kb.index().embedAll(texts);
+
+      kb.index().recreate();
+      int offset = 0;
+      for (int d = 0; d < parsed.size(); d++) {
+        ParsedDocument document = parsed.get(d);
+        int documentId = d + 1;
+        List<SegmentChunk> pieces = prepared.get(d);
         if (pieces.isEmpty()) {
           continue;
         }
@@ -66,7 +78,8 @@ public class KnowledgeBaseIngestion {
                   piece.chunk().content(),
                   metadata(kb.id(), document, documentId, piece)));
         }
-        kb.index().store().add(points);
+        kb.index().addEmbedded(points, vectors.subList(offset, offset + points.size()));
+        offset += points.size();
         kb.keywords().add(points);
         chunks += points.size();
         documents++;
