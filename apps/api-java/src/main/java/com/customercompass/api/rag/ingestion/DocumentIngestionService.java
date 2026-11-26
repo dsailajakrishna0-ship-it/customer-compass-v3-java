@@ -69,9 +69,24 @@ public class DocumentIngestionService {
     int chunksCreated = 0;
     try {
       List<ParsedDocument> documents = loadDocuments();
+
+      // Read-only phase: cut every document and embed every chunk BEFORE anything is replaced, so
+      // a failed embedding call (no key, a refused request, a half answer) leaves the previous
+      // index exactly as it was. The vectors are held in memory until the replace below.
+      var prepared = new ArrayList<List<SegmentChunk>>();
+      var texts = new ArrayList<String>();
+      for (ParsedDocument document : documents) {
+        List<SegmentChunk> chunks = Chunker.chunkSegments(document.segments());
+        prepared.add(chunks);
+        chunks.forEach(piece -> texts.add(piece.chunk().content()));
+      }
+      List<float[]> vectors = index.embedAll(texts);
+
       jdbc.sql("TRUNCATE documents RESTART IDENTITY CASCADE").update();
       index.recreate();
-      for (ParsedDocument document : documents) {
+      int offset = 0;
+      for (int d = 0; d < documents.size(); d++) {
+        ParsedDocument document = documents.get(d);
         Integer companyId = companyId(document.companyName());
         long documentId =
             jdbc.sql(
@@ -85,7 +100,7 @@ public class DocumentIngestionService {
                 .param("content", document.content())
                 .query(Long.class)
                 .single();
-        List<SegmentChunk> chunks = Chunker.chunkSegments(document.segments());
+        List<SegmentChunk> chunks = prepared.get(d);
         if (chunks.isEmpty()) {
           continue;
         }
@@ -97,8 +112,9 @@ public class DocumentIngestionService {
                   piece.chunk().content(),
                   metadata(document, documentId, companyId, piece)));
         }
-        index.store().add(points); // embeds every chunk, then stores vector and payload
-        keywords.add(points); // and the keyword vector of each chunk, under the same id
+        index.addEmbedded(points, vectors.subList(offset, offset + points.size()));
+        offset += points.size();
+        keywords.add(points); // the keyword vector of each chunk, under the same id
         chunksCreated += points.size();
         documentsProcessed++;
       }

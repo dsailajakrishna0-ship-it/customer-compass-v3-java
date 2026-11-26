@@ -5,8 +5,10 @@ import io.qdrant.client.ConditionFactory;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
 import io.qdrant.client.grpc.Common;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
+import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.google.genai.embedding.GoogleGenAiEmbeddingConnectionDetails;
 import org.springframework.ai.google.genai.text.GoogleGenAiTextEmbeddingModel;
@@ -62,6 +64,29 @@ public class VectorIndex {
       client = clientFactory.get();
     }
     return client;
+  }
+
+  /**
+   * Embeds the texts (at most 100 per request, each answer checked) WITHOUT touching the
+   * collection, so a caller can embed everything first and replace the index only when every vector
+   * exists.
+   */
+  public List<float[]> embedAll(List<String> texts) {
+    EmbeddingModel model = embeddings();
+    return new BatchedEmbeddings(model, model.dimensions()).embed(texts);
+  }
+
+  /**
+   * Stores chunks whose vectors were computed earlier with {@link #embedAll}: no embedding call is
+   * made here (the store is given a model that answers from the ready vectors).
+   */
+  public synchronized void addEmbedded(List<Document> points, List<float[]> vectors) {
+    var ready = PrecomputedEmbeddings.of(points, vectors, embeddings().dimensions());
+    QdrantVectorStore.builder(client(), ready)
+        .collectionName(properties.collection())
+        .initializeSchema(false)
+        .build()
+        .add(points);
   }
 
   /** The vector store over the (existing or new) collection. */
