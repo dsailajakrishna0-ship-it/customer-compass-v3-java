@@ -1,6 +1,6 @@
 # Stage J7: evals and observability
 
-Ports the Python edition's Stage 5 (and the 0.7 baseline). Decisions: [ADR 0025](../adr/0025-evals-as-shared-files-and-replayable-baselines.md). Cut into slices, one PR each: **J7.1** the adversarial set on the guard, **J7.2** the retrieval golden set (the harness; the recording is a separate step the owner approves), **J7.3** tracing (spans for the request, model calls, searches, tool calls, guard scans and agent steps), J7.4 guard comparison with the classifier, J7.5 tool and agent golden cases.
+Ports the Python edition's Stage 5 (and the 0.7 baseline). Decisions: [ADR 0025](../adr/0025-evals-as-shared-files-and-replayable-baselines.md). Cut into slices, one PR each: **J7.1** the adversarial set on the guard, **J7.2** the retrieval golden set (the harness; the recording is a separate step the owner approves), **J7.3** tracing (spans for the request, model calls, searches, tool calls, guard scans and agent steps), **J7.4** guard comparison with the classifier, **J7.5** tool and agent golden cases (the harness; the recording is a separate step the owner approves).
 
 ## In one minute
 
@@ -146,3 +146,26 @@ just eval-guards && just eval-guards-baseline && just eval-guards-check
 74 short classifier calls (roughly 250 tokens each, about 18,000 tokens in all) on a small paid model: well under one cent by the Python edition's quoted price of about $0.02 per million tokens (an estimate, not measured here). No embedding quota is used.
 
 **Rule to remember.** *A fail-open guard must never be measured as if "could not check" meant "safe".*
+
+## J7.5: tool choice and agent routing on the golden cases
+
+Ten tool cases and ten agent cases, the Python edition's files. Decisions: [ADR 0054](../adr/0054-tool-and-agent-golden-cases-over-http.md). The harness is built and proved on a made-up recording; the real recording needs the owner's approval.
+
+**What it asks.** For a message such as "What are Northstar Logistics' open deals?", did the model call `get_open_deals` with a company name containing "Northstar"? For "Hello, what can you help me with?", did it call nothing? For "Recommend next steps for Contoso Limited", did the agent answer `company_not_found` rather than invent a company? `evals/tools-agent/tool_agent_eval.py` scores these from a recording and compares them with a saved baseline.
+
+**Measured without a key.** Only the scoring: `evals/tools-agent/selftest.py` runs 11 checks on a small made-up recording whose numbers are worked by hand (the scoring, the replay, the check and the recording step against a stand-in server). No real model number exists yet.
+
+**Record it (needs approval, keys and ingested documents).**
+
+```bash
+just db && just qdrant                      # scratch Postgres and Qdrant
+OPENROUTER_API_KEY=... GOOGLE_API_KEY=... just run
+curl -s -X POST localhost:8001/api/v1/documents/ingest
+just eval-tools-agent-record                # 10 tool chats, 10 agent runs (15 to 60 seconds each)
+just eval-tools-agent && just eval-tools-agent-baseline && just eval-tools-agent-check
+```
+
+The recording writes nothing to the database: a write tool is only proposed in a one-message conversation, and recommend never writes. The counter `write_without_confirm` must be 0.
+
+**Rule to remember.** *Check the path the system took, not only the answer it gave.*
+

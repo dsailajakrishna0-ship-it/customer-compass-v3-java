@@ -68,6 +68,8 @@ jobs:
           RECORDED_PATH=evals/retrieval/recorded-floor-0.45.json BASELINE_PATH=evals/retrieval/baseline-floor-0.45.json python3 evals/retrieval/retrieval_eval.py --check
       - name: The guard comparison's scoring and replay hold (a made-up recording, no keys)
         run: python3 evals/guards/selftest.py
+      - name: The tool and agent eval's scoring and replay hold (a made-up recording, no keys)
+        run: python3 evals/tools-agent/selftest.py
       - name: API log on failure
         if: failure()
         run: tail -50 "$RUNNER_TEMP/api.log"
