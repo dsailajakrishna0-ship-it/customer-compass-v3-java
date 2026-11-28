@@ -242,8 +242,10 @@ class LibraryMeasurementsTests {
     two.join(5_000);
     // measured: both calls run at the same time (the library takes no per-id lock across the call) ...
     assertThat(bothInsideTheCall).isTrue();
-    // ... and the memory classes are not synchronised, so no pair of messages is guaranteed whole
-    assertThat(store.getMessages("c").size()).isBetween(3, 4);
+    // ... and the memory classes are not synchronised, so the unlocked read, modify, write can lose a
+    // message (seen in CI: 2 messages stored instead of 4). The test checks only what always holds:
+    // something was stored and no more than the four messages of the two turns.
+    assertThat(store.getMessages("c").size()).isBetween(1, 4);
     assertThat(MessageWindowChatMemory.class.getMethods()).noneMatch(m -> java.lang.reflect.Modifier.isSynchronized(m.getModifiers()));
   }
 
