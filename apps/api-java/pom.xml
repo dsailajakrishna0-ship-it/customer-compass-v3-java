@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.1.2</version>
+    <version>4.2.0</version>
     <relativePath/>
   </parent>
 
@@ -18,14 +18,14 @@
 
   <properties>
     <java.version>21</java.version>
-    <springdoc.version>3.2.0</springdoc.version>
-    <spotless.version>3.11.0</spotless.version>
+    <springdoc.version>3.2.1</springdoc.version>
+    <spotless.version>3.12.0</spotless.version>
     <google-java-format.version>1.28.0</google-java-format.version>
     <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
     <checkstyle.version>14.4.0</checkstyle.version>
-    <spring-ai.version>2.0.2</spring-ai.version>
+    <spring-ai.version>2.1.0</spring-ai.version>
     <pdfbox.version>3.0.8</pdfbox.version>
-    <langgraph4j.version>1.9.9</langgraph4j.version>
+    <langgraph4j.version>1.9.10</langgraph4j.version>
     <poi.version>6.0.0</poi.version>
   </properties>
 
