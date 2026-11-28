@@ -725,6 +725,20 @@ just test-web        # web app: lint, types, 16 tests, build
 
 **Stop:** nothing is left running.
 
+## Docs: the tool-calling guide (`docs/agent-tool-calling-guide.md`)
+
+A documentation-only change; nothing to build.
+
+**Without a key**
+1. Read `docs/agent-tool-calling-guide.md` top to bottom. Sections 3 and 4 are the two ends.
+2. Check one claim yourself with the app running (`just db`, then `just run`): `just mcp-call get_open_deals '{"company_name": "Acme"}'`. Notice that you play the model's part, with no key.
+3. Open `http://localhost:8001/swagger-ui.html` and find `GET /api/v1/companies/{company_id}`; compare its response with section 3.4 (contact emails).
+
+**With a key** (`OPENROUTER_API_KEY`)
+4. `just tools "What are Acme Fabrication's open deals?"`, then `GET /api/v1/tool-audit-log` to see the call it made.
+
+Answer the questions at the end of the guide; they check that you can say who decides a write and why.
+
 ## J8.6b: conversation memory with Spring AI (Java lab)
 
 Without a key:
