@@ -13,7 +13,7 @@ Several knowledge bases (for example the CRM documents and a farm-supply handboo
 | E1.1 | A knowledge-base registry, a second corpus with its own collection, `GET /knowledge-bases`, `POST /knowledge-bases/{id}/ingest`, `POST /knowledge-bases/{id}/search`. [ADR 0017](adr/0017-knowledge-bases.md), [guide](stages/E1-multi-source-rag.md) | Merged |
 | E1.2 | Three ways to decide where to search, behind `POST /chat/multi`: a router picks, search everything and merge (reciprocal rank fusion, then the optional reranker), or the model picks through a tool argument. [ADR 0018](adr/0018-multi-source-routing-strategies.md) | Merged |
 | E1.3 | A comparison of the three on 24 labelled questions (one corpus, both, neither), replayable without keys; `just eval-multi`. [ADR 0019](adr/0019-multi-source-strategy-results.md) | Merged |
-| E1.4 | A similarity floor for each knowledge base, calibrated on its own corpus (`just kb-calibrate`); the farm-supply handbook gets 0.64, the CRM floor becomes 0.60 in both editions ([ADR 0024](adr/0024-crm-similarity-floor-0-60.md)). [ADR 0023](adr/0023-per-corpus-similarity-floor.md) | In review |
+| E1.4 | A similarity floor for each knowledge base, calibrated on its own corpus (`just kb-calibrate`); the farm-supply handbook gets 0.64, the CRM floor becomes 0.60 in both editions ([ADR 0024](adr/0024-crm-similarity-floor-0-60.md)). [ADR 0023](adr/0023-per-corpus-similarity-floor.md) | Merged |
 
 ## New routes and settings (E1.1)
 
@@ -54,7 +54,7 @@ A coordinator that chooses, turn by turn, which specialist works next, with its 
 | --- | --- | --- |
 | E3.1 | `POST /agent/supervise`: a LangGraph4j supervisor graph over five specialists (CRM facts, researcher over all knowledge bases, analyst, reviewer, drafter), allowed-lists enforced in code, the same approval gate. [ADR 0020](adr/0020-supervisor-with-specialist-agents.md), [guide](stages/E3-supervisor.md) | Merged |
 | E3.2 | More autonomy: a plain question runs an answer team (an answerer specialist, fail-closed on citations, no gate); the supervisor writes its own search words. Parallel specialists left out. [ADR 0021](adr/0021-answer-team-and-supervisor-queries.md) | Merged |
-| E3.3 | A comparison of the supervisor and the fixed pipeline on the ten golden cases, replayable without keys; `just eval-supervisor`. [ADR 0022](adr/0022-supervisor-versus-pipeline-results.md) | In review |
+| E3.3 | A comparison of the supervisor and the fixed pipeline on the ten golden cases, replayable without keys; `just eval-supervisor`. [ADR 0022](adr/0022-supervisor-versus-pipeline-results.md) | Merged |
 
 | Route or setting | What it does |
 | --- | --- |

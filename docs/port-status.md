@@ -2,7 +2,7 @@
 
 Which stages of the Python edition (`customer-compass-v3`) are merged, and whether the Java edition has ported them. The Java session reads the Python edition's `main` before starting a stage; this table is the summary.
 
-Last checked against `customer-compass-v3` `main` at commit `99c59d8` (Stage 4.2 merged; 4.3 in review), 2026-11-07.
+The Python-edition columns were last checked against `customer-compass-v3` `main` at commit `99c59d8` (Stage 4.2 merged; 4.3 in review), 2026-11-07, and were **not** re-checked on 2026-11-28. The Java status column was brought up to date on 2026-11-28 from this repository's own history.
 
 | Python stage | Merged there | API contract changed? | Java stage | Java status |
 | --- | --- | --- | --- | --- |
@@ -10,8 +10,8 @@ Last checked against `customer-compass-v3` `main` at commit `99c59d8` (Stage 4.2
 | 1 Model layer | Yes | Gateway, usage footer, `/llm/models` | J2 | J2 merged (gateway, `/llm/models`, Spring AI client, `POST /chat`) |
 | 2 Tools and MCP | 2.1, 2.2a, 2.2b | `/chat/tools`, `/mcp/servers`, `contracts/mcp-tools.json` | J4 | J4 merged (MCP server inside the API, `/chat/tools`, `/mcp/servers`, `/tool-audit-log`) |
 | 3 LangGraph port | 3.1, 3.2a, 3.2b | No (26 contract tests unchanged) | J5 | J5 merged (the graph, both routes, the durable pause) |
-| 4 Retrieval upgrade | 4.1a, 4.1b, 4.2, 4.3 | 4.2 adds optional `page` and `sheet` to `/chat/rag` citations | J3 (RAG) | J3.1 to J3.5 merged; J3.6 (hybrid search) in review. J3 is then complete |
-| 5 and later (Python Stage 8 guard is ported as J6; tracing, evals and comparisons are Stage 5) | No | Unknown | J6 to J8 | J6 (guard and audit) merged; J7.1 (adversarial eval) merged, J7.2 (retrieval golden set, with its recording at floors 0.60 and 0.45) merged, J7.3 (tracing) merged, J7.4 (guard comparison harness; recording pending) in review, the rest of J7 (evals and observability) and J8 (the same module built several ways, in `comparisons/`; J8.1a handWritten tool calling and the web app's Approach buttons in review) |
+| 4 Retrieval upgrade | 4.1a, 4.1b, 4.2, 4.3 | 4.2 adds optional `page` and `sheet` to `/chat/rag` citations | J3 (RAG) | J3.1 to J3.6 merged (including the optional reranker and hybrid search); J3 is complete |
+| 5 and later (Python Stage 8 guard is ported as J6; tracing, evals and comparisons are Stage 5) | No | Unknown | J6 to J8 | J6 merged (guard and audit log, agent guard, optional LLM classifier). J7.1 to J7.4 merged (adversarial set, retrieval golden set, tracing, guard comparison harness); the J7.4 recording needs your approval and J7.5 is not started. J8 first round merged: tool calling, RAG ingestion, RAG retrieval, observability, the agent graph, memory and the multi-agent patterns, each built several ways in `comparisons/`. Java-only extensions E1 (multi-source RAG) and E3 (supervisor) are merged too |
 
 ## Contract gaps
 
