@@ -124,9 +124,9 @@ If you have little time: **4, 5, 6, 9 and 11** show the most.
 ## 11. Evals (replayable, no keys)
 
 - **What it is:** recorded model answers checked against stored **baselines**, so you can see in seconds whether behaviour changed, with no key and no network ([ADR 0025](adr/0025-evals-as-shared-files-and-replayable-baselines.md)).
-- **Run (all offline):** `just eval-adversarial-check`, `just eval-retrieval-check`, `just eval-multi-check`, `just eval-supervisor-check`, `just eval-guards-check`, `just eval-guards-selftest`, `just eval-retrieval-selftest`.
+- **Run (all offline):** `just eval-adversarial-check`, `just eval-retrieval-check`, `just eval-multi-check`, `just eval-supervisor-check`, `just eval-guards-check`, `just eval-guards-selftest`, `just eval-retrieval-selftest`, `just eval-tools-agent-selftest`.
 - **Notice:** each ends with a pass line; a changed count is a fail. The retrieval set reports **recall@k and MRR** at two floors (0.60 and 0.45).
-- **Not done yet:** the J7.4 guard-comparison recording (rules versus classifier) needs approval to run with keys, so `eval-guards-check` has no recorded model baseline to compare yet. J7.5 (tool and agent golden cases) is not started; the files `evals/golden/tool_calls.json` and `evals/golden/agent.json` came from the Python edition and are not run by a Java harness.
+- **Not done yet:** the J7.4 guard-comparison recording (rules versus classifier) and the J7.5 recording (tool choice and agent routing on the 10 + 10 golden cases, `just eval-tools-agent-record`) each need your approval to run with keys. Until then `eval-guards-check` and `eval-tools-agent-check` have no recorded model baseline to compare with and fail with a plain message; `just eval-tools-agent-selftest` (no keys) proves the J7.5 scoring on a made-up recording.
 
 ## 12. The framework comparisons (J8)
 

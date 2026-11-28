@@ -276,6 +276,26 @@ eval-retrieval-baseline:
 eval-retrieval-selftest:
     @python3 evals/retrieval/selftest.py
 
+# J7.5: the tool-choice and agent-routing score on the shared 10 + 10 golden cases, replayed from the recording (no keys, no network; exits 2 until the owner has made a recording)
+eval-tools-agent:
+    @python3 evals/tools-agent/tool_agent_eval.py
+
+# J7.5: replay and fail if a metric moved more than 0.05 from evals/tools-agent/baseline.json
+eval-tools-agent-check:
+    @python3 evals/tools-agent/tool_agent_eval.py --check
+
+# J7.5: ask the running API (keys set, documents ingested) for what is not recorded yet: 10 tool chats and 10 agent runs on real models (needs the owner's approval; agent runs take 15 to 60 seconds each); MODEL optional
+eval-tools-agent-record:
+    @python3 evals/tools-agent/tool_agent_eval.py --record
+
+# J7.5: save the replayed metrics as the baseline (on purpose, after a recording)
+eval-tools-agent-baseline:
+    @python3 evals/tools-agent/tool_agent_eval.py --write-baseline
+
+# J7.5: the scoring, the replay and the recording step proved on a made-up recording (no keys, no API)
+eval-tools-agent-selftest:
+    @python3 evals/tools-agent/selftest.py
+
 # J7.1: rewrite evals/adversarial/baseline.json from the guard's current behaviour (on purpose, after a rule change)
 eval-adversarial-baseline:
     cd {{api}} && EVAL_WRITE_BASELINE=1 ./mvnw -B -ntp -q test -Dtest=AdversarialEvalTests
