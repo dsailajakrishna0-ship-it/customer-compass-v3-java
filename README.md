@@ -16,6 +16,7 @@ The same CRM and AI assistant as [`customer-compass-v3`](https://github.com/dsai
 
 - Plan: [`docs/roadmap.md`](docs/roadmap.md). Each sub-stage is one pull request, squash-merged by the owner.
 - This edition follows the Python edition by about one stage; [`docs/port-status.md`](docs/port-status.md) says where it is.
+- Guide: [`docs/agent-tool-calling-guide.md`](docs/agent-tool-calling-guide.md): enabling tool calling for a few of this app's APIs, what to do at both ends (the app and the agent).
 - A later part of the plan adds a **no-framework** version (plain Java), to compare with the framework one.
 - Sibling project, planned: `claims-compass-v1` (insurance claims, Java).
 
